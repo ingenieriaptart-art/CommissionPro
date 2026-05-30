@@ -33,9 +33,28 @@ export function useCreateTest() {
     mutationFn: async (payload: Omit<Test, "id" | "created_at" | "updated_at" | "sync_status" | "version">) => {
       const id = uuidv4();
       const now = new Date().toISOString();
+
+      // [A-006 FIX] Capturar snapshot del equipo en el momento de crear la prueba.
+      // Si el equipo se modifica o elimina después, la trazabilidad queda intacta.
+      let equipment_snapshot: Partial<Test["equipment"]> | undefined;
+      if (payload.equipment_id) {
+        const eq = await localDB.equipment.get(payload.equipment_id);
+        if (eq) {
+          // Guardar solo campos técnicos relevantes, no metadatos de sync
+          equipment_snapshot = {
+            id: eq.id, tag: eq.tag, name: eq.name,
+            manufacturer: eq.manufacturer, model: eq.model,
+            serial_number: eq.serial_number, power: eq.power,
+            voltage: eq.voltage, current: eq.current,
+            criticality: eq.criticality,
+          };
+        }
+      }
+
       const test: Test = {
         ...payload, id, created_at: now, updated_at: now,
         sync_status: "pending", version: 1,
+        equipment_snapshot,
       };
       await localDB.tests.add(test);
       await enqueueSync("tests", id, "INSERT", test);

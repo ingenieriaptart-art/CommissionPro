@@ -28,6 +28,13 @@ export interface LocalBlobStore {
   createdAt: string;
 }
 
+// [A-008 FIX] Cursores de sync almacenados en IndexedDB (no localStorage)
+export interface SyncCursor {
+  entity: string;   // clave primaria
+  cursor: string;   // ISO timestamp del último registro recibido
+  updatedAt: string;
+}
+
 class CommissionProDB extends Dexie {
   projects!: EntityTable<Project, "id">;
   areas!: EntityTable<Area, "id">;
@@ -42,6 +49,7 @@ class CommissionProDB extends Dexie {
   formTemplates!: EntityTable<FormTemplate, "id">;
   syncQueue!: EntityTable<SyncOperation, "id">;
   blobStore!: EntityTable<LocalBlobStore, "id">;
+  syncCursors!: EntityTable<SyncCursor, "entity">;
 
   constructor() {
     super("CommissionProDB");
@@ -60,6 +68,16 @@ class CommissionProDB extends Dexie {
       formTemplates: "id, project_id, test_type",
       syncQueue:     "++id, entity, operation, createdAt",
       blobStore:     "++id, evidenceId",
+    });
+
+    // [A-005 FIX] v2: project_id como índice en equipment
+    this.version(2).stores({
+      equipment: "id, project_id, subsystem_id, tag, status, sync_status",
+    });
+
+    // [A-008 FIX] v3: tabla syncCursors en IndexedDB (reemplaza localStorage)
+    this.version(3).stores({
+      syncCursors: "entity",  // clave primaria: nombre de la entidad
     });
   }
 }

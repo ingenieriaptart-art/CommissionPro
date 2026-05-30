@@ -14,7 +14,7 @@ interface Props { params: Promise<{ projectId: string }> }
 
 export default function EquipmentPage({ params }: Props) {
   const { projectId } = use(params);
-  const { data: equipment = [], isLoading } = useEquipment();
+  const { data: equipment = [], isLoading } = useEquipment(projectId);
   const createEquipment = useCreateEquipment();
 
   const [search, setSearch] = useState("");

@@ -124,6 +124,8 @@ export interface Subsystem {
 
 export interface Equipment {
   id: string;
+  // [A-001 FIX] project_id desnormalizado para RLS eficiente sin JOINs
+  project_id: string;
   subsystem_id: string;
   tag: string;
   name: string;
@@ -179,6 +181,9 @@ export interface Test {
   id: string;
   project_id: string;
   equipment_id?: string;
+  // [A-006 FIX] Snapshot del equipo al momento de ejecutar la prueba.
+  // Preserva trazabilidad si el equipo se modifica o elimina.
+  equipment_snapshot?: Partial<Equipment>;
   form_version_id?: string;
   type: TestType;
   code?: string;

@@ -5,26 +5,41 @@ import { localDB, enqueueSync } from "@/lib/db/local";
 import { v4 as uuidv4 } from "uuid";
 import type { Equipment } from "@/types";
 
-// Carga desde Supabase (cuando hay red) o desde Dexie (offline)
-export function useEquipment(subsystemId?: string) {
+const PAGE_LIMIT = 500;
+
+// [A-005 FIX] projectId es SIEMPRE obligatorio para garantizar aislamiento multi-tenant
+export function useEquipment(projectId: string, subsystemId?: string) {
   return useQuery({
-    queryKey: ["equipment", subsystemId],
+    queryKey: ["equipment", projectId, subsystemId],
     queryFn: async (): Promise<Equipment[]> => {
       if (navigator.onLine) {
         const supabase = createClient();
-        let q = supabase.from("equipment").select("*").is("deleted_at", null).order("tag");
+        // SIEMPRE filtrar por project_id primero
+        let q = supabase
+          .from("equipment")
+          .select("*")
+          .eq("project_id", projectId)   // ← A-005: filtro obligatorio
+          .is("deleted_at", null)
+          .order("tag")
+          .limit(PAGE_LIMIT);
         if (subsystemId) q = q.eq("subsystem_id", subsystemId);
         const { data, error } = await q;
         if (error) throw error;
-        // Guardar en local
         if (data) await localDB.equipment.bulkPut(data as Equipment[]);
         return (data ?? []) as Equipment[];
       } else {
-        let q = localDB.equipment.where("sync_status").notEqual("deleted");
-        if (subsystemId) q = localDB.equipment.where("subsystem_id").equals(subsystemId);
-        return q.toArray();
+        // Offline: filtrar por project_id en IndexedDB
+        if (subsystemId) {
+          return localDB.equipment
+            .where("subsystem_id").equals(subsystemId)
+            .toArray();
+        }
+        return localDB.equipment
+          .where("project_id").equals(projectId)
+          .toArray();
       }
     },
+    enabled: !!projectId,  // No ejecutar sin projectId
   });
 }
 
