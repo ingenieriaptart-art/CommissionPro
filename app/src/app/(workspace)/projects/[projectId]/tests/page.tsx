@@ -8,26 +8,26 @@ import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { fmtDate } from "@/lib/utils";
 import { Plus, CheckSquare } from "lucide-react";
-import type { TestType, TestStatus } from "@/types";
+import type { TestType } from "@/types";
 
 interface Props { params: Promise<{ projectId: string }> }
 
 const typeLabel: Record<TestType, string> = {
   precomisionamiento: "Precomisionamiento",
-  fat: "FAT",
-  sat: "SAT",
+  fat:        "FAT",
+  sat:        "SAT",
   loop_check: "Loop Check",
   energizacion: "Energización",
-  funcional: "Funcional",
+  funcional:  "Funcional",
 };
 
 const typeColor: Record<TestType, string> = {
   precomisionamiento: "bg-slate-100 text-slate-700",
-  fat:  "bg-purple-100 text-purple-700",
-  sat:  "bg-blue-100 text-blue-700",
+  fat:        "bg-purple-100 text-purple-700",
+  sat:        "bg-blue-100 text-blue-700",
   loop_check: "bg-cyan-100 text-cyan-700",
   energizacion: "bg-amber-100 text-amber-700",
-  funcional: "bg-emerald-100 text-emerald-700",
+  funcional:  "bg-emerald-100 text-emerald-700",
 };
 
 export default function TestsPage({ params }: Props) {
@@ -62,7 +62,10 @@ export default function TestsPage({ params }: Props) {
         <Card className="border-blue-200 dark:border-blue-800">
           <NewTestForm
             projectId={projectId}
-            onSave={async (data) => { await createTest.mutateAsync(data as Parameters<typeof createTest.mutateAsync>[0]); setShowForm(false); }}
+            onSave={async (data) => {
+              await createTest.mutateAsync(data as Parameters<typeof createTest.mutateAsync>[0]);
+              setShowForm(false);
+            }}
             onCancel={() => setShowForm(false)}
             loading={createTest.isPending}
           />
@@ -133,8 +136,10 @@ function NewTestForm({ projectId, onSave, onCancel, loading }: {
       />
       <div className="flex gap-2 justify-end">
         <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
-        <Button loading={loading}
-          onClick={() => onSave({ project_id: projectId, type, code, status: "borrador" })}>
+        <Button
+          loading={loading}
+          onClick={() => onSave({ project_id: projectId, type, code, status: "borrador" })}
+        >
           Crear
         </Button>
       </div>

@@ -278,6 +278,8 @@ export interface PunchItem {
   evidences?: Evidence[];
 }
 
+export type DocumentProcessingStatus = "pending" | "processing" | "completed" | "failed";
+
 export interface Document {
   id: string;
   project_id: string;
@@ -285,9 +287,77 @@ export interface Document {
   file_type?: string;
   category?: string;
   storage_url?: string;
+  storage_path?: string;
   version: number;
   uploaded_by?: string;
   uploaded_at: string;
+  file_size?: number;
+  mime_type?: string;
+  processing_status?: DocumentProcessingStatus;
+  processing_error?: string;
+  processing_metadata?: Record<string, unknown>;
+  deleted_at?: string;
+}
+
+export type TagStatus = "pending_review" | "approved" | "rejected" | "merged";
+
+export interface TagPatternRule {
+  id: string;
+  project_id?: string;
+  name: string;
+  regex_pattern: string;
+  detected_type: string;
+  description_hint?: string;
+  priority: number;
+  is_active: boolean;
+  auto_approve_threshold?: number;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EngineeredDocumentEntity {
+  id: string;
+  project_id: string;
+  document_id: string;
+  page_number?: number;
+  source_text: string;
+  location_x?: number;
+  location_y?: number;
+  entity_type: string;
+  raw_value: string;
+  created_at: string;
+}
+
+export interface EngineeredTag {
+  id: string;
+  project_id: string;
+  document_id: string;
+  entity_id?: string;
+  tag: string;
+  detected_type?: string;
+  description?: string;
+  tag_confidence: number;
+  type_confidence: number;
+  description_confidence: number;
+  extracted_data_json: {
+    source_format?: string;
+    pattern_name?: string;
+    pattern_priority?: number;
+    occurrences?: number;
+    pages?: number[];
+    context?: string;
+    context_keywords?: string[];
+  };
+  status: TagStatus;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  review_notes?: string;
+  created_at: string;
+  updated_at: string;
+  // relations
+  document?: Document;
+  entity?: EngineeredDocumentEntity;
 }
 
 export interface Notification {

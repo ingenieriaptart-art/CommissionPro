@@ -1,9 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
-import { localDB, enqueueSync } from "@/lib/db/local";
-import { v4 as uuidv4 } from "uuid";
+import { usePunch, useCreatePunch } from "@/hooks/usePunch";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,57 +8,22 @@ import { Select } from "@/components/ui/Select";
 import { PunchStatusBadge, PunchPriorityBadge } from "@/components/ui/StatusBadge";
 import { fmtDate } from "@/lib/utils";
 import { Plus, AlertTriangle } from "lucide-react";
-import type { PunchItem, PunchPriority, PunchStatus } from "@/types";
+import type { PunchPriority, PunchStatus } from "@/types";
 
 interface PunchListProps { projectId: string; }
 
 export function PunchList({ projectId }: PunchListProps) {
-  const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<PunchStatus | "">("");
   const [filterPriority, setFilterPriority] = useState<PunchPriority | "">("");
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ["punch", projectId],
-    queryFn: async (): Promise<PunchItem[]> => {
-      if (navigator.onLine) {
-        const supabase = createClient();
-        const { data } = await supabase.from("punch_items")
-          .select("*").eq("project_id", projectId).is("deleted_at", null)
-          .order("created_at", { ascending: false });
-        if (data) await localDB.punchItems.bulkPut(data as PunchItem[]);
-        return (data ?? []) as PunchItem[];
-      }
-      return localDB.punchItems.where("project_id").equals(projectId).toArray();
-    },
-  });
+  const { data: items = [], isLoading } = usePunch(projectId);
+  const createMutation = useCreatePunch();
 
   const filteredItems = items.filter((i) => {
     if (filterStatus && i.status !== filterStatus) return false;
     if (filterPriority && i.priority !== filterPriority) return false;
     return true;
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: { title: string; description: string; priority: PunchPriority }) => {
-      const id = uuidv4();
-      const now = new Date().toISOString();
-      const item: PunchItem = {
-        id, project_id: projectId, title: data.title,
-        description: data.description, priority: data.priority,
-        status: "abierto", created_at: now, updated_at: now,
-        sync_status: "pending", version: 1,
-      };
-      await localDB.punchItems.add(item);
-      await enqueueSync("punch_items", id, "INSERT", item);
-      if (navigator.onLine) {
-        const supabase = createClient();
-        await supabase.from("punch_items").insert(item);
-        await localDB.punchItems.update(id, { sync_status: "synced" });
-      }
-      return item;
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["punch", projectId] }); setShowForm(false); },
   });
 
   return (
@@ -96,7 +58,18 @@ export function PunchList({ projectId }: PunchListProps) {
         </Button>
       </div>
 
-      {showForm && <NewPunchForm onSave={createMutation.mutate} onCancel={() => setShowForm(false)} loading={createMutation.isPending} />}
+      {showForm && (
+        <NewPunchForm
+          onSave={(d) =>
+            createMutation.mutate(
+              { ...d, project_id: projectId },
+              { onSuccess: () => setShowForm(false) }
+            )
+          }
+          onCancel={() => setShowForm(false)}
+          loading={createMutation.isPending}
+        />
+      )}
 
       {isLoading ? (
         <div className="flex justify-center py-8">

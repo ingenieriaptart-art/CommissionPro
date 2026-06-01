@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
@@ -24,6 +25,8 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const { hasPermission } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <aside className={cn(
@@ -46,7 +49,7 @@ export function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 py-4 overflow-y-auto space-y-0.5 px-2">
         {navItems.map(({ href, icon: Icon, label, permission }) => {
-          if (permission && !hasPermission(permission)) return null;
+          if (mounted && permission && !hasPermission(permission)) return null;
           const active = pathname.startsWith(href);
           return (
             <Link key={href} href={href}

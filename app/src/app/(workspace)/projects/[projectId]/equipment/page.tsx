@@ -25,7 +25,7 @@ export default function EquipmentPage({ params }: Props) {
     e.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const criticalityColor: Record<Criticality, "danger"|"warning"|"default"> = {
+  const criticalityColor: Record<Criticality, "danger" | "warning" | "default"> = {
     alta: "danger", media: "warning", baja: "default",
   };
 
@@ -119,7 +119,8 @@ function EquipmentForm({ projectId, onSave, onCancel, loading }: {
         <Input label="TAG" value={tag} onChange={(e) => setTag(e.target.value)} required />
         <Input label="Nombre" value={name} onChange={(e) => setName(e.target.value)} required />
         <Input label="Fabricante" value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} />
-        <Select label="Criticidad"
+        <Select
+          label="Criticidad"
           options={[
             { value: "alta", label: "Alta" },
             { value: "media", label: "Media" },
@@ -131,12 +132,14 @@ function EquipmentForm({ projectId, onSave, onCancel, loading }: {
       </div>
       <div className="flex gap-2 justify-end mt-4">
         <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
-        <Button loading={loading} disabled={!tag || !name}
-          onClick={() => onSave({ tag, name, manufacturer, criticality, status: "pendiente" })}>
+        <Button
+          loading={loading}
+          disabled={!tag || !name}
+          onClick={() => onSave({ tag, name, manufacturer, criticality, status: "pendiente" })}
+        >
           Crear equipo
         </Button>
       </div>
     </Card>
   );
 }
-
