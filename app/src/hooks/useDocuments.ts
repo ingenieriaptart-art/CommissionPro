@@ -21,6 +21,7 @@ export function useDocuments(projectId: string) {
         .from("documents")
         .select("*")
         .eq("project_id", projectId)
+        .is("deleted_at", null)
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Document[];
@@ -83,7 +84,10 @@ export function useUploadDocument() {
       const supabase   = createClient();
       const documentId = uuidv4();
       const extension  = file.name.split(".").pop()?.toLowerCase() ?? "";
-      const storagePath = `${projectId}/${documentId}/${file.name}`;
+      const safeName   = file.name
+        .normalize("NFD").replace(/[̀-ͯ]/g, "")  // quitar tildes
+        .replace(/[^a-zA-Z0-9._-]/g, "_");                  // espacios y caracteres especiales → _
+      const storagePath = `${projectId}/${documentId}/${safeName}`;
 
       // 1. Subir a Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -120,9 +124,14 @@ export function useUploadDocument() {
       // 4. Disparar procesamiento (fire-and-forget intencional)
       // El API route actualiza processing_status a 'completed' o 'failed'.
       // El Realtime subscription en useDocuments notificará el cambio de estado.
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("[upload] session token:", session?.access_token ? session.access_token.substring(0, 30) + "..." : "NULL");
       fetch("/api/process-document", {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
         body:    JSON.stringify({ document_id: documentId, project_id: projectId }),
       }).catch((err) => {
         console.warn("[useUploadDocument] Processing request failed:", err?.message);

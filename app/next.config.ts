@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 // @ts-expect-error next-pwa no tiene tipos perfectos para TS config
 import withPWA from "next-pwa";
 
+// Workaround: Avast intercepta SSL en desarrollo, Node.js no puede verificar
+// certificados de Supabase. Solo aplica en dev — nunca en producción (Vercel).
+if (process.env.NODE_ENV === "development") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
+
 const pwaConfig = withPWA({
   dest: "public",
   disable: process.env.ENABLE_PWA !== "true",

@@ -147,6 +147,14 @@ export function useMergeTag() {
   });
 }
 
+export function useResetTag() {
+  const review = useReviewTag();
+  return useMutation({
+    mutationFn: ({ id, projectId }: { id: string; projectId: string }) =>
+      review.mutateAsync({ id, projectId, status: "pending_review" }),
+  });
+}
+
 // ── Operaciones masivas ───────────────────────────────────────
 
 export function useBulkReviewTags() {

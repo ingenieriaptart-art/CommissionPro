@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useApproveTag, useRejectTag, useMergeTag, useBulkReviewTags } from "@/hooks/useEngineering";
+import { useApproveTag, useRejectTag, useMergeTag, useResetTag, useBulkReviewTags } from "@/hooks/useEngineering";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -71,6 +71,7 @@ function TagRow({
   const approve = useApproveTag();
   const reject  = useRejectTag();
   const merge   = useMergeTag();
+  const reset   = useResetTag();
 
   const isPending = tag.status === "pending_review";
   const overallPct = Math.round(
@@ -143,7 +144,7 @@ function TagRow({
 
         {/* Acciones */}
         <td className="px-3 py-3">
-          {isPending && (
+          {isPending ? (
             <div className="flex items-center gap-1.5">
               <button
                 title="Aprobar"
@@ -170,7 +171,16 @@ function TagRow({
                 <GitMerge size={16} />
               </button>
             </div>
-          )}
+          ) : (tag.status === "approved" || tag.status === "rejected") ? (
+            <button
+              title="Revertir a pendiente"
+              disabled={reset.isPending}
+              onClick={() => reset.mutate({ id: tag.id, projectId })}
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50 text-xs"
+            >
+              ↩
+            </button>
+          ) : null}
         </td>
       </tr>
 

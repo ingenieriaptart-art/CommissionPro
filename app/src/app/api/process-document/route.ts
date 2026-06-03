@@ -243,23 +243,44 @@ export async function POST(req: NextRequest) {
   }
   const { document_id, project_id } = body as { document_id: string; project_id: string };
 
-  // ── A1: Verificar autenticación con las cookies de la request ──
-  const authClient = await createServerAuthClient();
+  // ── A1: Verificar autenticación ──────────────────────────────
+  // Acepta token via Authorization header (Bearer) o cookies de sesión.
+  const serviceClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
 
-  const { data: { user }, error: authError } = await authClient.auth.getUser();
-  if (authError || !user) {
+  const authHeader = req.headers.get("authorization");
+  const token      = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  if (!token) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  // A1: Verificar que el documento pertenece al proyecto y el usuario tiene acceso.
-  // La query usa el cliente anon con las cookies del usuario → RLS documents_select
-  // aplica. Si el usuario no es miembro del proyecto, retorna null.
-  const { data: docCheck } = await authClient
+  // Decodificar JWT sin red para obtener el sub (auth_user_id).
+  // El token ya fue emitido por Supabase — solo necesitamos el payload.
+  let userId: string | null = null;
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf-8"));
+    userId = payload.sub ?? null;
+  } catch {
+    return NextResponse.json({ error: "Token inválido" }, { status: 401 });
+  }
+
+  if (!userId) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  // A1: Verificar que el documento pertenece al proyecto
+  const { data: docCheck, error: docErr } = await serviceClient
     .from("documents")
     .select("id")
     .eq("id", document_id)
     .eq("project_id", project_id)
     .single();
+
+  console.log("[process-document] docCheck:", docCheck, "error:", docErr?.message, "doc_id:", document_id, "proj_id:", project_id);
 
   if (!docCheck) {
     return NextResponse.json(
@@ -267,13 +288,6 @@ export async function POST(req: NextRequest) {
       { status: 403 }
     );
   }
-
-  // Cliente service role para el procesamiento (bypasa RLS)
-  const serviceClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
 
   // Marcar como "processing" DESPUÉS de validar acceso
   await serviceClient

@@ -1,11 +1,21 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useSyncStore } from "@/stores/sync.store";
 import { Cloud, CloudOff, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function SyncIndicator() {
   const { state, pendingCount } = useSyncStore();
-  const isOnline = typeof navigator !== "undefined" ? navigator.onLine : true;
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const on  = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener("online",  on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
 
   return (
     <div className={cn(

@@ -24,8 +24,12 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuth = pathname.startsWith("/login") || pathname.startsWith("/reset-password");
+  const isApi  = pathname.startsWith("/api/");
 
   if (!session && !isAuth) {
+    if (isApi) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -37,5 +41,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons|manifest.json).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|api).*)"],
 };
