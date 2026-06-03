@@ -9,8 +9,9 @@ import Link from "next/link";
 import {
   FileText, FileType2, FileSpreadsheet, Image, File,
   Loader2, CheckCircle, AlertCircle, Clock,
-  ChevronRight, FolderOpen,
+  ChevronRight, FolderOpen, RotateCcw,
 } from "lucide-react";
+import { useReprocessDocument } from "@/hooks/useDocuments";
 import type { Document, DocumentProcessingStatus } from "@/types";
 
 interface Props { params: Promise<{ projectId: string }> }
@@ -50,9 +51,10 @@ function fmtSize(bytes?: number): string {
 // ── Componente documento ──────────────────────────────────────
 
 function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
-  const status = doc.processing_status ?? "pending";
-  const cfg    = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
-  const meta   = doc.processing_metadata as { tags_found?: number } | undefined;
+  const status     = doc.processing_status ?? "pending";
+  const cfg        = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
+  const meta       = doc.processing_metadata as { tags_found?: number } | undefined;
+  const reprocess  = useReprocessDocument();
 
   return (
     <div className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors rounded-xl">
@@ -84,6 +86,20 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
           {cfg.icon} {cfg.label}
         </span>
       </Badge>
+
+      {/* Reprocesar */}
+      {status === "completed" && (
+        <button
+          title="Reprocesar documento"
+          disabled={reprocess.isPending}
+          onClick={() => reprocess.mutate({ document: doc, projectId })}
+          className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-500 transition-colors disabled:opacity-50 flex-shrink-0"
+        >
+          {reprocess.isPending
+            ? <Loader2 size={15} className="animate-spin" />
+            : <RotateCcw size={15} />}
+        </button>
+      )}
 
       {/* Link a revisión */}
       {status === "completed" && (

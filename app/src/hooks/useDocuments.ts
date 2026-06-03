@@ -145,6 +145,31 @@ export function useUploadDocument() {
   });
 }
 
+// ── Reprocesamiento ───────────────────────────────────────────
+
+export function useReprocessDocument() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ document, projectId }: { document: Document; projectId: string }) => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch("/api/process-document", {
+        method:  "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ document_id: document.id, project_id: projectId }),
+      });
+      if (!res.ok) throw new Error((await res.json())?.error ?? "Error reprocesando");
+    },
+    onSuccess: (_, { projectId }) => {
+      qc.invalidateQueries({ queryKey: ["documents", projectId] });
+    },
+  });
+}
+
 // ── Eliminación (soft delete) ─────────────────────────────────
 
 export function useDeleteDocument() {
