@@ -161,22 +161,26 @@ function calcConfidence(
 }
 
 function extractDescription(context: string, rawTag?: string): string | undefined {
-  // CSV/Excel: buscar columna de instrumento
-  // Estructura: TAG , SERVICIO , INSTRUMENTO , ÁREA
-  // Después del tag: ["", SERVICIO, INSTRUMENTO, ...]
+  // CSV/Excel: buscar el nombre del equipo/instrumento en los campos del registro.
+  // La columna varía por hoja, así que buscamos por palabras clave de equipos.
   if (rawTag) {
     const tagIdx = context.indexOf(rawTag);
     if (tagIdx !== -1) {
       const afterTag = context.substring(tagIdx + rawTag.length);
-      const fields = afterTag.split(",").map((f) => f.trim());
-      // Probar fields[2] primero (instrumento: SONDA CL, MEDIDOR DE CAUDAL)
-      // Filtrar: no vacío, no tag (RTU-xxx), no N/A, longitud razonable
-      const isValidName = (f: string) =>
-        f.length >= 3 && f.length <= 50 && /^[A-ZÁÉÍÓÚ]/.test(f)
-        && !/^\w{2,4}-\d{2,4}/.test(f) && f !== "N/A";
-      if (isValidName(fields[2] ?? "")) return (fields[2] as string).substring(0, 100);
-      // Fallback a fields[1] (servicio: LAZO DE CLORO LIBRE)
-      if (isValidName(fields[1] ?? "")) return (fields[1] as string).substring(0, 100);
+      const fields = afterTag.split(",").map((f) => f.replace(/^"|"$/g, "").trim());
+      const EQUIPO_KW = [
+        "MEDIDOR", "SONDA", "TRANSMISOR", "BOMBA", "VÁLVULA", "VALVULA",
+        "ELECTROVÁLVULA", "ELECTROVALVULA", "SENSOR", "ANALIZADOR", "CONTROLADOR",
+        "INDICADOR", "REGISTRADOR", "CLORÍMETRO", "CLORíMETRO", "TURBIDÍMETRO",
+        "OXÍMETRO", "INTERRUPTOR", "VARIADOR", "PUENTE", "HIDRO", "NEUTRALIZADOR",
+        "CONCENTRADOR", "ACTUADOR", "MANÓMETRO", "TERMÓMETRO",
+      ];
+      for (const f of fields) {
+        const fUp = f.toUpperCase();
+        if (f.length >= 3 && f.length <= 60 && EQUIPO_KW.some((kw) => fUp.includes(kw))) {
+          return f.trim().substring(0, 100);
+        }
+      }
     }
   }
   // Fallback para otros formatos (PDF, DXF, texto libre)
