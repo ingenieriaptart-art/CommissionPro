@@ -177,7 +177,7 @@ function extractDescription(context: string, rawTag?: string): string | undefine
       ];
       for (const f of fields) {
         const fUp = f.toUpperCase();
-        if (f.length >= 3 && f.length <= 60 && EQUIPO_KW.some((kw) => fUp.includes(kw))) {
+        if (f.length >= 3 && f.length <= 60 && EQUIPO_KW.some((kw) => fUp.startsWith(kw))) {
           return f.trim().substring(0, 100);
         }
       }
