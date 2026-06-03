@@ -134,7 +134,8 @@ const TYPE_KEYWORDS: Record<string, string[]> = {
 
 function calcConfidence(
   pattern: TagPatternRule,
-  context: string
+  context: string,
+  rawTag?: string,
 ): {
   tag_confidence:         number;
   type_confidence:        number;
@@ -153,16 +154,30 @@ function calcConfidence(
     p >= 10 ? 0.90 + keywordBoost : p >= 5 ? 0.75 + keywordBoost : 0.55 + keywordBoost
   );
 
-  const descriptionFound    = !!extractDescription(context);
+  const descriptionFound    = !!extractDescription(context, rawTag);
   const description_confidence = descriptionFound ? 0.70 : 0.00;
 
   return { tag_confidence, type_confidence, description_confidence, context_keywords: foundKeywords };
 }
 
-function extractDescription(context: string): string | undefined {
+function extractDescription(context: string, rawTag?: string): string | undefined {
+  // CSV/Excel: buscar columna de instrumento (2do campo tras el tag, saltando el servicio)
+  if (rawTag) {
+    const tagIdx = context.indexOf(rawTag);
+    if (tagIdx !== -1) {
+      const afterTag = context.substring(tagIdx + rawTag.length);
+      const fields = afterTag.split(",").map((f) => f.trim());
+      // fields[0] = servicio (largo), fields[1] = instrumento (corto) ← queremos este
+      const instrument = fields[1];
+      if (instrument && instrument.length >= 3 && instrument.length <= 60
+          && /^[A-ZÁÉÍÓÚ]/.test(instrument)) {
+        return instrument.substring(0, 100);
+      }
+    }
+  }
+  // Fallback para otros formatos (PDF, DXF, texto libre)
   const patterns = [
     /[-–:]\s*([A-Za-záéíóúÁÉÍÓÚñÑ][\w\s,./()]{3,80})/,
-    /,([A-ZÁÉÍÓÚÑ][A-Za-záéíóúÁÉÍÓÚñÑ\s./()-]{10,100}?)(?:,|$)/,
     /\s{2,}([A-Za-záéíóúÁÉÍÓÚñÑ][\w\s,./()]{3,60})/,
   ];
   for (const p of patterns) {
@@ -205,13 +220,13 @@ function extractTags(chunks: TextChunk[], patterns: TagPatternRule[]): TagMatch[
           }
         } else {
           const { tag_confidence, type_confidence, description_confidence, context_keywords } =
-            calcConfidence(pattern, context);
+            calcConfidence(pattern, context, rawTag);
 
           seen.set(normTag, {
             rawTag,           // valor exacto del documento
             tag: normTag,     // B2: normalizado para almacenamiento
             detected_type:          pattern.detected_type,
-            description:            extractDescription(context),
+            description:            extractDescription(context, rawTag),
             tag_confidence,
             type_confidence,
             description_confidence,
