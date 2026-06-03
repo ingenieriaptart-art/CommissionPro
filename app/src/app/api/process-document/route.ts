@@ -162,6 +162,7 @@ function calcConfidence(
 function extractDescription(context: string): string | undefined {
   const patterns = [
     /[-–:]\s*([A-Za-záéíóúÁÉÍÓÚñÑ][\w\s,./()]{3,80})/,
+    /,([A-ZÁÉÍÓÚÑ][A-Za-záéíóúÁÉÍÓÚñÑ\s./()-]{10,100}?)(?:,|$)/,
     /\s{2,}([A-Za-záéíóúÁÉÍÓÚñÑ][\w\s,./()]{3,60})/,
   ];
   for (const p of patterns) {
