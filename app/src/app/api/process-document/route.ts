@@ -161,18 +161,22 @@ function calcConfidence(
 }
 
 function extractDescription(context: string, rawTag?: string): string | undefined {
-  // CSV/Excel: buscar columna de instrumento (2do campo tras el tag, saltando el servicio)
+  // CSV/Excel: buscar columna de instrumento
+  // Estructura: TAG , SERVICIO , INSTRUMENTO , ÁREA
+  // Después del tag: ["", SERVICIO, INSTRUMENTO, ...]
   if (rawTag) {
     const tagIdx = context.indexOf(rawTag);
     if (tagIdx !== -1) {
       const afterTag = context.substring(tagIdx + rawTag.length);
       const fields = afterTag.split(",").map((f) => f.trim());
-      // fields[0] = servicio (largo), fields[1] = instrumento (corto) ← queremos este
-      const instrument = fields[1];
-      if (instrument && instrument.length >= 3 && instrument.length <= 60
-          && /^[A-ZÁÉÍÓÚ]/.test(instrument)) {
-        return instrument.substring(0, 100);
-      }
+      // Probar fields[2] primero (instrumento: SONDA CL, MEDIDOR DE CAUDAL)
+      // Filtrar: no vacío, no tag (RTU-xxx), no N/A, longitud razonable
+      const isValidName = (f: string) =>
+        f.length >= 3 && f.length <= 50 && /^[A-ZÁÉÍÓÚ]/.test(f)
+        && !/^\w{2,4}-\d{2,4}/.test(f) && f !== "N/A";
+      if (isValidName(fields[2] ?? "")) return (fields[2] as string).substring(0, 100);
+      // Fallback a fields[1] (servicio: LAZO DE CLORO LIBRE)
+      if (isValidName(fields[1] ?? "")) return (fields[1] as string).substring(0, 100);
     }
   }
   // Fallback para otros formatos (PDF, DXF, texto libre)
