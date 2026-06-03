@@ -110,6 +110,11 @@ function TagRow({
           <span className="font-mono text-sm font-bold text-slate-900 dark:text-slate-100">
             {tag.tag}
           </span>
+          {tag.description && (
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-normal truncate max-w-[180px]">
+              {tag.description}
+            </p>
+          )}
         </td>
 
         {/* Tipo */}
