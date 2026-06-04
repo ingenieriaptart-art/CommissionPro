@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import { useApproveTag, useRejectTag, useMergeTag, useResetTag, useBulkReviewTags } from "@/hooks/useEngineering";
+import { useApproveTag, useRejectTag, useMergeTag, useResetTag, useBulkReviewTags, useCreateEquipmentFromTags } from "@/hooks/useEngineering";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 import {
   CheckCircle, XCircle, GitMerge, ChevronDown, ChevronRight,
-  CheckSquare, Square, AlertTriangle,
+  CheckSquare, Square, AlertTriangle, PackagePlus,
 } from "lucide-react";
 import type { EngineeredTag, TagStatus } from "@/types";
 
@@ -286,6 +286,8 @@ export function TagReviewTable({ tags, projectId, loading }: TagReviewTableProps
   const [selected, setSelected]         = useState<Set<string>>(new Set());
 
   const bulkReview = useBulkReviewTags();
+  const createEquipment = useCreateEquipmentFromTags();
+  const [createResult, setCreateResult] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return tags.filter((t) => {
@@ -324,6 +326,30 @@ export function TagReviewTable({ tags, projectId, loading }: TagReviewTableProps
     bulkReview.mutate(
       { ids, projectId, status },
       { onSuccess: () => setSelected(new Set()) }
+    );
+  };
+
+  const handleCreateEquipment = () => {
+    const eligibleIds = Array.from(selected).filter((id) => {
+      const t = tags.find((x) => x.id === id);
+      return t && (t.status === "approved" || t.status === "merged");
+    });
+    if (eligibleIds.length === 0) return;
+    createEquipment.mutate(
+      { projectId, tagIds: eligibleIds },
+      {
+        onSuccess: (result) => {
+          setSelected(new Set());
+          setCreateResult(
+            result.created > 0
+              ? `✓ ${result.created} equipo(s) creado(s)${result.existing.length > 0 ? `, ${result.existing.length} ya existían` : ""}`
+              : result.existing.length > 0
+              ? `Todos los equipos ya existen (${result.existing.length})`
+              : "Sin equipos nuevos"
+          );
+          setTimeout(() => setCreateResult(null), 4000);
+        },
+      }
     );
   };
 
@@ -397,9 +423,32 @@ export function TagReviewTable({ tags, projectId, loading }: TagReviewTableProps
           >
             Rechazar seleccionados
           </Button>
+          {(() => {
+            const eligibleCount = Array.from(selected).filter((id) => {
+              const t = tags.find((x) => x.id === id);
+              return t && (t.status === "approved" || t.status === "merged");
+            }).length;
+            return eligibleCount > 0 ? (
+              <Button
+                size="sm"
+                variant="success"
+                icon={<PackagePlus size={14} />}
+                loading={createEquipment.isPending}
+                onClick={handleCreateEquipment}
+              >
+                Crear {eligibleCount} equipo(s)
+              </Button>
+            ) : null;
+          })()}
           <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
             Cancelar
           </Button>
+        </div>
+      )}
+
+      {createResult && (
+        <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+          {createResult}
         </div>
       )}
 
