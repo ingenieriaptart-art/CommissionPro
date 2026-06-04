@@ -1,5 +1,6 @@
 "use client";
-import { use, useState } from "react";
+import { use, useState }   from "react";
+import { useSearchParams } from "next/navigation";
 import { useEquipment, useCreateEquipment } from "@/hooks/useEquipment";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -7,18 +8,21 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
-import { Plus, Wrench, Search } from "lucide-react";
+import { Plus, Wrench, Search, ScanSearch } from "lucide-react";
+import { TagSearchModal } from "@/components/shared/TagSearchModal";
 import type { Equipment, Criticality } from "@/types";
 
 interface Props { params: Promise<{ projectId: string }> }
 
 export default function EquipmentPage({ params }: Props) {
-  const { projectId } = use(params);
+  const { projectId }   = use(params);
+  const searchParams    = useSearchParams();
   const { data: equipment = [], isLoading } = useEquipment(projectId);
   const createEquipment = useCreateEquipment();
 
-  const [search, setSearch] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [search, setSearch]               = useState(searchParams.get("tag") ?? "");
+  const [showForm, setShowForm]           = useState(false);
+  const [tagSearchOpen, setTagSearchOpen] = useState(false);
 
   const filtered = equipment.filter((e) =>
     e.tag.toLowerCase().includes(search.toLowerCase()) ||
@@ -36,9 +40,18 @@ export default function EquipmentPage({ params }: Props) {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Equipos</h1>
           <p className="text-slate-500 text-sm mt-1">{filtered.length} equipo(s)</p>
         </div>
-        <Button icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
-          Nuevo equipo
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            icon={<ScanSearch size={16} />}
+            onClick={() => setTagSearchOpen(true)}
+          >
+            Buscar TAG
+          </Button>
+          <Button icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
+            Nuevo equipo
+          </Button>
+        </div>
       </div>
 
       <Input
@@ -107,6 +120,11 @@ export default function EquipmentPage({ params }: Props) {
           ))}
         </div>
       )}
+      <TagSearchModal
+        projectId={projectId}
+        isOpen={tagSearchOpen}
+        onClose={() => setTagSearchOpen(false)}
+      />
     </div>
   );
 }
