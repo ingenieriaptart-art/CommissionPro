@@ -102,10 +102,11 @@ function extractFromExcel(buffer: Buffer): TextChunk[] {
 
 async function extractFromPDF(buffer: Buffer): Promise<TextChunk[]> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require("pdf-parse/lib/pdf-parse.js");
-    const data     = await pdfParse(buffer);
-    return [{ text: data.text ?? "", page: 1, source: "pdf" }];
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new PDFParse({ data: new Uint8Array(buffer) });
+    const result = await parser.getText();
+    await parser.destroy();
+    return [{ text: result.text ?? "", page: 1, source: "pdf" }];
   } catch {
     const raw     = buffer.toString("latin1");
     const blocks  = raw.match(/BT[\s\S]{1,500}?ET/g) ?? [];
