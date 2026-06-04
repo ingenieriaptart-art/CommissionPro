@@ -1,0 +1,34 @@
+# Variables de entorno — nunca commitear
+.env
+.env.*
+*.env
+app/.env.local
+app/.env.*.local
+
+# Scripts temporales de debugging (pueden contener credenciales)
+query_*.js
+pw_*.js
+insert_*.js
+migrate_*.js
+seed_*.js
+fix_*.js
+
+# Directorios temporales
+.tmp/
+temp/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/settings.json
+.idea/
+
+# Node (scripts raíz o herramientas auxiliares)
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
