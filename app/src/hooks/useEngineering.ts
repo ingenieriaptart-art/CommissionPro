@@ -238,3 +238,82 @@ export function useCreateEquipmentFromTags() {
     },
   });
 }
+
+// ── useImportEquipmentFromExcel ───────────────────────────────
+
+export interface ImportEquipmentParams {
+  projectId: string;
+  file: File;
+  sheetName?: string;
+}
+
+export interface ImportEquipmentResult {
+  created: number;
+  updated: number;
+  skipped: number;
+  existing: number;
+  sheetType: string;
+  sheetName: string;
+  totalRows: number;
+  errors?: string[];
+}
+
+export function useImportEquipmentFromExcel() {
+  const queryClient = useQueryClient();
+
+  return useMutation<ImportEquipmentResult, Error, ImportEquipmentParams>({
+    mutationFn: async ({ projectId, file, sheetName }) => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("No autenticado");
+
+      const body = new FormData();
+      body.append("file", file);
+      body.append("project_id", projectId);
+      if (sheetName) body.append("sheet_name", sheetName);
+
+      const res = await fetch("/api/import-equipment-excel", {
+        method:  "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error ?? "Error al importar");
+      }
+
+      return res.json() as Promise<ImportEquipmentResult>;
+    },
+    onSuccess: (_, { projectId }) => {
+      queryClient.invalidateQueries({ queryKey: ["equipment", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["eng-tags", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["eng-tags-stats", projectId] });
+    },
+  });
+}
+
+export function useListExcelSheets() {
+  return useMutation<string[], Error, { projectId: string; file: File }>({
+    mutationFn: async ({ projectId, file }) => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("No autenticado");
+
+      const body = new FormData();
+      body.append("file", file);
+      body.append("project_id", projectId);
+      body.append("list_sheets", "true");
+
+      const res = await fetch("/api/import-equipment-excel", {
+        method:  "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body,
+      });
+
+      if (!res.ok) throw new Error("Error al leer hojas");
+      const data = await res.json();
+      return data.sheets as string[];
+    },
+  });
+}
