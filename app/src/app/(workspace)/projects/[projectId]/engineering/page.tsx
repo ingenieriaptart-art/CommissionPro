@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useExtractedTags, useTagStats } from "@/hooks/useEngineering";
 import { useDocuments } from "@/hooks/useDocuments";
 import { TagReviewTable } from "@/components/engineering/TagReviewTable";
+import { ExcelImportPanel } from "@/components/engineering/ExcelImportPanel";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import {
@@ -112,6 +113,11 @@ export default function EngineeringPage({ params }: Props) {
           </p>
         </Card>
       )}
+
+      {/* Importación de Instrument Index */}
+      <div className="mb-6">
+        <ExcelImportPanel projectId={projectId} />
+      </div>
 
       {/* Tabla de revisión */}
       {(completedDocs.length > 0 || tags.length > 0) && (
