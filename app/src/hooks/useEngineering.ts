@@ -190,3 +190,51 @@ export function useBulkReviewTags() {
     },
   });
 }
+
+// ── Pipeline TAG → Equipo ─────────────────────────────────────
+
+export interface CreateEquipmentFromTagsResult {
+  created:  number;
+  skipped:  number;
+  existing: string[];
+  errors:   { tag: string; reason: string }[];
+}
+
+export function useCreateEquipmentFromTags() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      tagIds,
+    }: {
+      projectId: string;
+      tagIds:    string[];
+    }): Promise<CreateEquipmentFromTagsResult> => {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Sin sesión activa");
+
+      const res = await fetch("/api/create-equipment-from-tags", {
+        method:  "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ project_id: projectId, tag_ids: tagIds }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Error desconocido" }));
+        throw new Error((err as { error?: string }).error ?? "Error al crear equipos");
+      }
+
+      return res.json() as Promise<CreateEquipmentFromTagsResult>;
+    },
+    onSuccess: (_, { projectId }) => {
+      qc.invalidateQueries({ queryKey: ["equipment", projectId] });
+      qc.invalidateQueries({ queryKey: ["eng-tags", projectId] });
+      qc.invalidateQueries({ queryKey: ["eng-tags-stats", projectId] });
+    },
+  });
+}
