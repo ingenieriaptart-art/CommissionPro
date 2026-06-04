@@ -62,20 +62,24 @@ CREATE POLICY signatures_insert ON signatures
   );
 
 -- ── mv_project_stats (vista materializada) ─────────────────
-ALTER TABLE mv_project_stats ENABLE ROW LEVEL SECURITY;
+-- PostgreSQL no soporta ALTER TABLE ... ENABLE ROW LEVEL SECURITY
+-- en vistas materializadas (error 42809).
+-- Alternativa: vista regular con security_barrier que filtra por proyectos
+-- accesibles al usuario actual via get_accessible_project_ids().
+CREATE OR REPLACE VIEW v_project_stats
+  WITH (security_barrier = true) AS
+  SELECT *
+  FROM mv_project_stats
+  WHERE project_id IN (SELECT get_accessible_project_ids());
 
--- Un usuario solo ve stats de proyectos a los que pertenece.
-CREATE POLICY mv_project_stats_select ON mv_project_stats
-  FOR SELECT USING (
-    project_id IN (SELECT get_accessible_project_ids())
-  );
+GRANT SELECT ON v_project_stats TO authenticated;
 
 -- ── ROLLBACK ───────────────────────────────────────────────
+-- DROP VIEW IF EXISTS v_project_stats;
+-- REVOKE SELECT ON v_project_stats FROM authenticated;
 -- DROP POLICY IF EXISTS project_members_select ON project_members;
 -- ALTER TABLE project_members DISABLE ROW LEVEL SECURITY;
 -- DROP POLICY IF EXISTS signatures_select ON signatures;
 -- DROP POLICY IF EXISTS signatures_insert ON signatures;
 -- ALTER TABLE signatures DISABLE ROW LEVEL SECURITY;
--- DROP POLICY IF EXISTS mv_project_stats_select ON mv_project_stats;
--- ALTER TABLE mv_project_stats DISABLE ROW LEVEL SECURITY;
 -- DROP FUNCTION IF EXISTS get_accessible_project_ids();
