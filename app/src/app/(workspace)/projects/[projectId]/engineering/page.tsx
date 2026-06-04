@@ -21,7 +21,7 @@ export default function EngineeringPage({ params }: Props) {
 
   // Sincronizar si cambia el query param (ej: navegar desde Documents page)
   useEffect(() => {
-    if (docIdFromQuery) setSelectedDoc(docIdFromQuery);
+    if (docIdFromQuery) setSelectedDoc(docIdFromQuery); // eslint-disable-line react-hooks/set-state-in-effect
   }, [docIdFromQuery]);
 
   const { data: tags = [], isLoading } = useExtractedTags(

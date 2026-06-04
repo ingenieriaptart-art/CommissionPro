@@ -2,14 +2,15 @@
 // POST /api/process-document
 // Motor de extracción de TAGs a partir de documentos de ingeniería
 // Sprint 0013: A1 auth, B2 normalización, B3 limpieza, D1 bulk insert
+// Sprint 0015: E-02 JWT con firma, E-04 membresía proyecto
 // ============================================================
 import { NextRequest, NextResponse } from "next/server";
-import { createClient as createServerAuthClient } from "@/lib/supabase/server";
-import { createClient }                            from "@supabase/supabase-js";
+import { createClient }              from "@supabase/supabase-js";
 import type { TagPatternRule } from "@/types";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime    = "nodejs";
+export const dynamic    = "force-dynamic";
+export const maxDuration = 60;
 
 // ── Tipos internos ────────────────────────────────────────────
 
@@ -84,7 +85,7 @@ function extractFromDXF(buffer: Buffer): TextChunk[] {
 
 function extractFromExcel(buffer: Buffer): TextChunk[] {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const xlsx = require("xlsx");
     const wb   = xlsx.read(buffer, { type: "buffer" });
     return wb.SheetNames.map((name: string, idx: number) => ({
@@ -101,7 +102,7 @@ function extractFromExcel(buffer: Buffer): TextChunk[] {
 
 async function extractFromPDF(buffer: Buffer): Promise<TextChunk[]> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pdfParse = require("pdf-parse/lib/pdf-parse.js");
     const data     = await pdfParse(buffer);
     return [{ text: data.text ?? "", page: 1, source: "pdf" }];
@@ -267,8 +268,7 @@ export async function POST(req: NextRequest) {
   }
   const { document_id, project_id } = body as { document_id: string; project_id: string };
 
-  // ── A1: Verificar autenticación ──────────────────────────────
-  // Acepta token via Authorization header (Bearer) o cookies de sesión.
+  // ── A1: Autenticación — verificar JWT con firma criptográfica ─
   const serviceClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -282,29 +282,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  // Decodificar JWT sin red para obtener el sub (auth_user_id).
-  // El token ya fue emitido por Supabase — solo necesitamos el payload.
-  let userId: string | null = null;
-  try {
-    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf-8"));
-    userId = payload.sub ?? null;
-  } catch {
+  // E-02: Verificar JWT con firma usando auth.getUser() — no decodificar manualmente.
+  const { data: { user: authUser }, error: authErr } = await serviceClient.auth.getUser(token);
+  if (authErr || !authUser) {
     return NextResponse.json({ error: "Token inválido" }, { status: 401 });
   }
 
-  if (!userId) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  // E-04: Resolver auth user → app user; verificar membresía al proyecto.
+  const { data: appUser } = await serviceClient
+    .from("users")
+    .select("id, roles(key)")
+    .eq("auth_user_id", authUser.id)
+    .maybeSingle();
+
+  if (!appUser) {
+    return NextResponse.json({ error: "Sin acceso" }, { status: 403 });
   }
 
-  // A1: Verificar que el documento pertenece al proyecto
-  const { data: docCheck, error: docErr } = await serviceClient
+  // Supabase devuelve relaciones embebidas como array; tomamos el primer elemento.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const roleKey  = ((appUser as any).roles as Array<{ key: string }> | null)?.[0]?.key;
+  const isAdmin  = roleKey === "admin";
+
+  if (!isAdmin) {
+    const { count: memberCount } = await serviceClient
+      .from("project_members")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", project_id)
+      .eq("user_id", appUser.id);
+
+    if ((memberCount ?? 0) === 0) {
+      return NextResponse.json({ error: "Sin acceso al proyecto" }, { status: 403 });
+    }
+  }
+
+  // Verificar que el documento pertenece al proyecto
+  const { data: docCheck } = await serviceClient
     .from("documents")
     .select("id")
     .eq("id", document_id)
     .eq("project_id", project_id)
-    .single();
-
-  console.log("[process-document] docCheck:", docCheck, "error:", docErr?.message, "doc_id:", document_id, "proj_id:", project_id);
+    .maybeSingle();
 
   if (!docCheck) {
     return NextResponse.json(
@@ -321,12 +339,12 @@ export async function POST(req: NextRequest) {
 
   try {
     // 1. Obtener metadata completa del documento
-    const { data: doc, error: docErr } = await serviceClient
+    const { data: doc, error: docMetaErr } = await serviceClient
       .from("documents")
       .select("*")
       .eq("id", document_id)
       .single();
-    if (docErr || !doc) throw new Error("Documento no encontrado");
+    if (docMetaErr || !doc) throw new Error("Documento no encontrado");
 
     const storagePath = doc.storage_path as string;
     if (!storagePath) throw new Error("storage_path no definido en el documento");

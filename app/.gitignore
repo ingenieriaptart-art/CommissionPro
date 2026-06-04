@@ -40,4 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# scripts temporales de debugging (contienen credenciales)
+query_*.js
+pw_*.js
+insert_*.js
