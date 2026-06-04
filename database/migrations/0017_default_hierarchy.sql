@@ -7,14 +7,14 @@
 
 BEGIN;
 
--- Constraints necesarios para ON CONFLICT en sistemas y subsistemas
-ALTER TABLE systems
-  ADD CONSTRAINT IF NOT EXISTS uq_systems_area_code
-    UNIQUE (area_id, code);
+-- Índices únicos necesarios para ON CONFLICT en sistemas y subsistemas.
+-- Nota: PostgreSQL no soporta ADD CONSTRAINT IF NOT EXISTS;
+-- CREATE UNIQUE INDEX IF NOT EXISTS es equivalente y sí es idempotente.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_systems_area_code
+  ON systems(area_id, code);
 
-ALTER TABLE subsystems
-  ADD CONSTRAINT IF NOT EXISTS uq_subsystems_system_code
-    UNIQUE (system_id, code);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_subsystems_system_code
+  ON subsystems(system_id, code);
 
 -- Función: obtener o crear jerarquía SIN CLASIFICAR para un proyecto
 CREATE OR REPLACE FUNCTION get_or_create_unclassified_subsystem(
@@ -78,6 +78,6 @@ COMMIT;
 -- ROLLBACK:
 -- BEGIN;
 -- DROP FUNCTION IF EXISTS get_or_create_unclassified_subsystem(uuid);
--- ALTER TABLE systems    DROP CONSTRAINT IF EXISTS uq_systems_area_code;
--- ALTER TABLE subsystems DROP CONSTRAINT IF EXISTS uq_subsystems_system_code;
+-- DROP INDEX IF EXISTS uq_systems_area_code;
+-- DROP INDEX IF EXISTS uq_subsystems_system_code;
 -- COMMIT;
