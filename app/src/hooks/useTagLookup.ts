@@ -1,13 +1,5 @@
-import { useQuery }     from "@tanstack/react-query";
-import { createClient } from "@supabase/supabase-js";
-
-// Cliente separado para lookups — misma URL/anonKey que el resto de la app.
-// Supabase JS v2 persiste la sesión en localStorage bajo la misma clave,
-// así que este cliente comparte automáticamente el token del usuario logueado.
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { useQuery }   from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
 
 export interface EquipmentLookup {
   id: string;
@@ -45,6 +37,7 @@ export function useTagLookup(projectId: string, query: string) {
     enabled:  query.trim().length >= 2,
     staleTime: 30_000,
     queryFn: async () => {
+      const supabase = createClient();
       const q = query.trim().toUpperCase();
 
       const [eqRes, tagRes] = await Promise.all([
