@@ -84,6 +84,11 @@ export default function EquipmentPage({ params }: Props) {
                 <Badge variant={criticalityColor[eq.criticality]}>
                   Crit. {eq.criticality}
                 </Badge>
+                {eq.metadata?.unclassified === true && (
+                  <Badge variant="warning">
+                    Sin clasificar
+                  </Badge>
+                )}
                 {eq.manufacturer && (
                   <span className="text-xs text-slate-500">{eq.manufacturer}</span>
                 )}
@@ -91,6 +96,11 @@ export default function EquipmentPage({ params }: Props) {
               {(eq.voltage || eq.power) && (
                 <p className="text-xs text-slate-400 mt-2">
                   {eq.voltage && `${eq.voltage}V`} {eq.power && `· ${eq.power}kW`}
+                </p>
+              )}
+              {(eq.service || eq.io_type || eq.rtu_destination) && (
+                <p className="text-xs text-slate-400 mt-1 truncate">
+                  {[eq.io_type, eq.rtu_destination, eq.service].filter(Boolean).join(" · ")}
                 </p>
               )}
             </Card>
