@@ -8,8 +8,9 @@ import { ExcelImportPanel } from "@/components/engineering/ExcelImportPanel";
 import { Card } from "@/components/ui/Card";
 import { Select } from "@/components/ui/Select";
 import {
-  CheckCircle, XCircle, Clock, GitMerge, Tag, Layers,
+  CheckCircle, XCircle, Clock, GitMerge, Tag, Layers, ScanSearch,
 } from "lucide-react";
+import { TagSearchModal } from "@/components/shared/TagSearchModal";
 
 interface Props { params: Promise<{ projectId: string }> }
 
@@ -17,13 +18,20 @@ export default function EngineeringPage({ params }: Props) {
   const { projectId }   = use(params);
   const searchParams    = useSearchParams();
   const docIdFromQuery  = searchParams.get("document") ?? undefined;
+  const tagFromQuery    = searchParams.get("tag") ?? "";
 
   const [selectedDoc, setSelectedDoc] = useState<string>(docIdFromQuery ?? "");
+  const [tagFilter, setTagFilter]         = useState<string>(tagFromQuery);
+  const [tagSearchOpen, setTagSearchOpen] = useState(false);
 
   // Sincronizar si cambia el query param (ej: navegar desde Documents page)
   useEffect(() => {
     if (docIdFromQuery) setSelectedDoc(docIdFromQuery); // eslint-disable-line react-hooks/set-state-in-effect
   }, [docIdFromQuery]);
+
+  useEffect(() => {
+    if (tagFromQuery) setTagFilter(tagFromQuery); // eslint-disable-line react-hooks/set-state-in-effect
+  }, [tagFromQuery]);
 
   const { data: tags = [], isLoading } = useExtractedTags(
     projectId,
@@ -34,17 +42,43 @@ export default function EngineeringPage({ params }: Props) {
 
   const completedDocs = docs.filter((d) => d.processing_status === "completed");
 
+  const filteredTags = tagFilter
+    ? tags.filter((t) => t.tag.toUpperCase().includes(tagFilter.toUpperCase()))
+    : tags;
+
   return (
     <div className="space-y-6">
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Bandeja de Revisión de Ingeniería
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Revisa, aprueba o rechaza los TAGs extraídos de los documentos del proyecto
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Bandeja de Revisión de Ingeniería
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Revisa, aprueba o rechaza los TAGs extraídos de los documentos del proyecto
+          </p>
+          {tagFilter && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                Filtro: {tagFilter}
+              </span>
+              <button
+                onClick={() => setTagFilter("")}
+                className="text-xs text-slate-400 hover:text-slate-600"
+              >
+                Limpiar
+              </button>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => setTagSearchOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300 rounded-lg transition"
+        >
+          <ScanSearch size={15} />
+          Buscar TAG
+        </button>
       </div>
 
       {/* Stats de la bandeja */}
@@ -122,11 +156,16 @@ export default function EngineeringPage({ params }: Props) {
       {/* Tabla de revisión */}
       {(completedDocs.length > 0 || tags.length > 0) && (
         <TagReviewTable
-          tags={tags}
+          tags={filteredTags}
           projectId={projectId}
           loading={isLoading}
         />
       )}
+      <TagSearchModal
+        projectId={projectId}
+        isOpen={tagSearchOpen}
+        onClose={() => setTagSearchOpen(false)}
+      />
     </div>
   );
 }
