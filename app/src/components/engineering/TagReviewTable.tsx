@@ -349,6 +349,10 @@ export function TagReviewTable({ tags, projectId, loading }: TagReviewTableProps
           );
           setTimeout(() => setCreateResult(null), 4000);
         },
+        onError: (err) => {
+          setCreateResult(`Error: ${err instanceof Error ? err.message : "No se pudieron crear los equipos"}`);
+          setTimeout(() => setCreateResult(null), 5000);
+        },
       }
     );
   };
@@ -447,7 +451,11 @@ export function TagReviewTable({ tags, projectId, loading }: TagReviewTableProps
       )}
 
       {createResult && (
-        <div className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+        <div className={`px-3 py-2 rounded-xl border text-xs font-medium ${
+          createResult.startsWith("Error:")
+            ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+            : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
+        }`}>
           {createResult}
         </div>
       )}
