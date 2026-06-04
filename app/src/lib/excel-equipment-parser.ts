@@ -1,0 +1,238 @@
+import * as XLSX from "xlsx";
+
+// ── Tipos públicos ────────────────────────────────────────────
+
+export type SheetType = "instrument_index" | "power_equipment" | "equipment_list" | "unknown";
+
+export interface ParsedEquipmentRow {
+  tag: string;
+  name: string;
+  service?: string;
+  io_type?: string;
+  rtu_destination?: string;
+  location_system?: string;
+  pid_reference?: string;
+  power_kw?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ParseResult {
+  sheetType: SheetType;
+  sheetName: string;
+  rows: ParsedEquipmentRow[];
+  skipped: number;
+  totalRows: number;
+}
+
+// ── Mapas de columnas (case-insensitive, sin acentos) ────────
+
+type ColMap = Partial<Record<keyof ParsedEquipmentRow | "hp" | "voltage", string[]>>;
+
+const INSTRUMENT_MAP: ColMap = {
+  tag:             ["tag", "codigo", "cod", "codigo tag"],
+  name:            ["instrumento", "descripcion", "descripción", "nombre"],
+  service:         ["servicio"],
+  io_type:         ["tipo"],
+  rtu_destination: ["rtu destino", "rtu_destino", "rtu"],
+  location_system: ["ubicacion o sistema", "ubicación o sistema", "ubicacion", "sistema", "location"],
+  pid_reference:   ["p&id", "pid", "plano", "p_id", "referencia pid"],
+};
+
+const POWER_MAP: ColMap = {
+  tag:      ["tag", "codigo", "cod"],
+  name:     ["descripcion", "descripción", "nombre"],
+  service:  ["servicio"],
+  io_type:  ["tipo"],
+  power_kw: ["kw"],
+  hp:       ["hp"],
+  voltage:  ["voltaje", "voltage"],
+};
+
+const EQUIPMENT_LIST_MAP: ColMap = {
+  tag:             ["tag", "codigo", "cod"],
+  name:            ["descripcion", "descripción", "nombre", "instrumento"],
+  io_type:         ["tipo"],
+  pid_reference:   ["p&id", "pid", "plano"],
+  service:         ["servicio"],
+  location_system: ["ubicacion", "ubicación", "sistema"],
+};
+
+// ── Helpers ─────────────────────────────────────────────────
+
+function normalizeHeader(h: string): string {
+  return h
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function buildHeaderIndex(headers: string[]): Map<string, number> {
+  const idx = new Map<string, number>();
+  headers.forEach((h, i) => idx.set(normalizeHeader(String(h ?? "")), i));
+  return idx;
+}
+
+function pick(
+  row: unknown[],
+  idx: Map<string, number>,
+  variants: string[]
+): string | undefined {
+  for (const v of variants) {
+    const pos = idx.get(normalizeHeader(v));
+    if (pos !== undefined && row[pos] != null && String(row[pos]).trim() !== "") {
+      return String(row[pos]).trim();
+    }
+  }
+  return undefined;
+}
+
+function toNumber(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const n = parseFloat(value.replace(",", "."));
+  return isNaN(n) ? undefined : n;
+}
+
+// ── Detección de tipo de hoja ────────────────────────────────
+
+function detectSheetType(headerIdx: Map<string, number>): SheetType {
+  const has = (...variants: string[]) =>
+    variants.some(v => headerIdx.has(normalizeHeader(v)));
+
+  const hasTag = has("tag", "codigo", "cod");
+  if (!hasTag) return "unknown";
+
+  if (has("kw")) return "power_equipment";
+
+  if (has("tipo") && (has("rtu destino", "rtu") || has("servicio"))) {
+    return "instrument_index";
+  }
+
+  if (has("p&id", "pid", "plano")) return "equipment_list";
+
+  if (headerIdx.size > 2) return "instrument_index";
+
+  return "unknown";
+}
+
+// ── Parsers por tipo de hoja ─────────────────────────────────
+
+function parseInstrumentRow(
+  row: unknown[],
+  idx: Map<string, number>
+): ParsedEquipmentRow | null {
+  const tag = pick(row, idx, INSTRUMENT_MAP.tag!)?.toUpperCase();
+  if (!tag || tag.length < 2) return null;
+
+  return {
+    tag,
+    name:            pick(row, idx, INSTRUMENT_MAP.name!)       ?? tag,
+    service:         pick(row, idx, INSTRUMENT_MAP.service!),
+    io_type:         pick(row, idx, INSTRUMENT_MAP.io_type!),
+    rtu_destination: pick(row, idx, INSTRUMENT_MAP.rtu_destination!),
+    location_system: pick(row, idx, INSTRUMENT_MAP.location_system!),
+    pid_reference:   pick(row, idx, INSTRUMENT_MAP.pid_reference!),
+  };
+}
+
+function parsePowerRow(
+  row: unknown[],
+  idx: Map<string, number>
+): ParsedEquipmentRow | null {
+  const tag = pick(row, idx, POWER_MAP.tag!)?.toUpperCase();
+  if (!tag || tag.length < 2) return null;
+
+  const hp      = pick(row, idx, POWER_MAP.hp!);
+  const voltage = pick(row, idx, POWER_MAP.voltage!);
+  const extraMeta: Record<string, unknown> = {};
+  if (hp)      extraMeta.hp      = hp;
+  if (voltage) extraMeta.voltage = voltage;
+
+  return {
+    tag,
+    name:     pick(row, idx, POWER_MAP.name!)     ?? tag,
+    service:  pick(row, idx, POWER_MAP.service!),
+    io_type:  pick(row, idx, POWER_MAP.io_type!),
+    power_kw: toNumber(pick(row, idx, POWER_MAP.power_kw!)),
+    metadata: Object.keys(extraMeta).length > 0 ? extraMeta : undefined,
+  };
+}
+
+function parseEquipmentListRow(
+  row: unknown[],
+  idx: Map<string, number>
+): ParsedEquipmentRow | null {
+  const tag = pick(row, idx, EQUIPMENT_LIST_MAP.tag!)?.toUpperCase();
+  if (!tag || tag.length < 2) return null;
+
+  return {
+    tag,
+    name:            pick(row, idx, EQUIPMENT_LIST_MAP.name!)          ?? tag,
+    io_type:         pick(row, idx, EQUIPMENT_LIST_MAP.io_type!),
+    pid_reference:   pick(row, idx, EQUIPMENT_LIST_MAP.pid_reference!),
+    service:         pick(row, idx, EQUIPMENT_LIST_MAP.service!),
+    location_system: pick(row, idx, EQUIPMENT_LIST_MAP.location_system!),
+  };
+}
+
+// ── Función principal ────────────────────────────────────────
+
+export function parseExcelEquipment(
+  buffer: Buffer,
+  sheetName?: string
+): ParseResult {
+  const wb = XLSX.read(buffer, { type: "buffer" });
+
+  const targetSheet = sheetName
+    ? wb.SheetNames.find(n => n.toUpperCase() === sheetName.toUpperCase())
+    : wb.SheetNames[0];
+
+  if (!targetSheet || !wb.Sheets[targetSheet]) {
+    return { sheetType: "unknown", sheetName: sheetName ?? "", rows: [], skipped: 0, totalRows: 0 };
+  }
+
+  const raw: unknown[][] = XLSX.utils.sheet_to_json(wb.Sheets[targetSheet], {
+    header: 1,
+    defval: "",
+  });
+
+  if (raw.length < 2) {
+    return { sheetType: "unknown", sheetName: targetSheet, rows: [], skipped: 0, totalRows: 0 };
+  }
+
+  const headers   = raw[0] as string[];
+  const headerIdx = buildHeaderIndex(headers);
+  const sheetType = detectSheetType(headerIdx);
+
+  const dataRows = raw.slice(1);
+  const rows: ParsedEquipmentRow[] = [];
+  let skipped = 0;
+
+  for (const row of dataRows) {
+    let parsed: ParsedEquipmentRow | null = null;
+
+    if (sheetType === "instrument_index") {
+      parsed = parseInstrumentRow(row as unknown[], headerIdx);
+    } else if (sheetType === "power_equipment") {
+      parsed = parsePowerRow(row as unknown[], headerIdx);
+    } else if (sheetType === "equipment_list") {
+      parsed = parseEquipmentListRow(row as unknown[], headerIdx);
+    } else {
+      parsed = parseInstrumentRow(row as unknown[], headerIdx);
+    }
+
+    if (parsed) {
+      rows.push(parsed);
+    } else {
+      skipped++;
+    }
+  }
+
+  return { sheetType, sheetName: targetSheet, rows, skipped, totalRows: dataRows.length };
+}
+
+export function listSheets(buffer: Buffer): string[] {
+  const wb = XLSX.read(buffer, { type: "buffer" });
+  return wb.SheetNames;
+}
