@@ -1,0 +1,3791 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "Alarma",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Alarma.md",
+      "id": "alarma",
+      "community": 4,
+      "norm_label": "alarma"
+    },
+    {
+      "label": "An\u00e1lisis de Riesgo",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/An\u00e1lisis de Riesgo.md",
+      "id": "an\u00e1lisis_de_riesgo",
+      "community": 5,
+      "norm_label": "analisis de riesgo"
+    },
+    {
+      "label": "Area",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Area.md",
+      "id": "area",
+      "community": 1,
+      "norm_label": "area"
+    },
+    {
+      "label": "Certificado MC",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Certificado MC.md",
+      "id": "certificado_mc",
+      "community": 5,
+      "norm_label": "certificado mc"
+    },
+    {
+      "label": "Checklist",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Checklist.md",
+      "id": "checklist",
+      "community": 0,
+      "norm_label": "checklist"
+    },
+    {
+      "label": "Cliente",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Cliente.md",
+      "id": "cliente",
+      "community": 3,
+      "norm_label": "cliente"
+    },
+    {
+      "label": "CommissionPro",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/CommissionPro.md",
+      "id": "commissionpro",
+      "community": 0,
+      "norm_label": "commissionpro"
+    },
+    {
+      "label": "Contratista",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Contratista.md",
+      "id": "contratista",
+      "community": 3,
+      "norm_label": "contratista"
+    },
+    {
+      "label": "Coordenada GPS",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Coordenada GPS.md",
+      "id": "coordenada_gps",
+      "community": 1,
+      "norm_label": "coordenada gps"
+    },
+    {
+      "label": "Cronograma",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Cronograma.md",
+      "id": "cronograma",
+      "community": 6,
+      "norm_label": "cronograma"
+    },
+    {
+      "label": "Curva S",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Curva S.md",
+      "id": "curva_s",
+      "community": 6,
+      "norm_label": "curva s"
+    },
+    {
+      "label": "Dashboard IoT",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Dashboard IoT.md",
+      "id": "dashboard_iot",
+      "community": 4,
+      "norm_label": "dashboard iot"
+    },
+    {
+      "label": "Diagrama de Lazo",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Diagrama de Lazo.md",
+      "id": "diagrama_de_lazo",
+      "community": 2,
+      "norm_label": "diagrama de lazo"
+    },
+    {
+      "label": "Diagrama Unifilar",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Diagrama Unifilar.md",
+      "id": "diagrama_unifilar",
+      "community": 1,
+      "norm_label": "diagrama unifilar"
+    },
+    {
+      "label": "Digitalizacion Ingenieria",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Digitalizacion Ingenieria.md",
+      "id": "digitalizacion_ingenieria",
+      "community": 2,
+      "norm_label": "digitalizacion ingenieria"
+    },
+    {
+      "label": "Documento",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Documento.md",
+      "id": "documento",
+      "community": 2,
+      "norm_label": "documento"
+    },
+    {
+      "label": "Dossier Precomisionamiento",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Dossier Precomisionamiento.md",
+      "id": "dossier_precomisionamiento",
+      "community": 0,
+      "norm_label": "dossier precomisionamiento"
+    },
+    {
+      "label": "Empresa",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Empresa.md",
+      "id": "empresa",
+      "community": 3,
+      "norm_label": "empresa"
+    },
+    {
+      "label": "Energizacion",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Energizacion.md",
+      "id": "energizacion",
+      "community": 0,
+      "norm_label": "energizacion"
+    },
+    {
+      "label": "Equipo",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Equipo.md",
+      "id": "equipo",
+      "community": 1,
+      "norm_label": "equipo"
+    },
+    {
+      "label": "Especificaci\u00f3n T\u00e9cnica",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Especificaci\u00f3n T\u00e9cnica.md",
+      "id": "especificaci\u00f3n_t\u00e9cnica",
+      "community": 2,
+      "norm_label": "especificacion tecnica"
+    },
+    {
+      "label": "Estado Tiempo Real",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Estado Tiempo Real.md",
+      "id": "estado_tiempo_real",
+      "community": 4,
+      "norm_label": "estado tiempo real"
+    },
+    {
+      "label": "Etapa de Proceso",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Etapa de Proceso.md",
+      "id": "etapa_de_proceso",
+      "community": 1,
+      "norm_label": "etapa de proceso"
+    },
+    {
+      "label": "Evidencia",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Evidencia.md",
+      "id": "evidencia",
+      "community": 0,
+      "norm_label": "evidencia"
+    },
+    {
+      "label": "Fase A Auditoria",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Fase A Auditoria.md",
+      "id": "fase_a_auditoria",
+      "community": 0,
+      "norm_label": "fase a auditoria"
+    },
+    {
+      "label": "Fase B Formularios",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Fase B Formularios.md",
+      "id": "fase_b_formularios",
+      "community": 0,
+      "norm_label": "fase b formularios"
+    },
+    {
+      "label": "Fase C Trazabilidad",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Fase C Trazabilidad.md",
+      "id": "fase_c_trazabilidad",
+      "community": 0,
+      "norm_label": "fase c trazabilidad"
+    },
+    {
+      "label": "Fase D Dossier",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Fase D Dossier.md",
+      "id": "fase_d_dossier",
+      "community": 0,
+      "norm_label": "fase d dossier"
+    },
+    {
+      "label": "Fase E Documental",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Fase E Documental.md",
+      "id": "fase_e_documental",
+      "community": 2,
+      "norm_label": "fase e documental"
+    },
+    {
+      "label": "Fase F Dashboards",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Fase F Dashboards.md",
+      "id": "fase_f_dashboards",
+      "community": 6,
+      "norm_label": "fase f dashboards"
+    },
+    {
+      "label": "Fase G Escalabilidad",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Fase G Escalabilidad.md",
+      "id": "fase_g_escalabilidad",
+      "community": 0,
+      "norm_label": "fase g escalabilidad"
+    },
+    {
+      "label": "FAT",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/FAT.md",
+      "id": "fat",
+      "community": 0,
+      "norm_label": "fat"
+    },
+    {
+      "label": "Firma Aprobacion",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Firma Aprobacion.md",
+      "id": "firma_aprobacion",
+      "community": 0,
+      "norm_label": "firma aprobacion"
+    },
+    {
+      "label": "Funcional",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Funcional.md",
+      "id": "funcional",
+      "community": 0,
+      "norm_label": "funcional"
+    },
+    {
+      "label": "Gemelo Digital",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Gemelo Digital.md",
+      "id": "gemelo_digital",
+      "community": 4,
+      "norm_label": "gemelo digital"
+    },
+    {
+      "label": "Hist\u00f3rico de Datos",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Hist\u00f3rico de Datos.md",
+      "id": "hist\u00f3rico_de_datos",
+      "community": 4,
+      "norm_label": "historico de datos"
+    },
+    {
+      "label": "Hito",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Hito.md",
+      "id": "hito",
+      "community": 6,
+      "norm_label": "hito"
+    },
+    {
+      "label": "Hoja de Datos",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Hoja de Datos.md",
+      "id": "hoja_de_datos",
+      "community": 2,
+      "norm_label": "hoja de datos"
+    },
+    {
+      "label": "Importacion Excel",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Importacion Excel.md",
+      "id": "importacion_excel",
+      "community": 2,
+      "norm_label": "importacion excel"
+    },
+    {
+      "label": "Inspector QAQC",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Inspector QAQC.md",
+      "id": "inspector_qaqc",
+      "community": 3,
+      "norm_label": "inspector qaqc"
+    },
+    {
+      "label": "ITR",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/ITR.md",
+      "id": "itr",
+      "community": 3,
+      "norm_label": "itr"
+    },
+    {
+      "label": "Lista de Materiales",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Lista de Materiales.md",
+      "id": "lista_de_materiales",
+      "community": 2,
+      "norm_label": "lista de materiales"
+    },
+    {
+      "label": "Loop Check",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Loop Check.md",
+      "id": "loop_check",
+      "community": 0,
+      "norm_label": "loop check"
+    },
+    {
+      "label": "LOTO",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/LOTO.md",
+      "id": "loto",
+      "community": 5,
+      "norm_label": "loto"
+    },
+    {
+      "label": "L\u00ednea de Proceso",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/L\u00ednea de Proceso.md",
+      "id": "l\u00ednea_de_proceso",
+      "community": 1,
+      "norm_label": "linea de proceso"
+    },
+    {
+      "label": "Normativa ISA IEC",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Normativa ISA IEC.md",
+      "id": "normativa_isa_iec",
+      "community": 5,
+      "norm_label": "normativa isa iec"
+    },
+    {
+      "label": "Permiso de Trabajo",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Permiso de Trabajo.md",
+      "id": "permiso_de_trabajo",
+      "community": 5,
+      "norm_label": "permiso de trabajo"
+    },
+    {
+      "label": "PID",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/PID.md",
+      "id": "pid",
+      "community": 2,
+      "norm_label": "pid"
+    },
+    {
+      "label": "Pipeline TAG Equipo",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Pipeline TAG Equipo.md",
+      "id": "pipeline_tag_equipo",
+      "community": 2,
+      "norm_label": "pipeline tag equipo"
+    },
+    {
+      "label": "Plano de Planta",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Plano de Planta.md",
+      "id": "plano_de_planta",
+      "community": 1,
+      "norm_label": "plano de planta"
+    },
+    {
+      "label": "Planta de Tratamiento",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Planta de Tratamiento.md",
+      "id": "planta_de_tratamiento",
+      "community": 1,
+      "norm_label": "planta de tratamiento"
+    },
+    {
+      "label": "Precomisionamiento",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Precomisionamiento.md",
+      "id": "precomisionamiento",
+      "community": 0,
+      "norm_label": "precomisionamiento"
+    },
+    {
+      "label": "Protocolo",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Protocolo.md",
+      "id": "protocolo",
+      "community": 0,
+      "norm_label": "protocolo"
+    },
+    {
+      "label": "Proyecto",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Proyecto.md",
+      "id": "proyecto",
+      "community": 6,
+      "norm_label": "proyecto"
+    },
+    {
+      "label": "PSSR",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/PSSR.md",
+      "id": "pssr",
+      "community": 5,
+      "norm_label": "pssr"
+    },
+    {
+      "label": "PunchItem",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/PunchItem.md",
+      "id": "punchitem",
+      "community": 3,
+      "norm_label": "punchitem"
+    },
+    {
+      "label": "Punto de Control",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Punto de Control.md",
+      "id": "punto_de_control",
+      "community": 4,
+      "norm_label": "punto de control"
+    },
+    {
+      "label": "Responsable Tecnico",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Responsable Tecnico.md",
+      "id": "responsable_tecnico",
+      "community": 3,
+      "norm_label": "responsable tecnico"
+    },
+    {
+      "label": "Revisi\u00f3n Documental",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Revisi\u00f3n Documental.md",
+      "id": "revisi\u00f3n_documental",
+      "community": 2,
+      "norm_label": "revision documental"
+    },
+    {
+      "label": "Sala de Control",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Sala de Control.md",
+      "id": "sala_de_control",
+      "community": 1,
+      "norm_label": "sala de control"
+    },
+    {
+      "label": "SAT",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/SAT.md",
+      "id": "sat",
+      "community": 0,
+      "norm_label": "sat"
+    },
+    {
+      "label": "Sensor Virtual",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Sensor Virtual.md",
+      "id": "sensor_virtual",
+      "community": 4,
+      "norm_label": "sensor virtual"
+    },
+    {
+      "label": "Sistema",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Sistema.md",
+      "id": "sistema",
+      "community": 1,
+      "norm_label": "sistema"
+    },
+    {
+      "label": "Subsistema",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Subsistema.md",
+      "id": "subsistema",
+      "community": 1,
+      "norm_label": "subsistema"
+    },
+    {
+      "label": "Supervisor Comisionamiento",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Supervisor Comisionamiento.md",
+      "id": "supervisor_comisionamiento",
+      "community": 3,
+      "norm_label": "supervisor comisionamiento"
+    },
+    {
+      "label": "TAG",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/TAG.md",
+      "id": "tag",
+      "community": 2,
+      "norm_label": "tag"
+    },
+    {
+      "label": "Tanque Canal",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Tanque Canal.md",
+      "id": "tanque_canal",
+      "community": 1,
+      "norm_label": "tanque canal"
+    },
+    {
+      "label": "Tren de Tratamiento",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Tren de Tratamiento.md",
+      "id": "tren_de_tratamiento",
+      "community": 1,
+      "norm_label": "tren de tratamiento"
+    },
+    {
+      "label": "Ubicacion Fisica",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Ubicacion Fisica.md",
+      "id": "ubicacion_fisica",
+      "community": 1,
+      "norm_label": "ubicacion fisica"
+    },
+    {
+      "label": "Usuario App",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Usuario App.md",
+      "id": "usuario_app",
+      "community": 3,
+      "norm_label": "usuario app"
+    },
+    {
+      "label": "Walkdown",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Walkdown.md",
+      "id": "walkdown",
+      "community": 3,
+      "norm_label": "walkdown"
+    },
+    {
+      "label": "Zona",
+      "file_type": "document",
+      "source_file": "graphify-out/obsidian-business-v2/Zona.md",
+      "id": "zona",
+      "community": 1,
+      "norm_label": "zona"
+    }
+  ],
+  "links": [
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Alarma.md",
+      "weight": 1.0,
+      "source": "alarma",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Alarma.md",
+      "weight": 1.0,
+      "source": "alarma",
+      "target": "estado_tiempo_real"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Alarma.md",
+      "weight": 1.0,
+      "source": "alarma",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Alarma.md",
+      "weight": 1.0,
+      "source": "alarma",
+      "target": "gemelo_digital"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Alarma.md",
+      "weight": 1.0,
+      "source": "alarma",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Alarma.md",
+      "weight": 1.0,
+      "source": "alarma",
+      "target": "punto_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "alarma"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "An\u00e1lisis de Riesgo.md",
+      "weight": 1.0,
+      "source": "an\u00e1lisis_de_riesgo",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "An\u00e1lisis de Riesgo.md",
+      "weight": 1.0,
+      "source": "an\u00e1lisis_de_riesgo",
+      "target": "loto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "An\u00e1lisis de Riesgo.md",
+      "weight": 1.0,
+      "source": "an\u00e1lisis_de_riesgo",
+      "target": "normativa_isa_iec"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "An\u00e1lisis de Riesgo.md",
+      "weight": 1.0,
+      "source": "an\u00e1lisis_de_riesgo",
+      "target": "permiso_de_trabajo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "An\u00e1lisis de Riesgo.md",
+      "weight": 1.0,
+      "source": "an\u00e1lisis_de_riesgo",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PSSR.md",
+      "weight": 1.0,
+      "source": "pssr",
+      "target": "an\u00e1lisis_de_riesgo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Area.md",
+      "weight": 1.0,
+      "source": "area",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Area.md",
+      "weight": 1.0,
+      "source": "area",
+      "target": "sistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "area"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "area"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "hito"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "pssr"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "revisi\u00f3n_documental"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Certificado MC.md",
+      "weight": 1.0,
+      "source": "certificado_mc",
+      "target": "walkdown"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "ITR.md",
+      "weight": 1.0,
+      "source": "itr",
+      "target": "certificado_mc"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Normativa ISA IEC.md",
+      "weight": 1.0,
+      "source": "normativa_isa_iec",
+      "target": "certificado_mc"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "fase_b_formularios"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "funcional"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Checklist.md",
+      "weight": 1.0,
+      "source": "checklist",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "checklist"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "checklist"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cliente.md",
+      "weight": 1.0,
+      "source": "cliente",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cliente.md",
+      "weight": 1.0,
+      "source": "cliente",
+      "target": "empresa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cliente.md",
+      "weight": 1.0,
+      "source": "cliente",
+      "target": "fase_f_dashboards"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cliente.md",
+      "weight": 1.0,
+      "source": "cliente",
+      "target": "planta_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cliente.md",
+      "weight": 1.0,
+      "source": "cliente",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cliente.md",
+      "weight": 1.0,
+      "source": "cliente",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "cliente"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "cliente"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Responsable Tecnico.md",
+      "weight": 1.0,
+      "source": "responsable_tecnico",
+      "target": "cliente"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "digitalizacion_ingenieria"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "energizacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fase_a_auditoria"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fase_b_formularios"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fase_c_trazabilidad"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fase_d_dossier"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fase_e_documental"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fase_f_dashboards"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fase_g_escalabilidad"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "firma_aprobacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "funcional"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "pipeline_tag_equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "sistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CommissionPro.md",
+      "weight": 1.0,
+      "source": "commissionpro",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Empresa.md",
+      "weight": 1.0,
+      "source": "empresa",
+      "target": "commissionpro"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "commissionpro"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Contratista.md",
+      "weight": 1.0,
+      "source": "contratista",
+      "target": "empresa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Contratista.md",
+      "weight": 1.0,
+      "source": "contratista",
+      "target": "inspector_qaqc"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Contratista.md",
+      "weight": 1.0,
+      "source": "contratista",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Contratista.md",
+      "weight": 1.0,
+      "source": "contratista",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Contratista.md",
+      "weight": 1.0,
+      "source": "contratista",
+      "target": "supervisor_comisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Coordenada GPS.md",
+      "weight": 1.0,
+      "source": "coordenada_gps",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Coordenada GPS.md",
+      "weight": 1.0,
+      "source": "coordenada_gps",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Coordenada GPS.md",
+      "weight": 1.0,
+      "source": "coordenada_gps",
+      "target": "ubicacion_fisica"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Coordenada GPS.md",
+      "weight": 1.0,
+      "source": "coordenada_gps",
+      "target": "walkdown"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cronograma.md",
+      "weight": 1.0,
+      "source": "cronograma",
+      "target": "curva_s"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cronograma.md",
+      "weight": 1.0,
+      "source": "cronograma",
+      "target": "fase_f_dashboards"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cronograma.md",
+      "weight": 1.0,
+      "source": "cronograma",
+      "target": "hito"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cronograma.md",
+      "weight": 1.0,
+      "source": "cronograma",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Cronograma.md",
+      "weight": 1.0,
+      "source": "cronograma",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Curva S.md",
+      "weight": 1.0,
+      "source": "curva_s",
+      "target": "fase_f_dashboards"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Curva S.md",
+      "weight": 1.0,
+      "source": "curva_s",
+      "target": "hito"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Curva S.md",
+      "weight": 1.0,
+      "source": "curva_s",
+      "target": "itr"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Curva S.md",
+      "weight": 1.0,
+      "source": "curva_s",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "estado_tiempo_real"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "fase_f_dashboards"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "gemelo_digital"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "hist\u00f3rico_de_datos"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "planta_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "responsable_tecnico"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dashboard IoT.md",
+      "weight": 1.0,
+      "source": "dashboard_iot",
+      "target": "supervisor_comisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama de Lazo.md",
+      "weight": 1.0,
+      "source": "diagrama_de_lazo",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama de Lazo.md",
+      "weight": 1.0,
+      "source": "diagrama_de_lazo",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama de Lazo.md",
+      "weight": 1.0,
+      "source": "diagrama_de_lazo",
+      "target": "pid"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama de Lazo.md",
+      "weight": 1.0,
+      "source": "diagrama_de_lazo",
+      "target": "revisi\u00f3n_documental"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama de Lazo.md",
+      "weight": 1.0,
+      "source": "diagrama_de_lazo",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama Unifilar.md",
+      "weight": 1.0,
+      "source": "diagrama_unifilar",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama Unifilar.md",
+      "weight": 1.0,
+      "source": "diagrama_unifilar",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Diagrama Unifilar.md",
+      "weight": 1.0,
+      "source": "diagrama_unifilar",
+      "target": "sala_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Digitalizacion Ingenieria.md",
+      "weight": 1.0,
+      "source": "digitalizacion_ingenieria",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Digitalizacion Ingenieria.md",
+      "weight": 1.0,
+      "source": "digitalizacion_ingenieria",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Digitalizacion Ingenieria.md",
+      "weight": 1.0,
+      "source": "digitalizacion_ingenieria",
+      "target": "fase_e_documental"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Digitalizacion Ingenieria.md",
+      "weight": 1.0,
+      "source": "digitalizacion_ingenieria",
+      "target": "importacion_excel"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Digitalizacion Ingenieria.md",
+      "weight": 1.0,
+      "source": "digitalizacion_ingenieria",
+      "target": "pipeline_tag_equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Digitalizacion Ingenieria.md",
+      "weight": 1.0,
+      "source": "digitalizacion_ingenieria",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PID.md",
+      "weight": 1.0,
+      "source": "pid",
+      "target": "digitalizacion_ingenieria"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Revisi\u00f3n Documental.md",
+      "weight": 1.0,
+      "source": "revisi\u00f3n_documental",
+      "target": "digitalizacion_ingenieria"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Documento.md",
+      "weight": 1.0,
+      "source": "documento",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Documento.md",
+      "weight": 1.0,
+      "source": "documento",
+      "target": "fase_e_documental"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Documento.md",
+      "weight": 1.0,
+      "source": "documento",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Documento.md",
+      "weight": 1.0,
+      "source": "documento",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Especificaci\u00f3n T\u00e9cnica.md",
+      "weight": 1.0,
+      "source": "especificaci\u00f3n_t\u00e9cnica",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hoja de Datos.md",
+      "weight": 1.0,
+      "source": "hoja_de_datos",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Importacion Excel.md",
+      "weight": 1.0,
+      "source": "importacion_excel",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Lista de Materiales.md",
+      "weight": 1.0,
+      "source": "lista_de_materiales",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PID.md",
+      "weight": 1.0,
+      "source": "pid",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Plano de Planta.md",
+      "weight": 1.0,
+      "source": "plano_de_planta",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Revisi\u00f3n Documental.md",
+      "weight": 1.0,
+      "source": "revisi\u00f3n_documental",
+      "target": "documento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "fase_d_dossier"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "firma_aprobacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Dossier Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "dossier_precomisionamiento",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Energizacion.md",
+      "weight": 1.0,
+      "source": "energizacion",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase G Escalabilidad.md",
+      "weight": 1.0,
+      "source": "fase_g_escalabilidad",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "FAT.md",
+      "weight": 1.0,
+      "source": "fat",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hist\u00f3rico de Datos.md",
+      "weight": 1.0,
+      "source": "hist\u00f3rico_de_datos",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Loop Check.md",
+      "weight": 1.0,
+      "source": "loop_check",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Permiso de Trabajo.md",
+      "weight": 1.0,
+      "source": "permiso_de_trabajo",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "precomisionamiento",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "SAT.md",
+      "weight": 1.0,
+      "source": "sat",
+      "target": "dossier_precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Empresa.md",
+      "weight": 1.0,
+      "source": "empresa",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "empresa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Responsable Tecnico.md",
+      "weight": 1.0,
+      "source": "responsable_tecnico",
+      "target": "empresa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "empresa"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Energizacion.md",
+      "weight": 1.0,
+      "source": "energizacion",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Energizacion.md",
+      "weight": 1.0,
+      "source": "energizacion",
+      "target": "firma_aprobacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Energizacion.md",
+      "weight": 1.0,
+      "source": "energizacion",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Energizacion.md",
+      "weight": 1.0,
+      "source": "energizacion",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Energizacion.md",
+      "weight": 1.0,
+      "source": "energizacion",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "energizacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Loop Check.md",
+      "weight": 1.0,
+      "source": "loop_check",
+      "target": "energizacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "SAT.md",
+      "weight": 1.0,
+      "source": "sat",
+      "target": "energizacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "firma_aprobacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "funcional"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "importacion_excel"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "pipeline_tag_equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "sistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Equipo.md",
+      "weight": 1.0,
+      "source": "equipo",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Especificaci\u00f3n T\u00e9cnica.md",
+      "weight": 1.0,
+      "source": "especificaci\u00f3n_t\u00e9cnica",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Estado Tiempo Real.md",
+      "weight": 1.0,
+      "source": "estado_tiempo_real",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Etapa de Proceso.md",
+      "weight": 1.0,
+      "source": "etapa_de_proceso",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase B Formularios.md",
+      "weight": 1.0,
+      "source": "fase_b_formularios",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase C Trazabilidad.md",
+      "weight": 1.0,
+      "source": "fase_c_trazabilidad",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase E Documental.md",
+      "weight": 1.0,
+      "source": "fase_e_documental",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase G Escalabilidad.md",
+      "weight": 1.0,
+      "source": "fase_g_escalabilidad",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Gemelo Digital.md",
+      "weight": 1.0,
+      "source": "gemelo_digital",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hist\u00f3rico de Datos.md",
+      "weight": 1.0,
+      "source": "hist\u00f3rico_de_datos",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hoja de Datos.md",
+      "weight": 1.0,
+      "source": "hoja_de_datos",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "ITR.md",
+      "weight": 1.0,
+      "source": "itr",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Lista de Materiales.md",
+      "weight": 1.0,
+      "source": "lista_de_materiales",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "LOTO.md",
+      "weight": 1.0,
+      "source": "loto",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "L\u00ednea de Proceso.md",
+      "weight": 1.0,
+      "source": "l\u00ednea_de_proceso",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Permiso de Trabajo.md",
+      "weight": 1.0,
+      "source": "permiso_de_trabajo",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Plano de Planta.md",
+      "weight": 1.0,
+      "source": "plano_de_planta",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Protocolo.md",
+      "weight": 1.0,
+      "source": "protocolo",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Responsable Tecnico.md",
+      "weight": 1.0,
+      "source": "responsable_tecnico",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sala de Control.md",
+      "weight": 1.0,
+      "source": "sala_de_control",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tanque Canal.md",
+      "weight": 1.0,
+      "source": "tanque_canal",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Ubicacion Fisica.md",
+      "weight": 1.0,
+      "source": "ubicacion_fisica",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Walkdown.md",
+      "weight": 1.0,
+      "source": "walkdown",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Zona.md",
+      "weight": 1.0,
+      "source": "zona",
+      "target": "equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Especificaci\u00f3n T\u00e9cnica.md",
+      "weight": 1.0,
+      "source": "especificaci\u00f3n_t\u00e9cnica",
+      "target": "hoja_de_datos"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Especificaci\u00f3n T\u00e9cnica.md",
+      "weight": 1.0,
+      "source": "especificaci\u00f3n_t\u00e9cnica",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Walkdown.md",
+      "weight": 1.0,
+      "source": "walkdown",
+      "target": "especificaci\u00f3n_t\u00e9cnica"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Estado Tiempo Real.md",
+      "weight": 1.0,
+      "source": "estado_tiempo_real",
+      "target": "gemelo_digital"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Estado Tiempo Real.md",
+      "weight": 1.0,
+      "source": "estado_tiempo_real",
+      "target": "hist\u00f3rico_de_datos"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Estado Tiempo Real.md",
+      "weight": 1.0,
+      "source": "estado_tiempo_real",
+      "target": "punto_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sensor Virtual.md",
+      "weight": 1.0,
+      "source": "sensor_virtual",
+      "target": "estado_tiempo_real"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Etapa de Proceso.md",
+      "weight": 1.0,
+      "source": "etapa_de_proceso",
+      "target": "l\u00ednea_de_proceso"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Etapa de Proceso.md",
+      "weight": 1.0,
+      "source": "etapa_de_proceso",
+      "target": "tanque_canal"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Etapa de Proceso.md",
+      "weight": 1.0,
+      "source": "etapa_de_proceso",
+      "target": "tren_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Planta de Tratamiento.md",
+      "weight": 1.0,
+      "source": "planta_de_tratamiento",
+      "target": "etapa_de_proceso"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Evidencia.md",
+      "weight": 1.0,
+      "source": "evidencia",
+      "target": "fase_c_trazabilidad"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Evidencia.md",
+      "weight": 1.0,
+      "source": "evidencia",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Evidencia.md",
+      "weight": 1.0,
+      "source": "evidencia",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase D Dossier.md",
+      "weight": 1.0,
+      "source": "fase_d_dossier",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase G Escalabilidad.md",
+      "weight": 1.0,
+      "source": "fase_g_escalabilidad",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "FAT.md",
+      "weight": 1.0,
+      "source": "fat",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hist\u00f3rico de Datos.md",
+      "weight": 1.0,
+      "source": "hist\u00f3rico_de_datos",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "LOTO.md",
+      "weight": 1.0,
+      "source": "loto",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Permiso de Trabajo.md",
+      "weight": 1.0,
+      "source": "permiso_de_trabajo",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "precomisionamiento",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "SAT.md",
+      "weight": 1.0,
+      "source": "sat",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "evidencia"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase B Formularios.md",
+      "weight": 1.0,
+      "source": "fase_b_formularios",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase B Formularios.md",
+      "weight": 1.0,
+      "source": "fase_b_formularios",
+      "target": "funcional"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase B Formularios.md",
+      "weight": 1.0,
+      "source": "fase_b_formularios",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase B Formularios.md",
+      "weight": 1.0,
+      "source": "fase_b_formularios",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase B Formularios.md",
+      "weight": 1.0,
+      "source": "fase_b_formularios",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase B Formularios.md",
+      "weight": 1.0,
+      "source": "fase_b_formularios",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase C Trazabilidad.md",
+      "weight": 1.0,
+      "source": "fase_c_trazabilidad",
+      "target": "firma_aprobacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase C Trazabilidad.md",
+      "weight": 1.0,
+      "source": "fase_c_trazabilidad",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase C Trazabilidad.md",
+      "weight": 1.0,
+      "source": "fase_c_trazabilidad",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase D Dossier.md",
+      "weight": 1.0,
+      "source": "fase_d_dossier",
+      "target": "firma_aprobacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase D Dossier.md",
+      "weight": 1.0,
+      "source": "fase_d_dossier",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase E Documental.md",
+      "weight": 1.0,
+      "source": "fase_e_documental",
+      "target": "pipeline_tag_equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase E Documental.md",
+      "weight": 1.0,
+      "source": "fase_e_documental",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Revisi\u00f3n Documental.md",
+      "weight": 1.0,
+      "source": "revisi\u00f3n_documental",
+      "target": "fase_e_documental"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase F Dashboards.md",
+      "weight": 1.0,
+      "source": "fase_f_dashboards",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Gemelo Digital.md",
+      "weight": 1.0,
+      "source": "gemelo_digital",
+      "target": "fase_f_dashboards"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase G Escalabilidad.md",
+      "weight": 1.0,
+      "source": "fase_g_escalabilidad",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Fase G Escalabilidad.md",
+      "weight": 1.0,
+      "source": "fase_g_escalabilidad",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "FAT.md",
+      "weight": 1.0,
+      "source": "fat",
+      "target": "firma_aprobacion"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "FAT.md",
+      "weight": 1.0,
+      "source": "fat",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "FAT.md",
+      "weight": 1.0,
+      "source": "fat",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "FAT.md",
+      "weight": 1.0,
+      "source": "fat",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "precomisionamiento",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Supervisor Comisionamiento.md",
+      "weight": 1.0,
+      "source": "supervisor_comisionamiento",
+      "target": "fat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Firma Aprobacion.md",
+      "weight": 1.0,
+      "source": "firma_aprobacion",
+      "target": "funcional"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Firma Aprobacion.md",
+      "weight": 1.0,
+      "source": "firma_aprobacion",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Firma Aprobacion.md",
+      "weight": 1.0,
+      "source": "firma_aprobacion",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "sistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Funcional.md",
+      "weight": 1.0,
+      "source": "funcional",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Gemelo Digital.md",
+      "weight": 1.0,
+      "source": "gemelo_digital",
+      "target": "hist\u00f3rico_de_datos"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Gemelo Digital.md",
+      "weight": 1.0,
+      "source": "gemelo_digital",
+      "target": "planta_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Gemelo Digital.md",
+      "weight": 1.0,
+      "source": "gemelo_digital",
+      "target": "sensor_virtual"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Gemelo Digital.md",
+      "weight": 1.0,
+      "source": "gemelo_digital",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Punto de Control.md",
+      "weight": 1.0,
+      "source": "punto_de_control",
+      "target": "gemelo_digital"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sala de Control.md",
+      "weight": 1.0,
+      "source": "sala_de_control",
+      "target": "gemelo_digital"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hist\u00f3rico de Datos.md",
+      "weight": 1.0,
+      "source": "hist\u00f3rico_de_datos",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hito.md",
+      "weight": 1.0,
+      "source": "hito",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hoja de Datos.md",
+      "weight": 1.0,
+      "source": "hoja_de_datos",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Hoja de Datos.md",
+      "weight": 1.0,
+      "source": "hoja_de_datos",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Importacion Excel.md",
+      "weight": 1.0,
+      "source": "importacion_excel",
+      "target": "pipeline_tag_equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Importacion Excel.md",
+      "weight": 1.0,
+      "source": "importacion_excel",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Importacion Excel.md",
+      "weight": 1.0,
+      "source": "importacion_excel",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "itr"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Inspector QAQC.md",
+      "weight": 1.0,
+      "source": "inspector_qaqc",
+      "target": "supervisor_comisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "inspector_qaqc"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "ITR.md",
+      "weight": 1.0,
+      "source": "itr",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "ITR.md",
+      "weight": 1.0,
+      "source": "itr",
+      "target": "supervisor_comisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "ITR.md",
+      "weight": 1.0,
+      "source": "itr",
+      "target": "walkdown"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Responsable Tecnico.md",
+      "weight": 1.0,
+      "source": "responsable_tecnico",
+      "target": "itr"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Lista de Materiales.md",
+      "weight": 1.0,
+      "source": "lista_de_materiales",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Lista de Materiales.md",
+      "weight": 1.0,
+      "source": "lista_de_materiales",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Loop Check.md",
+      "weight": 1.0,
+      "source": "loop_check",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Loop Check.md",
+      "weight": 1.0,
+      "source": "loop_check",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Loop Check.md",
+      "weight": 1.0,
+      "source": "loop_check",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Normativa ISA IEC.md",
+      "weight": 1.0,
+      "source": "normativa_isa_iec",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "precomisionamiento",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Punto de Control.md",
+      "weight": 1.0,
+      "source": "punto_de_control",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sala de Control.md",
+      "weight": 1.0,
+      "source": "sala_de_control",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sensor Virtual.md",
+      "weight": 1.0,
+      "source": "sensor_virtual",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Supervisor Comisionamiento.md",
+      "weight": 1.0,
+      "source": "supervisor_comisionamiento",
+      "target": "loop_check"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "LOTO.md",
+      "weight": 1.0,
+      "source": "loto",
+      "target": "permiso_de_trabajo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "LOTO.md",
+      "weight": 1.0,
+      "source": "loto",
+      "target": "planta_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "LOTO.md",
+      "weight": 1.0,
+      "source": "loto",
+      "target": "precomisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "LOTO.md",
+      "weight": 1.0,
+      "source": "loto",
+      "target": "sala_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "L\u00ednea de Proceso.md",
+      "weight": 1.0,
+      "source": "l\u00ednea_de_proceso",
+      "target": "punto_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "L\u00ednea de Proceso.md",
+      "weight": 1.0,
+      "source": "l\u00ednea_de_proceso",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "L\u00ednea de Proceso.md",
+      "weight": 1.0,
+      "source": "l\u00ednea_de_proceso",
+      "target": "tanque_canal"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Planta de Tratamiento.md",
+      "weight": 1.0,
+      "source": "planta_de_tratamiento",
+      "target": "l\u00ednea_de_proceso"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Normativa ISA IEC.md",
+      "weight": 1.0,
+      "source": "normativa_isa_iec",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Normativa ISA IEC.md",
+      "weight": 1.0,
+      "source": "normativa_isa_iec",
+      "target": "pssr"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PSSR.md",
+      "weight": 1.0,
+      "source": "pssr",
+      "target": "permiso_de_trabajo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PID.md",
+      "weight": 1.0,
+      "source": "pid",
+      "target": "pipeline_tag_equipo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PID.md",
+      "weight": 1.0,
+      "source": "pid",
+      "target": "revisi\u00f3n_documental"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "PID.md",
+      "weight": 1.0,
+      "source": "pid",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Walkdown.md",
+      "weight": 1.0,
+      "source": "walkdown",
+      "target": "pid"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Pipeline TAG Equipo.md",
+      "weight": 1.0,
+      "source": "pipeline_tag_equipo",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Pipeline TAG Equipo.md",
+      "weight": 1.0,
+      "source": "pipeline_tag_equipo",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Plano de Planta.md",
+      "weight": 1.0,
+      "source": "plano_de_planta",
+      "target": "planta_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Plano de Planta.md",
+      "weight": 1.0,
+      "source": "plano_de_planta",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Plano de Planta.md",
+      "weight": 1.0,
+      "source": "plano_de_planta",
+      "target": "sala_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Plano de Planta.md",
+      "weight": 1.0,
+      "source": "plano_de_planta",
+      "target": "ubicacion_fisica"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Plano de Planta.md",
+      "weight": 1.0,
+      "source": "plano_de_planta",
+      "target": "zona"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Planta de Tratamiento.md",
+      "weight": 1.0,
+      "source": "planta_de_tratamiento",
+      "target": "proyecto"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Planta de Tratamiento.md",
+      "weight": 1.0,
+      "source": "planta_de_tratamiento",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Planta de Tratamiento.md",
+      "weight": 1.0,
+      "source": "planta_de_tratamiento",
+      "target": "tren_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Planta de Tratamiento.md",
+      "weight": 1.0,
+      "source": "planta_de_tratamiento",
+      "target": "zona"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sala de Control.md",
+      "weight": 1.0,
+      "source": "sala_de_control",
+      "target": "planta_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Ubicacion Fisica.md",
+      "weight": 1.0,
+      "source": "ubicacion_fisica",
+      "target": "planta_de_tratamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "precomisionamiento",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "precomisionamiento",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Precomisionamiento.md",
+      "weight": 1.0,
+      "source": "precomisionamiento",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Protocolo.md",
+      "weight": 1.0,
+      "source": "protocolo",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Protocolo.md",
+      "weight": 1.0,
+      "source": "protocolo",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Revisi\u00f3n Documental.md",
+      "weight": 1.0,
+      "source": "revisi\u00f3n_documental",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Supervisor Comisionamiento.md",
+      "weight": 1.0,
+      "source": "supervisor_comisionamiento",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "protocolo"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Proyecto.md",
+      "weight": 1.0,
+      "source": "proyecto",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Proyecto.md",
+      "weight": 1.0,
+      "source": "proyecto",
+      "target": "sistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Proyecto.md",
+      "weight": 1.0,
+      "source": "proyecto",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Revisi\u00f3n Documental.md",
+      "weight": 1.0,
+      "source": "revisi\u00f3n_documental",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "SAT.md",
+      "weight": 1.0,
+      "source": "sat",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Supervisor Comisionamiento.md",
+      "weight": 1.0,
+      "source": "supervisor_comisionamiento",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Walkdown.md",
+      "weight": 1.0,
+      "source": "walkdown",
+      "target": "punchitem"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Punto de Control.md",
+      "weight": 1.0,
+      "source": "punto_de_control",
+      "target": "sensor_virtual"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Punto de Control.md",
+      "weight": 1.0,
+      "source": "punto_de_control",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Responsable Tecnico.md",
+      "weight": 1.0,
+      "source": "responsable_tecnico",
+      "target": "punto_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Responsable Tecnico.md",
+      "weight": 1.0,
+      "source": "responsable_tecnico",
+      "target": "walkdown"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "responsable_tecnico"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Ubicacion Fisica.md",
+      "weight": 1.0,
+      "source": "ubicacion_fisica",
+      "target": "sala_de_control"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Supervisor Comisionamiento.md",
+      "weight": 1.0,
+      "source": "supervisor_comisionamiento",
+      "target": "sat"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sensor Virtual.md",
+      "weight": 1.0,
+      "source": "sensor_virtual",
+      "target": "tag"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Sistema.md",
+      "weight": 1.0,
+      "source": "sistema",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tren de Tratamiento.md",
+      "weight": 1.0,
+      "source": "tren_de_tratamiento",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Walkdown.md",
+      "weight": 1.0,
+      "source": "walkdown",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Zona.md",
+      "weight": 1.0,
+      "source": "zona",
+      "target": "subsistema"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Supervisor Comisionamiento.md",
+      "weight": 1.0,
+      "source": "supervisor_comisionamiento",
+      "target": "walkdown"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Usuario App.md",
+      "weight": 1.0,
+      "source": "usuario_app",
+      "target": "supervisor_comisionamiento"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tanque Canal.md",
+      "weight": 1.0,
+      "source": "tanque_canal",
+      "target": "zona"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Tren de Tratamiento.md",
+      "weight": 1.0,
+      "source": "tren_de_tratamiento",
+      "target": "zona"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "Ubicacion Fisica.md",
+      "weight": 1.0,
+      "source": "ubicacion_fisica",
+      "target": "zona"
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "a77d893b8240fba7dc63ce79a8fe55187186bc58"
+}

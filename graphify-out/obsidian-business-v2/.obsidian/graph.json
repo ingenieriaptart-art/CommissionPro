@@ -1,0 +1,23 @@
+﻿{
+  "colorGroups": [
+    { "query": "tag:#entidad",   "color": { "a": 1, "rgb": 3447003  } },
+    { "query": "tag:#protocolo", "color": { "a": 1, "rgb": 3066993  } },
+    { "query": "tag:#proceso",   "color": { "a": 1, "rgb": 15105570 } },
+    { "query": "tag:#fase",      "color": { "a": 1, "rgb": 10178998 } },
+    { "query": "tag:#plataforma","color": { "a": 1, "rgb": 15157308 } }
+  ],
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": false,
+  "search": "",
+  "showArrows": false,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1.4,
+  "lineSizeMultiplier": 1,
+  "centerStrength": 0.25,
+  "repelStrength": 14,
+  "linkStrength": 1,
+  "linkDistance": 30,
+  "animate": true
+}

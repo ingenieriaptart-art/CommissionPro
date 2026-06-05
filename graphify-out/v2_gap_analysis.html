@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CommissionPro v2 — Visual Gap Analysis</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+  --bg:#0d1117; --surface:#161b22; --surface2:#21262d;
+  --border:#30363d; --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Header */
+#hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:9px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#hdr h1{font-size:14px;font-weight:600}
+#hdr .ac{color:var(--accent)}
+#hdr small{color:var(--muted);font-size:11px}
+
+/* Tabs */
+#tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0;overflow-x:auto}
+.tab{background:none;border:none;color:var(--muted);padding:8px 13px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* Content */
+#content{flex:1;overflow:hidden}
+.panel{display:none;height:100%;flex-direction:column}
+.panel.active{display:flex}
+.graph-area{flex:1;position:relative;overflow:hidden}
+
+/* Stats bar */
+.sbar{background:var(--surface);border-top:1px solid var(--border);padding:5px 18px;display:flex;gap:24px;flex-shrink:0;align-items:center}
+.sv{font-size:17px;font-weight:700;color:var(--accent);line-height:1}
+.sl{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* Legend */
+.leg{position:absolute;top:10px;right:12px;background:rgba(13,17,23,.93);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:11px;max-height:calc(100% - 20px);overflow-y:auto;z-index:10}
+.lt{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:5px}
+.li{display:flex;align-items:center;gap:6px;margin:2px 0}
+.ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ldnew{border-radius:1px;transform:rotate(45deg);border:1px dashed #666;background:#333 !important}
+
+/* Tooltip */
+#tt{position:fixed;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 11px;font-size:11px;pointer-events:none;opacity:0;transition:opacity .1s;z-index:200;max-width:210px}
+#tt.show{opacity:1}
+#tt strong{display:block;color:var(--accent);margin-bottom:2px}
+#tt .m{font-size:10px;color:var(--muted)}
+
+/* Split view */
+.split{display:flex;flex:1;overflow:hidden}
+.spane{flex:1;position:relative;overflow:hidden}
+.spane+.spane{border-left:1px solid var(--border)}
+.slabel{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 10px;font-size:11px;z-index:5}
+
+/* Bar chart */
+.bwrap{flex:1;padding:18px 28px;overflow-y:auto}
+.btitle{font-size:15px;font-weight:600;margin-bottom:3px}
+.bsub{font-size:11px;color:var(--muted);margin-bottom:16px}
+.brow{margin:10px 0}
+.bname{font-size:12px;margin-bottom:2px}
+.btrack{display:flex;align-items:stretch;height:22px;gap:0}
+.bseg{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;min-width:20px;transition:width .6s}
+.bseg:first-child{border-radius:4px 0 0 4px}
+.bseg:last-child{border-radius:0 4px 4px 0}
+.btotal{font-size:11px;color:var(--muted);margin-left:8px;align-self:center;white-space:nowrap}
+.bleg{display:flex;gap:16px;margin-top:18px;font-size:11px}
+.bli{display:flex;align-items:center;gap:5px}
+.bld{width:10px;height:10px;border-radius:2px}
+
+/* Cards */
+.cwrap{flex:1;padding:14px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;align-content:start}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px;border-left-width:3px !important}
+.chead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
+.ctitle{font-size:13px;font-weight:600}
+.crank{font-size:26px;font-weight:800;line-height:1}
+.srow{display:flex;align-items:center;gap:7px;margin:3px 0}
+.strk{flex:1;height:3px;background:var(--border);border-radius:2px}
+.sfil{height:100%;border-radius:2px}
+.slb{font-size:10px;color:var(--muted);min-width:34px;text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:3px;margin:6px 0}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:2px 6px;font-size:10px}
+.cdesc{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.45}
+.pri{display:inline-block;padding:1px 7px;border-radius:9px;font-size:9px;font-weight:700;margin-top:4px}
+.p0{background:#e74c3c14;color:#ff6b6b;border:1px solid #e74c3c30}
+.p1{background:#e67e2214;color:#fdcb6e;border:1px solid #e67e2230}
+.p2{background:#3498db14;color:#74b9ff;border:1px solid #3498db30}
+
+/* Graph elements */
+.link{stroke:#334155;stroke-opacity:.5;stroke-width:1.2;fill:none}
+.link.v2e{stroke:#58a6ff;stroke-opacity:.25;stroke-dasharray:4,3;stroke-width:.9}
+.node{stroke-width:1.5;cursor:pointer}
+.node:hover{stroke-width:3;filter:brightness(1.3)}
+.ghost{opacity:.22;stroke-dasharray:4,2}
+.label{font-size:9px;fill:#dde;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:#0d1117;stroke-width:3px}
+.label.ghost-lbl{opacity:.28}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div>
+    <h1>CommissionPro <span class="ac">v2</span> — Visual Gap Analysis</h1>
+    <small>Análisis de brechas · 30 → 72 nodos · 4 → 11 comunidades · 71 → 151 relaciones</small>
+  </div>
+  <small style="color:var(--muted)">Requiere internet (D3.js CDN) · Arrastra nodos · Zoom con rueda</small>
+</div>
+
+<div id="tabs">
+  <button class="tab active" onclick="switchTab('current')">① Estado Actual (v1)</button>
+  <button class="tab" onclick="switchTab('gaps')">② Gap Analysis</button>
+  <button class="tab" onclick="switchTab('v2')">③ Propuesta v2</button>
+  <button class="tab" onclick="switchTab('split')">④ Antes / Después</button>
+  <button class="tab" onclick="switchTab('impact')">⑤ Impacto por Módulo</button>
+  <button class="tab" onclick="switchTab('ranking')">⑥ Ranking Comunidades</button>
+</div>
+
+<div id="tt"></div>
+
+<div id="content">
+
+  <div class="panel active" id="panel-current">
+    <div class="graph-area" id="ga-current">
+      <div class="leg" id="leg-current"></div>
+    </div>
+    <div class="sbar">
+      <div><div class="sv">30</div><div class="sl">Nodos</div></div>
+      <div><div class="sv">71</div><div class="sl">Relaciones clave</div></div>
+      <div><div class="sv">4</div><div class="sl">Comunidades</div></div>
+      <div><div class="sv">4.7</div><div class="sl">Grado promedio</div></div>
+      <div style="margin-left:auto;font-size:10px;color:var(--muted)">CommissionPro v1 — PTAR Zipaquirá pilot · Octubre 2025</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-gaps">
+    <div class="graph-area" id="ga-gaps">
+      <div class="leg">
+        <div class="lt">Leyenda Gap Analysis</div>
+        <div class="li"><div class="ld" style="background:#3498db"></div>Nodo existente (v1)</div>
+        <div class="li"><div class="ld ldnew"></div>Concepto faltante (v2)</div>
+        <div class="li" style="margin-top:5px"><div style="width:24px;height:2px;background:#58a6ff;opacity:.5;border-radius:1px;flex-shrink:0"></div>Relación nueva</div>
+        <div class="li"><div style="width:24px;height:2px;background:#334155;border-radius:1px;flex-shrink:0"></div>Relación existente</div>
+      </div>
+    </div>
+    <div class="sbar">
+      <div><div class="sv">42</div><div class="sl">Conceptos faltantes</div></div>
+      <div><div class="sv">7</div><div class="sl">Nuevas comunidades</div></div>
+      <div><div class="sv">80</div><div class="sl">Relaciones nuevas</div></div>
+      <div><div class="sv">+140%</div><div class="sl">Crecimiento de grafo</div></div>
+      <div style="margin-left:auto;font-size:10px;color:var(--muted)">Nodos difuminados = conceptos ausentes en v1</div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-v2">
+    <div class="graph-area" id="ga-v2">
+      <div class="leg" id="leg-v2"></div>
+    </div>
+    <div class="sbar">
+      <div><div class="sv">72</div><div class="sl">Nodos totales</div></div>
+      <div><div class="sv">151</div><div class="sl">Relaciones</div></div>
+      <div><div class="sv">11</div><div class="sl">Comunidades</div></div>
+      <div><div class="sv">4.19</div><div class="sl">Grado promedio</div></div>
+      <div><div class="sv" style="color:#2ecc71">+140%</div><div class="sl">Cobertura vs v1</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-split">
+    <div class="split">
+      <div class="spane" id="ga-sv1"><div class="slabel">v1 · 30 nodos · 4 comunidades</div></div>
+      <div class="spane" id="ga-sv2"><div class="slabel">v2 · 72 nodos · 11 comunidades</div></div>
+    </div>
+    <div class="sbar">
+      <div style="display:flex;align-items:center;gap:6px"><span style="color:#ff6b6b">✗</span><span style="font-size:11px">Sin actores/roles</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><span style="color:#ff6b6b">✗</span><span style="font-size:11px">Sin Gemelo Digital</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><span style="color:#ff6b6b">✗</span><span style="font-size:11px">Sin seguridad/normativa</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><span style="color:#ff6b6b">✗</span><span style="font-size:11px">Sin jerarquía PTAR</span></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-left:auto"><span style="color:#2ecc71">→</span><span style="font-size:11px;color:#2ecc71">v2 cubre todas las brechas</span></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-impact">
+    <div class="bwrap">
+      <div class="btitle">Impacto por Módulo Nuevo</div>
+      <div class="bsub">Puntuación compuesta = nodos nuevos × 2 + conexiones a v1 + cohesión interna. Ordenado de mayor a menor.</div>
+      <div id="bar-container"></div>
+      <div class="bleg">
+        <div class="bli"><div class="bld" style="background:#a29bfe"></div>Nodos nuevos (×2)</div>
+        <div class="bli"><div class="bld" style="background:#58a6ff"></div>Conexiones a v1</div>
+        <div class="bli"><div class="bld" style="background:#27ae60"></div>Cohesión interna</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-ranking">
+    <div class="cwrap" id="cards-container"></div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// GRAPH DATA
+// ============================================================
+const CC = {
+  Entidades:"#3498db", Protocolos:"#27ae60", Procesos:"#e67e22",
+  Fases:"#9b59b6",     Plataforma:"#e74c3c",
+  Actores:"#1abc9c",   Ubicacion:"#f39c12",  PTAR:"#00b4d8",
+  DocIng:"#fd79a8",    Gemelo:"#a29bfe",     Seguridad:"#ff6b6b",
+  Gestion:"#fdcb6e",
+};
+
+const CCL = {
+  Entidades:"Entidades de Dominio",       Protocolos:"Protocolos de Comisionamiento",
+  Procesos:"Procesos de Ingeniería",      Fases:"Fases del Producto",
+  Plataforma:"Plataforma CommissionPro",  Actores:"Actores y Organizaciones",
+  Ubicacion:"Modelo de Ubicación",        PTAR:"Jerarquía PTAR",
+  DocIng:"Documentos de Ingeniería",      Gemelo:"Gemelo Digital",
+  Seguridad:"Seguridad y Normativa",      Gestion:"Gestión de Proyecto",
+};
+
+// Cluster center [x_frac, y_frac]
+const CP = {
+  Plataforma:[.5,.5],  Entidades:[.33,.42],  Protocolos:[.65,.32],
+  Procesos:[.5,.2],    Fases:[.16,.68],
+  Actores:[.16,.22],   Ubicacion:[.82,.5],   PTAR:[.5,.82],
+  DocIng:[.74,.16],    Gemelo:[.85,.72],     Seguridad:[.64,.83],
+  Gestion:[.3,.83],
+};
+
+const V1N = [
+  {id:"cp",          label:"CommissionPro",     comm:"Plataforma"},
+  {id:"proyecto",    label:"Proyecto",          comm:"Entidades"},
+  {id:"area",        label:"Área",              comm:"Entidades"},
+  {id:"sistema",     label:"Sistema",           comm:"Entidades"},
+  {id:"subsistema",  label:"Subsistema",        comm:"Entidades"},
+  {id:"equipo",      label:"Equipo",            comm:"Entidades"},
+  {id:"tag",         label:"TAG",               comm:"Entidades"},
+  {id:"documento",   label:"Documento",         comm:"Entidades"},
+  {id:"punchitem",   label:"Punch Item",        comm:"Entidades"},
+  {id:"evidencia",   label:"Evidencia",         comm:"Entidades"},
+  {id:"checklist",   label:"Checklist",         comm:"Entidades"},
+  {id:"firma",       label:"Firma Aprobación",  comm:"Entidades"},
+  {id:"dossier",     label:"Dossier Precom.",   comm:"Entidades"},
+  {id:"dig_ing",     label:"Digital. Ingeniería",comm:"Procesos"},
+  {id:"pipeline_tag",label:"Pipeline TAG→Eq.",  comm:"Procesos"},
+  {id:"imp_excel",   label:"Importación Excel", comm:"Procesos"},
+  {id:"protocolo",   label:"Protocolo",         comm:"Protocolos"},
+  {id:"fat",         label:"FAT",               comm:"Protocolos"},
+  {id:"sat",         label:"SAT",               comm:"Protocolos"},
+  {id:"precom",      label:"Precomisionamiento",comm:"Protocolos"},
+  {id:"loop",        label:"Loop Check",        comm:"Protocolos"},
+  {id:"energ",       label:"Energización",      comm:"Protocolos"},
+  {id:"funcional",   label:"Funcional",         comm:"Protocolos"},
+  {id:"fase_a",      label:"Fase A: Auditoría", comm:"Fases"},
+  {id:"fase_b",      label:"Fase B: Formularios",comm:"Fases"},
+  {id:"fase_c",      label:"Fase C: Trazabilidad",comm:"Fases"},
+  {id:"fase_d",      label:"Fase D: Dossier",   comm:"Fases"},
+  {id:"fase_e",      label:"Fase E: Documental",comm:"Fases"},
+  {id:"fase_f",      label:"Fase F: Dashboards",comm:"Fases"},
+  {id:"fase_g",      label:"Fase G: Escalabilidad",comm:"Fases"},
+];
+
+const V2N_NEW = [
+  {id:"empresa",     label:"Empresa",           comm:"Actores"},
+  {id:"contratista", label:"Contratista",        comm:"Actores"},
+  {id:"supervisor",  label:"Supervisor Com.",    comm:"Actores"},
+  {id:"inspector",   label:"Inspector QA/QC",   comm:"Actores"},
+  {id:"responsable", label:"Resp. Técnico",      comm:"Actores"},
+  {id:"cliente",     label:"Cliente",            comm:"Actores"},
+  {id:"usuario",     label:"Usuario App",        comm:"Actores"},
+  {id:"ubicacion",   label:"Ubicación Física",   comm:"Ubicacion"},
+  {id:"gps",         label:"Coordenada GPS",     comm:"Ubicacion"},
+  {id:"zona",        label:"Zona",               comm:"Ubicacion"},
+  {id:"plano",       label:"Plano de Planta",    comm:"Ubicacion"},
+  {id:"sala_ctrl",   label:"Sala de Control",    comm:"Ubicacion"},
+  {id:"planta",      label:"Planta Tratamiento", comm:"PTAR"},
+  {id:"tren",        label:"Tren Tratamiento",   comm:"PTAR"},
+  {id:"etapa",       label:"Etapa de Proceso",   comm:"PTAR"},
+  {id:"linea",       label:"Línea de Proceso",   comm:"PTAR"},
+  {id:"punto_ctrl",  label:"Punto de Control",   comm:"PTAR"},
+  {id:"tanque",      label:"Tanque / Canal",     comm:"PTAR"},
+  {id:"pid",         label:"P&ID",               comm:"DocIng"},
+  {id:"diag_lazo",   label:"Diagrama de Lazo",   comm:"DocIng"},
+  {id:"hoja_datos",  label:"Hoja de Datos",      comm:"DocIng"},
+  {id:"diag_uni",    label:"Diag. Unifilar",     comm:"DocIng"},
+  {id:"lista_mat",   label:"Lista Materiales",   comm:"DocIng"},
+  {id:"especif",     label:"Especif. Técnica",   comm:"DocIng"},
+  {id:"rev_doc",     label:"Rev. Documental",    comm:"DocIng"},
+  {id:"gemelo",      label:"Gemelo Digital",     comm:"Gemelo"},
+  {id:"estado_rt",   label:"Estado Tiempo Real", comm:"Gemelo"},
+  {id:"historico",   label:"Histórico Datos",    comm:"Gemelo"},
+  {id:"alarma",      label:"Alarma",             comm:"Gemelo"},
+  {id:"dash_iot",    label:"Dashboard IoT",      comm:"Gemelo"},
+  {id:"sensor_virt", label:"Sensor Virtual",     comm:"Gemelo"},
+  {id:"permiso",     label:"Permiso Trabajo",    comm:"Seguridad"},
+  {id:"analisis",    label:"Análisis Riesgo",    comm:"Seguridad"},
+  {id:"loto",        label:"LOTO",               comm:"Seguridad"},
+  {id:"normativa",   label:"Normativa ISA/IEC",  comm:"Seguridad"},
+  {id:"cert_mc",     label:"Certificado MC",     comm:"Seguridad"},
+  {id:"pssr",        label:"PSSR",               comm:"Seguridad"},
+  {id:"hito",        label:"Hito",               comm:"Gestion"},
+  {id:"itr",         label:"ITR",                comm:"Gestion"},
+  {id:"cronograma",  label:"Cronograma",         comm:"Gestion"},
+  {id:"walkdown",    label:"Walkdown",           comm:"Gestion"},
+  {id:"curva_s",     label:"Curva S",            comm:"Gestion"},
+];
+
+const V1E = [
+  {s:"cp",t:"proyecto"},{s:"cp",t:"equipo"},{s:"cp",t:"protocolo"},{s:"cp",t:"dig_ing"},
+  {s:"cp",t:"tag"},{s:"cp",t:"dossier"},{s:"cp",t:"fase_a"},{s:"cp",t:"fase_b"},
+  {s:"cp",t:"fase_c"},{s:"cp",t:"fase_d"},{s:"cp",t:"fase_e"},{s:"cp",t:"fase_f"},
+  {s:"cp",t:"fase_g"},
+  {s:"proyecto",t:"area"},{s:"proyecto",t:"documento"},{s:"proyecto",t:"punchitem"},
+  {s:"proyecto",t:"dossier"},
+  {s:"area",t:"sistema"},{s:"sistema",t:"subsistema"},{s:"subsistema",t:"equipo"},
+  {s:"equipo",t:"tag"},{s:"equipo",t:"protocolo"},{s:"equipo",t:"punchitem"},
+  {s:"equipo",t:"evidencia"},{s:"equipo",t:"pipeline_tag"},
+  {s:"tag",t:"documento"},{s:"tag",t:"dig_ing"},{s:"tag",t:"pipeline_tag"},
+  {s:"tag",t:"imp_excel"},
+  {s:"documento",t:"dig_ing"},{s:"dig_ing",t:"pipeline_tag"},{s:"pipeline_tag",t:"imp_excel"},
+  {s:"protocolo",t:"fat"},{s:"protocolo",t:"sat"},{s:"protocolo",t:"precom"},
+  {s:"protocolo",t:"loop"},{s:"protocolo",t:"energ"},{s:"protocolo",t:"funcional"},
+  {s:"protocolo",t:"checklist"},{s:"protocolo",t:"evidencia"},{s:"protocolo",t:"firma"},
+  {s:"protocolo",t:"punchitem"},{s:"protocolo",t:"dossier"},
+  {s:"fat",t:"sat"},{s:"fat",t:"checklist"},{s:"fat",t:"evidencia"},{s:"fat",t:"firma"},
+  {s:"sat",t:"checklist"},{s:"sat",t:"evidencia"},{s:"sat",t:"firma"},{s:"sat",t:"funcional"},
+  {s:"precom",t:"loop"},{s:"precom",t:"checklist"},{s:"precom",t:"evidencia"},
+  {s:"precom",t:"punchitem"},
+  {s:"loop",t:"tag"},{s:"loop",t:"checklist"},
+  {s:"energ",t:"firma"},{s:"energ",t:"punchitem"},
+  {s:"funcional",t:"checklist"},{s:"funcional",t:"evidencia"},{s:"funcional",t:"firma"},
+  {s:"checklist",t:"punchitem"},
+  {s:"evidencia",t:"punchitem"},{s:"evidencia",t:"dossier"},
+  {s:"firma",t:"dossier"},{s:"punchitem",t:"dossier"},
+  {s:"fase_b",t:"protocolo"},{s:"fase_b",t:"checklist"},
+  {s:"fase_c",t:"evidencia"},{s:"fase_c",t:"punchitem"},{s:"fase_c",t:"firma"},
+  {s:"fase_d",t:"dossier"},{s:"fase_e",t:"documento"},{s:"fase_e",t:"dig_ing"},
+  {s:"fase_f",t:"proyecto"},
+];
+
+const V2E_NEW = [
+  {s:"empresa",t:"proyecto"},{s:"empresa",t:"contratista"},{s:"empresa",t:"cliente"},
+  {s:"contratista",t:"supervisor"},
+  {s:"supervisor",t:"protocolo"},{s:"supervisor",t:"firma"},{s:"supervisor",t:"equipo"},
+  {s:"supervisor",t:"itr"},
+  {s:"inspector",t:"protocolo"},{s:"inspector",t:"punchitem"},{s:"inspector",t:"dossier"},
+  {s:"responsable",t:"equipo"},{s:"responsable",t:"itr"},{s:"responsable",t:"walkdown"},
+  {s:"cliente",t:"proyecto"},{s:"cliente",t:"firma"},{s:"cliente",t:"dossier"},
+  {s:"usuario",t:"protocolo"},{s:"usuario",t:"evidencia"},{s:"usuario",t:"cp"},
+  {s:"ubicacion",t:"equipo"},
+  {s:"gps",t:"equipo"},{s:"gps",t:"evidencia"},
+  {s:"zona",t:"subsistema"},{s:"zona",t:"ubicacion"},
+  {s:"plano",t:"zona"},{s:"plano",t:"documento"},
+  {s:"sala_ctrl",t:"equipo"},{s:"sala_ctrl",t:"plano"},
+  {s:"planta",t:"proyecto"},
+  {s:"tren",t:"planta"},{s:"etapa",t:"tren"},{s:"linea",t:"etapa"},
+  {s:"punto_ctrl",t:"linea"},{s:"punto_ctrl",t:"tag"},{s:"punto_ctrl",t:"loop"},
+  {s:"tanque",t:"etapa"},{s:"tanque",t:"equipo"},
+  {s:"subsistema",t:"tren"},
+  {s:"pid",t:"documento"},{s:"pid",t:"tag"},
+  {s:"diag_lazo",t:"documento"},{s:"diag_lazo",t:"tag"},{s:"diag_lazo",t:"loop"},
+  {s:"hoja_datos",t:"documento"},{s:"hoja_datos",t:"equipo"},
+  {s:"diag_uni",t:"documento"},{s:"diag_uni",t:"equipo"},
+  {s:"lista_mat",t:"documento"},{s:"lista_mat",t:"equipo"},
+  {s:"especif",t:"documento"},{s:"especif",t:"equipo"},
+  {s:"rev_doc",t:"documento"},{s:"rev_doc",t:"pid"},{s:"rev_doc",t:"diag_lazo"},
+  {s:"gemelo",t:"equipo"},{s:"gemelo",t:"estado_rt"},{s:"gemelo",t:"historico"},
+  {s:"gemelo",t:"sensor_virt"},{s:"gemelo",t:"dash_iot"},
+  {s:"estado_rt",t:"equipo"},{s:"estado_rt",t:"dash_iot"},{s:"estado_rt",t:"alarma"},
+  {s:"historico",t:"equipo"},{s:"historico",t:"dash_iot"},
+  {s:"alarma",t:"equipo"},{s:"alarma",t:"punchitem"},{s:"alarma",t:"gemelo"},
+  {s:"sensor_virt",t:"tag"},{s:"sensor_virt",t:"gemelo"},
+  {s:"dash_iot",t:"proyecto"},{s:"dash_iot",t:"fase_f"},
+  {s:"permiso",t:"equipo"},{s:"permiso",t:"energ"},{s:"permiso",t:"analisis"},
+  {s:"analisis",t:"equipo"},{s:"analisis",t:"precom"},
+  {s:"loto",t:"equipo"},{s:"loto",t:"energ"},{s:"loto",t:"precom"},
+  {s:"normativa",t:"protocolo"},{s:"normativa",t:"loop"},
+  {s:"cert_mc",t:"subsistema"},{s:"cert_mc",t:"walkdown"},{s:"cert_mc",t:"dossier"},
+  {s:"pssr",t:"energ"},{s:"pssr",t:"cert_mc"},
+  {s:"hito",t:"proyecto"},{s:"hito",t:"cronograma"},
+  {s:"itr",t:"equipo"},{s:"itr",t:"protocolo"},{s:"itr",t:"walkdown"},
+  {s:"cronograma",t:"proyecto"},{s:"cronograma",t:"curva_s"},
+  {s:"walkdown",t:"subsistema"},{s:"walkdown",t:"equipo"},{s:"walkdown",t:"punchitem"},
+  {s:"walkdown",t:"cert_mc"},
+  {s:"curva_s",t:"proyecto"},{s:"curva_s",t:"hito"},{s:"curva_s",t:"fase_f"},
+];
+
+// ============================================================
+// GRAPH ENGINE
+// ============================================================
+const ttEl = document.getElementById('tt');
+
+function showTip(ev, d) {
+  const newBadge = d.isNew ? ' <span style="color:#a29bfe;font-size:9px">★ v2</span>' : '';
+  ttEl.innerHTML = '<strong>' + (d.label||d.id) + newBadge + '</strong>'
+    + '<div class="m">Comunidad: ' + (CCL[d.comm]||d.comm) + '</div>'
+    + '<div class="m">Conexiones: ' + (d.degree||0) + '</div>';
+  ttEl.style.left = (ev.pageX+13)+'px';
+  ttEl.style.top  = (ev.pageY-32)+'px';
+  ttEl.classList.add('show');
+}
+function hideTip(){ ttEl.classList.remove('show'); }
+
+function toD3Edges(rawEdges){
+  return rawEdges.map(e=>({source:e.s||e.source, target:e.t||e.target, _isNew:e._isNew}));
+}
+
+function calcDeg(nodes, edges){
+  const m={};
+  nodes.forEach(n=>{m[n.id]=n; n.degree=0;});
+  edges.forEach(e=>{
+    const s=typeof e.source==='object'?e.source.id:e.source;
+    const t=typeof e.target==='object'?e.target.id:e.target;
+    if(m[s]) m[s].degree++;
+    if(m[t]) m[t].degree++;
+  });
+}
+
+function nr(d){ return Math.max(5,Math.min(18,4+Math.sqrt(d.degree||0)*2.2)); }
+
+function createGraph(cid, rawNodes, rawEdges, opts){
+  opts = opts||{};
+  const container = document.getElementById(cid);
+  if(!container) return null;
+
+  // Check D3 loaded
+  if(!window.d3){
+    container.innerHTML='<div style="padding:30px;color:var(--muted);text-align:center;font-size:13px">⚠ D3.js no disponible. Abre este archivo con conexión a internet.</div>';
+    return null;
+  }
+
+  const w = container.clientWidth  || container.offsetWidth  || 800;
+  const h = container.clientHeight || container.offsetHeight || 500;
+
+  const nodes = rawNodes.map(n=>Object.assign({},n));
+  const edges = toD3Edges(rawEdges);
+
+  // Mark new edges
+  const v1ids = new Set(V1N.map(n=>n.id));
+  edges.forEach(e=>{
+    const s=typeof e.source==='object'?e.source.id:e.source;
+    const t=typeof e.target==='object'?e.target.id:e.target;
+    e._isNew = !v1ids.has(s) || !v1ids.has(t);
+  });
+
+  calcDeg(nodes, edges);
+
+  // Pre-position by community
+  nodes.forEach(n=>{
+    const p=CP[n.comm]||[.5,.5];
+    n.x=p[0]*w+(Math.random()-.5)*50;
+    n.y=p[1]*h+(Math.random()-.5)*50;
+  });
+
+  const svg = d3.select(container).append('svg').attr('width','100%').attr('height','100%');
+  const g   = svg.append('g');
+
+  svg.call(d3.zoom().scaleExtent([.15,6]).on('zoom',e=>g.attr('transform',e.transform)));
+
+  // Links
+  const link = g.append('g').selectAll('line').data(edges).join('line')
+    .attr('class', d => 'link' + (opts.ghostNew && d._isNew ? ' v2e' : ''));
+
+  // Drag
+  const drg = d3.drag()
+    .on('start',(e,d)=>{ if(!e.active) sim.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on('drag', (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+    .on('end',  (e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; });
+
+  // Nodes
+  const node = g.append('g').selectAll('circle').data(nodes).join('circle')
+    .attr('class', d=> 'node'+(opts.ghostNew&&d.isNew?' ghost':''))
+    .attr('r', nr)
+    .attr('fill', d=>CC[d.comm]||'#888')
+    .attr('stroke', d=>{ const c=d3.color(CC[d.comm]||'#888'); return c?c.brighter(.6):'#aaa'; })
+    .on('mouseover', showTip).on('mousemove', showTip).on('mouseout', hideTip)
+    .call(drg);
+
+  // Labels
+  const label = g.append('g').selectAll('text').data(nodes).join('text')
+    .attr('class', d=>'label'+(opts.ghostNew&&d.isNew?' ghost-lbl':''))
+    .text(d=>d.label);
+
+  const cs = opts.compact ? -110 : (nodes.length>40 ? -145 : -195);
+  const ld = opts.compact ?  52  : (nodes.length>40 ?  62  :  72);
+
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(edges).id(d=>d.id).distance(ld))
+    .force('charge', d3.forceManyBody().strength(cs))
+    .force('center', d3.forceCenter(w/2,h/2).strength(.04))
+    .force('x', d3.forceX(d=>(CP[d.comm]||[.5,.5])[0]*w).strength(.1))
+    .force('y', d3.forceY(d=>(CP[d.comm]||[.5,.5])[1]*h).strength(.1))
+    .force('col', d3.forceCollide(d=>nr(d)+5))
+    .alphaDecay(.022);
+
+  sim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('cx',d=>d.x).attr('cy',d=>d.y);
+    label.attr('x',d=>d.x).attr('y',d=>d.y+nr(d)+9);
+  });
+
+  return sim;
+}
+
+function buildLeg(id, comms){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.innerHTML='<div class="lt">Comunidades</div>'
+    +comms.map(c=>'<div class="li"><div class="ld" style="background:'+CC[c]+'"></div>'+CCL[c]+'</div>').join('');
+}
+
+// ============================================================
+// BAR CHART DATA
+// ============================================================
+const BAR_D = [
+  {name:"Actores y Organizaciones",  comm:"Actores",   n:7, c1:16, ci:4},
+  {name:"Documentos de Ingeniería",  comm:"DocIng",    n:7, c1:14, ci:6},
+  {name:"Gemelo Digital",            comm:"Gemelo",    n:6, c1:12, ci:8},
+  {name:"Seguridad y Normativa",     comm:"Seguridad", n:6, c1:12, ci:5},
+  {name:"Proceso PTAR",              comm:"PTAR",      n:6, c1:9,  ci:5},
+  {name:"Gestión de Proyecto",       comm:"Gestion",   n:5, c1:11, ci:5},
+  {name:"Modelo de Ubicación",       comm:"Ubicacion", n:5, c1:7,  ci:4},
+].sort((a,b)=>(b.n*2+b.c1+b.ci)-(a.n*2+a.c1+a.ci));
+
+function initBarChart(){
+  const cont=document.getElementById('bar-container');
+  if(!cont||cont.childElementCount>0) return;
+  const maxS=Math.max(...BAR_D.map(d=>d.n*2+d.c1+d.ci));
+  const PX=360;
+  BAR_D.forEach((d,i)=>{
+    const sc=d.n*2+d.c1+d.ci;
+    const w1=Math.round(d.n*2/maxS*PX);
+    const w2=Math.round(d.c1/maxS*PX);
+    const w3=Math.round(d.ci/maxS*PX);
+    const col=CC[d.comm]||'#888';
+    cont.innerHTML+=`<div class="brow">
+      <div class="bname" style="color:${col}">${i+1}. ${d.name}</div>
+      <div style="display:flex;align-items:center">
+        <div class="btrack" style="width:${PX}px">
+          <div class="bseg" style="background:#a29bfe;width:${w1}px">${d.n*2}</div>
+          <div class="bseg" style="background:#58a6ff;width:${w2}px">${d.c1}</div>
+          <div class="bseg" style="background:#27ae60;width:${w3}px">${d.ci}</div>
+        </div>
+        <span class="btotal">Score ${sc}</span>
+      </div>
+    </div>`;
+  });
+}
+
+// ============================================================
+// RANKING CARDS
+// ============================================================
+const RANKS = [
+  {
+    rank:1,comm:"Gemelo",title:"Gemelo Digital",bv:10,cv:8,pri:"P0",
+    nodes:["Gemelo Digital","Estado Tiempo Real","Histórico Datos","Alarma","Dashboard IoT","Sensor Virtual"],
+    v1:["Equipo","Proyecto","Fase F: Dashboards","TAG","Punch Item","Loop Check"],
+    desc:"Transforma CommissionPro de gestor documental a plataforma de monitoreo en vivo. 360 instrumentos PTAR → estado en tiempo real, histórico y alertas automáticas vinculadas a Punch Items.",
+  },
+  {
+    rank:2,comm:"Actores",title:"Actores y Organizaciones",bv:9,cv:9,pri:"P0",
+    nodes:["Empresa","Contratista","Supervisor Com.","Inspector QA/QC","Resp. Técnico","Cliente","Usuario App"],
+    v1:["Proyecto","Protocolo","Firma Aprobación","Punch Item","Dossier Precom."],
+    desc:"Habilita multi-empresa, auditoría por actor y firma digital vinculada a persona. Requerido para cualquier despliegue más allá del proyecto piloto Zipaquirá.",
+  },
+  {
+    rank:3,comm:"Seguridad",title:"Seguridad y Normativa",bv:8,cv:7,pri:"P0",
+    nodes:["Permiso Trabajo","Análisis Riesgo","LOTO","Normativa ISA/IEC","Certificado MC","PSSR"],
+    v1:["Equipo","Energización","Protocolo","Precomisionamiento","Loop Check","Dossier Precom."],
+    desc:"PTAR es infraestructura crítica de agua. Sin gestión de LOTO, permisos de trabajo y normativa ISA/IEC la plataforma no puede usarse en campo ni aprobar auditorías regulatorias.",
+  },
+  {
+    rank:4,comm:"DocIng",title:"Documentos de Ingeniería",bv:8,cv:8,pri:"P1",
+    nodes:["P&ID","Diagrama de Lazo","Hoja de Datos","Diag. Unifilar","Lista Materiales","Especif. Técnica","Rev. Documental"],
+    v1:["Documento","TAG","Loop Check","Equipo"],
+    desc:"Cierra el ciclo de ingeniería: TAG extraído de Instrument Index → vinculado a P&ID → trazable al equipo físico. Amplifica el valor del pipeline TAG→Equipo ya implementado.",
+  },
+  {
+    rank:5,comm:"PTAR",title:"Jerarquía de Proceso PTAR",bv:8,cv:7,pri:"P1",
+    nodes:["Planta Tratamiento","Tren Tratamiento","Etapa de Proceso","Línea de Proceso","Punto de Control","Tanque / Canal"],
+    v1:["Proyecto","Subsistema","Equipo","TAG","Loop Check"],
+    desc:"Modelo de dominio específico de tratamiento de agua. Conecta la jerarquía de comisionamiento (Sistema/Subsistema) con la jerarquía de proceso real de la PTAR Zipaquirá.",
+  },
+  {
+    rank:6,comm:"Gestion",title:"Gestión de Proyecto",bv:7,cv:7,pri:"P1",
+    nodes:["Hito","ITR","Cronograma","Walkdown","Curva S"],
+    v1:["Proyecto","Equipo","Protocolo","Subsistema","Punch Item","Dossier Precom.","Fase F: Dashboards"],
+    desc:"Capa de PMO sobre el dossier técnico. ITR (Inspection Test Record) es estándar de la industria para trazabilidad; el Certificado MC y la Curva S los necesita el cliente antes de la aceptación.",
+  },
+  {
+    rank:7,comm:"Ubicacion",title:"Modelo de Ubicación",bv:6,cv:5,pri:"P2",
+    nodes:["Ubicación Física","Coordenada GPS","Zona","Plano de Planta","Sala de Control"],
+    v1:["Equipo","Evidencia","Subsistema","Documento"],
+    desc:"Habilita trabajo de campo guiado por mapa y GPS en evidencias fotográficas. Prioridad baja hasta que se escale a múltiples proyectos con campo disperso.",
+  },
+];
+
+function initCards(){
+  const cont=document.getElementById('cards-container');
+  if(!cont||cont.childElementCount>0) return;
+  RANKS.forEach(d=>{
+    const col=CC[d.comm]||'#888';
+    const bvW=(d.bv/10*100)+'%';
+    const cvW=(d.cv/10*100)+'%';
+    const pc=d.pri==='P0'?'p0':d.pri==='P1'?'p1':'p2';
+    cont.innerHTML+=`<div class="card" style="border-left-color:${col}">
+      <div class="chead">
+        <div><div class="ctitle">${d.title}</div><span class="pri ${pc}">${d.pri} — ${d.pri==='P0'?'Crítico':d.pri==='P1'?'Alto valor':'Nice-to-have'}</span></div>
+        <div class="crank" style="color:${col}">#${d.rank}</div>
+      </div>
+      <div class="srow">
+        <span style="font-size:9px;color:var(--muted);width:62px">Valor negocio</span>
+        <div class="strk"><div class="sfil" style="background:${col};width:${bvW}"></div></div>
+        <span class="slb">${d.bv}/10</span>
+      </div>
+      <div class="srow">
+        <span style="font-size:9px;color:var(--muted);width:62px">Conectividad</span>
+        <div class="strk"><div class="sfil" style="background:${col};width:${cvW}"></div></div>
+        <span class="slb">${d.cv}/10</span>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px;margin-bottom:2px">Nodos nuevos:</div>
+      <div class="chips">${d.nodes.map(n=>'<span class="chip">'+n+'</span>').join('')}</div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:2px">Conecta con v1:</div>
+      <div class="chips">${d.v1.map(n=>'<span class="chip" style="border-color:'+col+'44">'+n+'</span>').join('')}</div>
+      <div class="cdesc">${d.desc}</div>
+    </div>`;
+  });
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+const inited={};
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const tabs=['current','gaps','v2','split','impact','ranking'];
+  const idx=tabs.indexOf(name);
+  if(idx>=0) document.querySelectorAll('.tab')[idx].classList.add('active');
+  const panel=document.getElementById('panel-'+name);
+  if(panel) panel.classList.add('active');
+  if(!inited[name]){ inited[name]=true; setTimeout(()=>initTab(name),30); }
+}
+
+function initTab(name){
+  if(name==='current'){
+    buildLeg('leg-current',[...new Set(V1N.map(n=>n.comm))]);
+    createGraph('ga-current', V1N, V1E, {});
+  }
+  else if(name==='gaps'){
+    const allN=[...V1N.map(n=>({...n,isNew:false})),...V2N_NEW.map(n=>({...n,isNew:true}))];
+    createGraph('ga-gaps', allN, [...V1E,...V2E_NEW], {ghostNew:true});
+  }
+  else if(name==='v2'){
+    const allN=[...V1N.map(n=>({...n,isNew:false})),...V2N_NEW.map(n=>({...n,isNew:true}))];
+    const allC=[...new Set(allN.map(n=>n.comm))];
+    buildLeg('leg-v2', allC);
+    createGraph('ga-v2', allN, [...V1E,...V2E_NEW], {});
+  }
+  else if(name==='split'){
+    createGraph('ga-sv1', V1N, V1E, {compact:true});
+    const allN=[...V1N.map(n=>({...n})),...V2N_NEW.map(n=>({...n,isNew:true}))];
+    createGraph('ga-sv2', allN, [...V1E,...V2E_NEW], {compact:true});
+  }
+  else if(name==='impact'){ initBarChart(); }
+  else if(name==='ranking'){ initCards(); }
+}
+
+// Init first tab
+window.addEventListener('load',()=>{
+  inited['current']=true;
+  setTimeout(()=>initTab('current'),50);
+});
+</script>
+</body>
+</html>
