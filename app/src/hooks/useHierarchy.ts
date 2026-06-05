@@ -1,7 +1,7 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { localDB } from "@/lib/db/local";
+import { localDB, enqueueSync } from "@/lib/db/local";
 import { v4 as uuidv4 } from "uuid";
 import type { Area, System, Subsystem } from "@/types";
 
@@ -33,10 +33,11 @@ export function useCreateArea() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Omit<Area, "id">) => {
-      const supabase = createClient();
       const area: Area = { ...payload, id: uuidv4() };
       await localDB.areas.add(area);
+      await enqueueSync("areas", area.id, "INSERT", area);
       if (navigator.onLine) {
+        const supabase = createClient();
         const { error } = await supabase.from("areas").insert(area);
         if (error) throw error;
       }
@@ -51,6 +52,7 @@ export function useUpdateArea() {
   return useMutation({
     mutationFn: async ({ id, projectId, ...updates }: Partial<Area> & { id: string; projectId: string }) => {
       await localDB.areas.update(id, updates);
+      await enqueueSync("areas", id, "UPDATE", { id, ...updates });
       if (navigator.onLine) {
         const supabase = createClient();
         const { error } = await supabase.from("areas").update(updates).eq("id", id);
@@ -89,10 +91,11 @@ export function useCreateSystem() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Omit<System, "id">) => {
-      const supabase = createClient();
       const system: System = { ...payload, id: uuidv4() };
       await localDB.systems.add(system);
+      await enqueueSync("systems", system.id, "INSERT", system);
       if (navigator.onLine) {
+        const supabase = createClient();
         const { error } = await supabase.from("systems").insert(system);
         if (error) throw error;
       }
@@ -130,10 +133,11 @@ export function useCreateSubsystem() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: Omit<Subsystem, "id">) => {
-      const supabase = createClient();
       const subsystem: Subsystem = { ...payload, id: uuidv4() };
       await localDB.subsystems.add(subsystem);
+      await enqueueSync("subsystems", subsystem.id, "INSERT", subsystem);
       if (navigator.onLine) {
+        const supabase = createClient();
         const { error } = await supabase.from("subsystems").insert(subsystem);
         if (error) throw error;
       }
