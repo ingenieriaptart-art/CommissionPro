@@ -9,9 +9,15 @@
  */
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL     = "https://nkjunkolsmjledzwuxgn.supabase.co";
-const SERVICE_ROLE_KEY = "SUPABASE_SERVICE_ROLE_KEY_REDACTED";
-const PROJECT_REF      = "nkjunkolsmjledzwuxgn";
+const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const PROJECT_REF      = new URL(SUPABASE_URL).hostname.split(".")[0];
+
+if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  console.error("❌  Faltan variables de entorno: NEXT_PUBLIC_SUPABASE_URL y/o SUPABASE_SERVICE_ROLE_KEY");
+  console.error("   Ejecutar con: node --env-file=.env.local scripts/enable-pgcron.mjs");
+  process.exit(1);
+}
 
 const sb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
