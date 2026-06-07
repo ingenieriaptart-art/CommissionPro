@@ -1,7 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
 import { v4 as uuidv4 } from "uuid";
-import type { Area, PlantMapAreaOverlay } from "@/types";
+import type { Area, Equipment, PlantMapAreaOverlay } from "@/types";
 
 interface DrawingRect {
   startX: number;
@@ -11,7 +11,9 @@ interface DrawingRect {
 }
 
 interface OverlayEditorProps {
+  overlayMode?: 'area' | 'equipment';
   areas: Area[];
+  equipment?: Equipment[];
   existingOverlays: PlantMapAreaOverlay[];
   imgWidth: number;
   imgHeight: number;
@@ -20,13 +22,13 @@ interface OverlayEditorProps {
 }
 
 export function OverlayEditor({
-  areas, existingOverlays, imgWidth, imgHeight,
+  overlayMode = 'area', areas, equipment = [], existingOverlays, imgWidth, imgHeight,
   scale, onOverlaysChange,
 }: OverlayEditorProps) {
   const [overlays, setOverlays] = useState<PlantMapAreaOverlay[]>(existingOverlays);
   const [drawing, setDrawing] = useState<DrawingRect | null>(null);
   const [pendingOverlay, setPendingOverlay] = useState<PlantMapAreaOverlay | null>(null);
-  const [selectedAreaId, setSelectedAreaId] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string>("");
 
   const toImageCoords = useCallback((clientX: number, clientY: number, svgEl: SVGSVGElement) => {
     const rect = svgEl.getBoundingClientRect();
@@ -57,27 +59,26 @@ export function OverlayEditor({
     const ry = Math.min(drawing.startY, y);
     const rw = Math.abs(x - drawing.startX);
     const rh = Math.abs(y - drawing.startY);
-
     if (rw > 20 && rh > 20) {
       setPendingOverlay({ id: uuidv4(), x: rx, y: ry, width: rw, height: rh });
     }
     setDrawing(null);
   };
 
-  const handleAssignArea = () => {
-    if (!pendingOverlay || !selectedAreaId) return;
+  const handleAssign = () => {
+    if (!pendingOverlay || !selectedId) return;
     const updated = [
-      ...overlays.filter(o => o.id !== selectedAreaId),
-      { ...pendingOverlay, id: selectedAreaId },
+      ...overlays.filter(o => o.id !== selectedId),
+      { ...pendingOverlay, id: selectedId, type: overlayMode },
     ];
     setOverlays(updated);
     onOverlaysChange(updated);
     setPendingOverlay(null);
-    setSelectedAreaId("");
+    setSelectedId("");
   };
 
-  const handleDeleteOverlay = (areaId: string) => {
-    const updated = overlays.filter(o => o.id !== areaId);
+  const handleDeleteOverlay = (id: string) => {
+    const updated = overlays.filter(o => o.id !== id);
     setOverlays(updated);
     onOverlaysChange(updated);
   };
@@ -89,17 +90,24 @@ export function OverlayEditor({
     height: Math.abs(drawing.currentY - drawing.startY),
   } : null;
 
-  const assignedAreaIds = new Set(overlays.map(o => o.id));
+  // Items ya asignados (por type)
+  const assignedAreaIds = new Set(
+    overlays.filter(o => !o.type || o.type === 'area').map(o => o.id)
+  );
+  const assignedEquipmentIds = new Set(
+    overlays.filter(o => o.type === 'equipment').map(o => o.id)
+  );
   const unassignedAreas = areas.filter(a => !assignedAreaIds.has(a.id));
+  const unassignedEquipment = equipment.filter(eq => !assignedEquipmentIds.has(eq.id));
+
+  const popupLabel = overlayMode === 'equipment' ? "Asignar zona a equipo" : "Asignar zona a área";
 
   return (
     <>
       <svg
         style={{
-          position: "absolute",
-          inset: 0,
-          width: imgWidth,
-          height: imgHeight,
+          position: "absolute", inset: 0,
+          width: imgWidth, height: imgHeight,
           cursor: "crosshair",
         }}
         viewBox={`0 0 ${imgWidth} ${imgHeight}`}
@@ -108,7 +116,9 @@ export function OverlayEditor({
         onMouseUp={handleSvgMouseUp}
       >
         {overlays.map(o => {
-          const area = areas.find(a => a.id === o.id);
+          const label = overlayMode === 'equipment'
+            ? (equipment.find(eq => eq.id === o.id)?.tag ?? o.id)
+            : (areas.find(a => a.id === o.id)?.name ?? o.id);
           return (
             <g key={o.id}>
               <rect
@@ -117,7 +127,7 @@ export function OverlayEditor({
                 stroke="#3b82f6" strokeWidth={2} rx={3}
               />
               <text x={o.x + 6} y={o.y + 16} fill="white" fontSize={11} fontWeight={700}>
-                {area?.name ?? o.id}
+                {label}
               </text>
               <g
                 style={{ cursor: "pointer" }}
@@ -145,36 +155,43 @@ export function OverlayEditor({
           style={{
             position: "absolute", top: 16, right: 16, zIndex: 50,
             background: "#1e293b", border: "1px solid #3b82f6",
-            borderRadius: 10, padding: 16, width: 220,
+            borderRadius: 10, padding: 16, width: 232,
             boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
           }}
         >
           <p style={{ color: "#f1f5f9", fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
-            Asignar zona a área
+            {popupLabel}
           </p>
           <select
-            value={selectedAreaId}
-            onChange={e => setSelectedAreaId(e.target.value)}
+            value={selectedId}
+            onChange={e => setSelectedId(e.target.value)}
             style={{
               width: "100%", background: "#0f172a", color: "#e2e8f0",
               border: "1px solid #334155", borderRadius: 6, padding: "6px 8px",
               fontSize: 12, marginBottom: 10,
             }}
           >
-            <option value="">Seleccionar área…</option>
-            {unassignedAreas.map(a => (
-              <option key={a.id} value={a.id}>{a.name}</option>
-            ))}
+            <option value="">
+              {overlayMode === 'equipment' ? "Seleccionar equipo…" : "Seleccionar área…"}
+            </option>
+            {overlayMode === 'equipment'
+              ? unassignedEquipment.map(eq => (
+                  <option key={eq.id} value={eq.id}>{eq.tag} — {eq.name}</option>
+                ))
+              : unassignedAreas.map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))
+            }
           </select>
           <div style={{ display: "flex", gap: 6 }}>
             <button
-              onClick={handleAssignArea}
-              disabled={!selectedAreaId}
+              onClick={handleAssign}
+              disabled={!selectedId}
               style={{
                 flex: 1, padding: "6px 0", borderRadius: 6, fontSize: 12,
-                background: selectedAreaId ? "#1d4ed8" : "#1e293b",
-                color: selectedAreaId ? "white" : "#475569",
-                border: "none", cursor: selectedAreaId ? "pointer" : "not-allowed",
+                background: selectedId ? "#1d4ed8" : "#1e293b",
+                color: selectedId ? "white" : "#475569",
+                border: "none", cursor: selectedId ? "pointer" : "not-allowed",
               }}
             >
               Asignar
