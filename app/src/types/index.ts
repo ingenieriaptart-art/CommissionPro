@@ -416,10 +416,11 @@ export interface PlantMapEdgeConfig {
   target: string;
 }
 
-/** Overlay rectangular de un área sobre la imagen física */
+/** Overlay rectangular sobre la imagen física — área o equipo */
 export interface PlantMapAreaOverlay {
-  id: string;      // area.id
-  x: number;       // píxeles desde esquina superior izquierda de la imagen original
+  id: string;                   // area.id cuando type='area'; equipment.id cuando type='equipment'
+  type?: 'area' | 'equipment';  // ausente se trata como 'area' (backward-compatible)
+  x: number;                    // píxeles desde esquina superior izquierda de la imagen original
   y: number;
   width: number;
   height: number;
