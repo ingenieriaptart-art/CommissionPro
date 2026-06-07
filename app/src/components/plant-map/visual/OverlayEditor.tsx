@@ -11,9 +11,9 @@ interface DrawingRect {
 }
 
 interface OverlayEditorProps {
-  overlayMode?: 'area' | 'equipment';
+  overlayMode: 'area' | 'equipment';
   areas: Area[];
-  equipment?: Equipment[];
+  equipment: Equipment[];
   existingOverlays: PlantMapAreaOverlay[];
   imgWidth: number;
   imgHeight: number;
@@ -22,7 +22,7 @@ interface OverlayEditorProps {
 }
 
 export function OverlayEditor({
-  overlayMode = 'area', areas, equipment = [], existingOverlays, imgWidth, imgHeight,
+  overlayMode, areas, equipment, existingOverlays, imgWidth, imgHeight,
   scale, onOverlaysChange,
 }: OverlayEditorProps) {
   const [overlays, setOverlays] = useState<PlantMapAreaOverlay[]>(existingOverlays);
