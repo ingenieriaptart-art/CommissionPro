@@ -39,6 +39,11 @@ export function PlantVisualToolbar({
       return;
     }
 
+    if (overlayMode === 'equipment' && !areaId) {
+      setUploadError("Error interno: falta el ID de área.");
+      return;
+    }
+
     setUploading(true);
     setUploadError(null);
     try {
