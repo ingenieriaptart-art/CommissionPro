@@ -142,6 +142,7 @@ export default function PlantMapPage() {
       {drill.level === 'visual' && (
         <>
           <PlantVisualToolbar
+            overlayMode="area"
             projectId={projectId}
             hasImage={!!layout.imageUrl}
             editMode={editMode}

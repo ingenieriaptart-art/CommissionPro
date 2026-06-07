@@ -5,7 +5,9 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
 interface PlantVisualToolbarProps {
+  overlayMode: 'area' | 'equipment';
   projectId: string;
+  areaId?: string;        // requerido cuando overlayMode='equipment'
   hasImage: boolean;
   editMode: boolean;
   hasPendingOverlays: boolean;
@@ -16,7 +18,7 @@ interface PlantVisualToolbarProps {
 }
 
 export function PlantVisualToolbar({
-  projectId, hasImage, editMode, hasPendingOverlays,
+  overlayMode, projectId, areaId, hasImage, editMode, hasPendingOverlays,
   onEditModeChange, onImageUploaded, onSaveOverlays, onCancelEdit,
 }: PlantVisualToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +44,8 @@ export function PlantVisualToolbar({
     try {
       const supabase = createClient();
       const ext = file.name.split('.').pop() ?? 'png';
-      const path = `${projectId}/plano.${ext}`;
+      const folder = areaId ? `${projectId}/${areaId}` : projectId;
+      const path = `${folder}/plano.${ext}`;
 
       const { error: uploadErr } = await supabase.storage
         .from("plant-maps")
@@ -62,6 +65,9 @@ export function PlantVisualToolbar({
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
+
+  const editLabel = overlayMode === 'equipment' ? "Editar equipos" : "Editar áreas";
+  const saveLabel = overlayMode === 'equipment' ? "Guardar equipos" : "Guardar áreas";
 
   return (
     <div className="h-10 bg-slate-800 border-b border-slate-700 flex items-center px-4 gap-2 flex-shrink-0">
@@ -94,7 +100,7 @@ export function PlantVisualToolbar({
           onClick={() => onEditModeChange(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-300 border border-slate-600 transition-colors"
         >
-          <Pencil size={12} /> Editar áreas
+          <Pencil size={12} /> {editLabel}
         </button>
       )}
 
@@ -110,7 +116,7 @@ export function PlantVisualToolbar({
                 : "bg-slate-700 text-slate-500 border border-slate-600 cursor-not-allowed"
             )}
           >
-            <Check size={12} /> Guardar áreas
+            <Check size={12} /> {saveLabel}
           </button>
           <button
             onClick={onCancelEdit}
