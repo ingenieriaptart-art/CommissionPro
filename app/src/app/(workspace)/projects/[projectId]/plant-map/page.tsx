@@ -1,6 +1,7 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { useProject } from "@/hooks/useProject";
 import { useAreas, useSystems, useSubsystems } from "@/hooks/useHierarchy";
 import { useEquipment } from "@/hooks/useEquipment";
@@ -24,12 +25,20 @@ export default function PlantMapPage() {
   const [panelState, setPanelState] = useState<PanelState>({ open: false });
   const [editMode, setEditMode]     = useState(false);
   const [pendingOverlays, setPendingOverlays] = useState<PlantMapAreaOverlay[] | null>(null);
+  const [activeTab, setActiveTab]   = useState<'unifilar' | 'diagrama'>('unifilar');
+
+  // Reset tab and panel when entering area level
+  useEffect(() => {
+    if (drill.level === 'area') {
+      setActiveTab('unifilar');
+      setPanelState({ open: false });
+    }
+  }, [drill.level]);
 
   // ── Data queries ─────────────────────────────────────────────
   const { data: project }     = useProject(projectId);
   const { data: areas = [] }  = useAreas(projectId);
 
-  // useSystems/useSubsystems accept string (not undefined) — pass '' to disable query
   const areaIdForQuery   = (drill.level === 'area' || drill.level === 'system') ? drill.areaId : '';
   const systemIdForQuery = drill.level === 'system' ? drill.systemId : '';
 
@@ -37,7 +46,6 @@ export default function PlantMapPage() {
   const { data: subsystems = [] } = useSubsystems(systemIdForQuery);
   const { data: equipment  = [] } = useEquipment(projectId);
 
-  // Entities for React Flow canvas (based on drill level)
   const activeEntities: (Area | System | Subsystem)[] =
     drill.level === 'area'   ? systems :
     drill.level === 'system' ? subsystems : [];
@@ -81,6 +89,10 @@ export default function PlantMapPage() {
     setPanelState({ open: true, view: 'area', areaId });
   };
 
+  const handleEquipmentOverlayClick = (equipmentId: string) => {
+    setPanelState({ open: true, view: 'detail', equipmentId });
+  };
+
   const handleExploreArea = (areaId: string) => {
     const area = areas.find(a => a.id === areaId);
     setDrill({ level: 'area', areaId, areaName: area?.name ?? '' });
@@ -92,10 +104,10 @@ export default function PlantMapPage() {
       const system = systems.find(s => s.id === nodeId);
       if (system) {
         setDrill({
-          level:      'system',
-          areaId:     drill.areaId,
-          areaName:   drill.areaName,
-          systemId:   nodeId,
+          level: 'system',
+          areaId: drill.areaId,
+          areaName: drill.areaName,
+          systemId: nodeId,
           systemName: system.name,
         });
       }
@@ -126,10 +138,49 @@ export default function PlantMapPage() {
     setEditMode(false);
   };
 
+  // ── Shared sub-renders ───────────────────────────────────────
+
+  const saveLayoutButton = layout.hasPendingChanges && (
+    <div className="absolute top-4 right-4 z-20">
+      <button
+        onClick={layout.saveLayout}
+        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-lg transition-colors"
+      >
+        ● Guardar layout
+      </button>
+    </div>
+  );
+
+  const firstTimeBanner = layout.isFirstTime && (
+    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 bg-slate-800/90 backdrop-blur-sm border border-slate-600 rounded-lg px-4 py-2 text-xs text-slate-400">
+      Arrastrá los nodos para organizar el diagrama y guardá el layout
+    </div>
+  );
+
+  const flowCanvas = (
+    <>
+      {saveLayoutButton}
+      {layout.isLoading ? (
+        <div className="flex-1 flex items-center justify-center bg-slate-900">
+          <div className="text-slate-500 text-sm">Cargando diagrama…</div>
+        </div>
+      ) : (
+        <PlantFlowCanvas
+          initialNodes={layout.nodes}
+          initialEdges={layout.edges}
+          onNodeClick={handleFlowNodeClick}
+          onNodesChange={layout.updatePositions}
+          onEdgesChange={layout.updateEdges}
+        />
+      )}
+      {firstTimeBanner}
+    </>
+  );
+
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full relative">
-      {/* Breadcrumb — only visible in React Flow layers */}
+      {/* Breadcrumb — visible cuando no estamos en el nivel visual */}
       {drill.level !== 'visual' && (
         <PlantMapBreadcrumb
           drill={drill}
@@ -138,7 +189,7 @@ export default function PlantMapPage() {
         />
       )}
 
-      {/* ── VISUAL PLANT LAYER ── */}
+      {/* ── NIVEL VISUAL ── */}
       {drill.level === 'visual' && (
         <>
           <PlantVisualToolbar
@@ -152,7 +203,6 @@ export default function PlantMapPage() {
             onSaveOverlays={handleSaveOverlays}
             onCancelEdit={handleCancelEdit}
           />
-
           <PlantVisualMap
             overlayMode="area"
             imageUrl={layout.imageUrl}
@@ -163,51 +213,85 @@ export default function PlantMapPage() {
             selectedAreaId={panelState.open && panelState.view === 'area' ? panelState.areaId : null}
             editMode={editMode}
             onAreaClick={handleAreaClick}
-            onUploadClick={() => { /* handled by PlantVisualToolbar */ }}
+            onUploadClick={() => { /* manejado por PlantVisualToolbar */ }}
             onOverlaysChange={setPendingOverlays}
           />
         </>
       )}
 
-      {/* ── REACT FLOW LAYER ── */}
-      {drill.level !== 'visual' && (
+      {/* ── NIVEL ÁREA — con tabs Unifilar / Diagrama ── */}
+      {drill.level === 'area' && (
         <>
-          {/* Save layout button — only when there are unsaved position changes */}
-          {layout.hasPendingChanges && (
-            <div className="absolute top-4 right-4 z-20">
-              <button
-                onClick={layout.saveLayout}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-lg transition-colors"
-              >
-                ● Guardar layout
-              </button>
-            </div>
+          {/* Tab bar */}
+          <div className="h-10 bg-slate-800 border-b border-slate-700 flex items-center px-4 gap-1 flex-shrink-0">
+            <button
+              onClick={() => setActiveTab('unifilar')}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                activeTab === 'unifilar'
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-700"
+              )}
+            >
+              ⚡ Unifilar
+            </button>
+            <button
+              onClick={() => setActiveTab('diagrama')}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                activeTab === 'diagrama'
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-700"
+              )}
+            >
+              🔷 Diagrama
+            </button>
+          </div>
+
+          {/* Tab Unifilar */}
+          {activeTab === 'unifilar' && (
+            <>
+              <PlantVisualToolbar
+                overlayMode="equipment"
+                projectId={projectId}
+                areaId={drill.areaId}
+                hasImage={!!layout.imageUrl}
+                editMode={editMode}
+                hasPendingOverlays={pendingOverlays !== null}
+                onEditModeChange={setEditMode}
+                onImageUploaded={handleImageUploaded}
+                onSaveOverlays={handleSaveOverlays}
+                onCancelEdit={handleCancelEdit}
+              />
+              <PlantVisualMap
+                overlayMode="equipment"
+                imageUrl={layout.imageUrl}
+                overlays={pendingOverlays ?? layout.overlays}
+                areas={areas}
+                equipment={equipment}
+                pctByArea={pctByArea}
+                selectedAreaId={
+                  panelState.open && panelState.view === 'detail'
+                    ? panelState.equipmentId
+                    : null
+                }
+                editMode={editMode}
+                onAreaClick={handleEquipmentOverlayClick}
+                onUploadClick={() => { /* manejado por PlantVisualToolbar */ }}
+                onOverlaysChange={setPendingOverlays}
+              />
+            </>
           )}
 
-          {layout.isLoading ? (
-            <div className="flex-1 flex items-center justify-center bg-slate-900">
-              <div className="text-slate-500 text-sm">Cargando diagrama…</div>
-            </div>
-          ) : (
-            <PlantFlowCanvas
-              initialNodes={layout.nodes}
-              initialEdges={layout.edges}
-              onNodeClick={handleFlowNodeClick}
-              onNodesChange={layout.updatePositions}
-              onEdgesChange={layout.updateEdges}
-            />
-          )}
-
-          {/* First-time banner */}
-          {layout.isFirstTime && (
-            <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 bg-slate-800/90 backdrop-blur-sm border border-slate-600 rounded-lg px-4 py-2 text-xs text-slate-400">
-              Arrastrá los nodos para organizar el diagrama y guardá el layout
-            </div>
-          )}
+          {/* Tab Diagrama */}
+          {activeTab === 'diagrama' && flowCanvas}
         </>
       )}
 
-      {/* Floating panel */}
+      {/* ── NIVEL SISTEMA ── */}
+      {drill.level === 'system' && flowCanvas}
+
+      {/* Panel flotante */}
       <PlantMapPanel
         panelState={panelState}
         areas={areas}
