@@ -2,18 +2,21 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { ZoomIn, ZoomOut, Maximize2, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Area, PlantMapAreaOverlay } from "@/types";
+import type { Area, Equipment, PlantMapAreaOverlay } from "@/types";
 import { PlantAreaOverlay } from "./PlantAreaOverlay";
+import { EquipmentOverlay } from "./EquipmentOverlay";
 import { OverlayEditor } from "./OverlayEditor";
 
 interface PlantVisualMapProps {
+  overlayMode: 'area' | 'equipment';
   imageUrl: string | null;
   overlays: PlantMapAreaOverlay[];
   areas: Area[];
+  equipment: Equipment[];
   pctByArea: Record<string, number>;
   selectedAreaId: string | null;
   editMode: boolean;
-  onAreaClick: (areaId: string) => void;
+  onAreaClick: (id: string) => void;
   onUploadClick: () => void;
   onOverlaysChange: (overlays: PlantMapAreaOverlay[]) => void;
 }
@@ -23,7 +26,7 @@ const MAX_SCALE = 4;
 const SCALE_STEP = 0.15;
 
 export function PlantVisualMap({
-  imageUrl, overlays, areas, pctByArea,
+  overlayMode, imageUrl, overlays, areas, equipment, pctByArea,
   selectedAreaId, editMode, onAreaClick, onUploadClick, onOverlaysChange,
 }: PlantVisualMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -65,8 +68,19 @@ export function PlantVisualMap({
   const fitView = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
 
   const areaMap = new Map(areas.map((a, i) => [a.id, { area: a, index: i }]));
+  const equipmentMap = new Map(equipment.map(eq => [eq.id, eq]));
 
   const handleHover = useCallback((_id: string | null) => {}, []);
+
+  const emptyText = overlayMode === 'equipment'
+    ? "Subí el unifilar de esta área para comenzar"
+    : "Subí el plano de tu planta para comenzar";
+  const emptyBtnText = overlayMode === 'equipment'
+    ? "Subir unifilar del área"
+    : "Subir imagen de planta";
+  const editHintText = overlayMode === 'equipment'
+    ? 'Activá "Editar equipos" para marcar los equipos sobre el unifilar'
+    : 'Activá "Editar áreas" para marcar las zonas sobre el plano';
 
   if (!imageUrl) {
     return (
@@ -75,14 +89,12 @@ export function PlantVisualMap({
           <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center">
             <ImagePlus size={28} className="text-slate-500" />
           </div>
-          <p className="text-slate-400 text-sm">
-            Subí el plano de tu planta para comenzar
-          </p>
+          <p className="text-slate-400 text-sm">{emptyText}</p>
           <button
             onClick={onUploadClick}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            Subir imagen de planta
+            {emptyBtnText}
           </button>
         </div>
       </div>
@@ -116,7 +128,7 @@ export function PlantVisualMap({
         <div style={{ position: "relative", display: "inline-block" }}>
           <img
             src={imageUrl}
-            alt="Plano de planta"
+            alt="Plano"
             onLoad={e => {
               const img = e.currentTarget;
               setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
@@ -128,38 +140,53 @@ export function PlantVisualMap({
           {imgSize.w > 0 && !editMode && (
             <svg
               style={{
-                position: "absolute",
-                inset: 0,
-                width: imgSize.w,
-                height: imgSize.h,
+                position: "absolute", inset: 0,
+                width: imgSize.w, height: imgSize.h,
                 pointerEvents: "none",
               }}
               viewBox={`0 0 ${imgSize.w} ${imgSize.h}`}
             >
               {overlays.map(overlay => {
-                const entry = areaMap.get(overlay.id);
-                if (!entry) return null;
-                return (
-                  <g key={overlay.id} style={{ pointerEvents: "all" }}>
-                    <PlantAreaOverlay
-                      overlay={overlay}
-                      area={entry.area}
-                      areaIndex={entry.index}
-                      completionPct={pctByArea[overlay.id] ?? 0}
-                      selected={selectedAreaId === overlay.id}
-                      onHover={handleHover}
-                      onClick={onAreaClick}
-                    />
-                  </g>
-                );
+                if (overlayMode === 'equipment') {
+                  const eq = equipmentMap.get(overlay.id);
+                  if (!eq) return null;
+                  return (
+                    <g key={overlay.id} style={{ pointerEvents: "all" }}>
+                      <EquipmentOverlay
+                        overlay={overlay}
+                        equipment={eq}
+                        selected={selectedAreaId === overlay.id}
+                        onHover={handleHover}
+                        onClick={onAreaClick}
+                      />
+                    </g>
+                  );
+                } else {
+                  const entry = areaMap.get(overlay.id);
+                  if (!entry) return null;
+                  return (
+                    <g key={overlay.id} style={{ pointerEvents: "all" }}>
+                      <PlantAreaOverlay
+                        overlay={overlay}
+                        area={entry.area}
+                        areaIndex={entry.index}
+                        completionPct={pctByArea[overlay.id] ?? 0}
+                        selected={selectedAreaId === overlay.id}
+                        onHover={handleHover}
+                        onClick={onAreaClick}
+                      />
+                    </g>
+                  );
+                }
               })}
             </svg>
           )}
 
-          {/* OverlayEditor renders its own SVG when editMode=true */}
           {imgSize.w > 0 && editMode && (
             <OverlayEditor
+              overlayMode={overlayMode}
               areas={areas}
+              equipment={equipment}
               existingOverlays={overlays}
               imgWidth={imgSize.w}
               imgHeight={imgSize.h}
@@ -171,18 +198,13 @@ export function PlantVisualMap({
           {imageUrl && overlays.length === 0 && !editMode && (
             <div
               style={{
-                position: "absolute",
-                top: 12, left: 12,
-                background: "rgba(15,23,42,0.9)",
-                border: "1px solid #334155",
-                borderRadius: 8,
-                padding: "8px 14px",
-                color: "#94a3b8",
-                fontSize: 12,
-                pointerEvents: "none",
+                position: "absolute", top: 12, left: 12,
+                background: "rgba(15,23,42,0.9)", border: "1px solid #334155",
+                borderRadius: 8, padding: "8px 14px",
+                color: "#94a3b8", fontSize: 12, pointerEvents: "none",
               }}
             >
-              Activá &quot;Editar áreas&quot; para marcar las zonas sobre el plano
+              {editHintText}
             </div>
           )}
         </div>

@@ -153,9 +153,11 @@ export default function PlantMapPage() {
           />
 
           <PlantVisualMap
+            overlayMode="area"
             imageUrl={layout.imageUrl}
             overlays={pendingOverlays ?? layout.overlays}
             areas={areas}
+            equipment={equipment}
             pctByArea={pctByArea}
             selectedAreaId={panelState.open && panelState.view === 'area' ? panelState.areaId : null}
             editMode={editMode}
