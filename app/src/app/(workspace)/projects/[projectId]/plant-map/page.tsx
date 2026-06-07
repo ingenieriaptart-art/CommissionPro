@@ -27,12 +27,12 @@ export default function PlantMapPage() {
   const [pendingOverlays, setPendingOverlays] = useState<PlantMapAreaOverlay[] | null>(null);
   const [activeTab, setActiveTab]   = useState<'unifilar' | 'diagrama'>('unifilar');
 
-  // Reset tab and panel when entering area level
+  // Reset tab, panel, and edit state on drill level change
   useEffect(() => {
-    if (drill.level === 'area') {
-      setActiveTab('unifilar');
-      setPanelState({ open: false });
-    }
+    setActiveTab('unifilar');
+    setPanelState({ open: false });
+    setEditMode(false);
+    setPendingOverlays(null);
   }, [drill.level]);
 
   // ── Data queries ─────────────────────────────────────────────
