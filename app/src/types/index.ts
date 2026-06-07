@@ -382,3 +382,58 @@ export interface Notification {
 // -------------------- UI helpers --------------------
 export interface SelectOption { value: string; label: string; }
 export interface KpiCard { label: string; value: number | string; total?: number; color?: string; }
+
+// ============================================================
+// Plant Map — Mapa Interactivo de Planta
+// ============================================================
+
+export type PlantMapLevel = 'visual' | 'area' | 'system';
+
+export interface PlantMapLayout {
+  id: string;
+  project_id: string;
+  level: PlantMapLevel;
+  parent_id: string | null;
+  nodes_json: PlantMapNodePosition[];
+  edges_json: PlantMapEdgeConfig[];
+  overlays_json: PlantMapAreaOverlay[];
+  image_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Posición de un nodo en el canvas React Flow */
+export interface PlantMapNodePosition {
+  id: string;
+  x: number;
+  y: number;
+}
+
+/** Edge en el diagrama React Flow */
+export interface PlantMapEdgeConfig {
+  id: string;
+  source: string;
+  target: string;
+}
+
+/** Overlay rectangular de un área sobre la imagen física */
+export interface PlantMapAreaOverlay {
+  id: string;      // area.id
+  x: number;       // píxeles desde esquina superior izquierda de la imagen original
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Estado de navegación — qué nivel está activo en el canvas */
+export type DrillLevel =
+  | { level: 'visual' }
+  | { level: 'area';   areaId: string; areaName: string }
+  | { level: 'system'; areaId: string; areaName: string; systemId: string; systemName: string };
+
+/** Estado del panel flotante */
+export type PanelState =
+  | { open: false }
+  | { open: true; view: 'area';      areaId: string }
+  | { open: true; view: 'equipment'; subsystemId: string }
+  | { open: true; view: 'detail';    equipmentId: string };
