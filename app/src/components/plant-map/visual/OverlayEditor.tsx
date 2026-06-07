@@ -159,7 +159,7 @@ export function OverlayEditor({
       {pendingOverlay && (
         <div
           style={{
-            position: "absolute", top: 16, right: 16, zIndex: 50,
+            position: "fixed", top: 72, right: 24, zIndex: 1000,
             background: "#1e293b", border: "1px solid #3b82f6",
             borderRadius: 10, padding: 16, width: 232,
             boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
