@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { Area, Equipment, PlantMapAreaOverlay } from "@/types";
 
@@ -29,6 +29,10 @@ export function OverlayEditor({
   const [drawing, setDrawing] = useState<DrawingRect | null>(null);
   const [pendingOverlay, setPendingOverlay] = useState<PlantMapAreaOverlay | null>(null);
   const [selectedId, setSelectedId] = useState<string>("");
+
+  // Memoized lookup maps to avoid O(n*m) in render loop
+  const equipmentById = useMemo(() => new Map(equipment.map(e => [e.id, e])), [equipment]);
+  const areasById = useMemo(() => new Map(areas.map(a => [a.id, a])), [areas]);
 
   const toImageCoords = useCallback((clientX: number, clientY: number, svgEl: SVGSVGElement) => {
     const rect = svgEl.getBoundingClientRect();
@@ -114,11 +118,13 @@ export function OverlayEditor({
         onMouseDown={handleSvgMouseDown}
         onMouseMove={handleSvgMouseMove}
         onMouseUp={handleSvgMouseUp}
+        onMouseLeave={() => setDrawing(null)}
       >
         {overlays.map(o => {
-          const label = overlayMode === 'equipment'
-            ? (equipment.find(eq => eq.id === o.id)?.tag ?? o.id)
-            : (areas.find(a => a.id === o.id)?.name ?? o.id);
+          const isEquipment = (o.type ?? 'area') === 'equipment';
+          const label = isEquipment
+            ? (equipmentById.get(o.id)?.tag ?? o.id)
+            : (areasById.get(o.id)?.name ?? o.id);
           return (
             <g key={o.id}>
               <rect
