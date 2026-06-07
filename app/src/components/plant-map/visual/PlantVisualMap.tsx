@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { ZoomIn, ZoomOut, Maximize2, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Area, Equipment, PlantMapAreaOverlay } from "@/types";
@@ -67,8 +67,14 @@ export function PlantVisualMap({
   const zoomOut = () => setScale(s => Math.max(MIN_SCALE, s - SCALE_STEP));
   const fitView = () => { setScale(1); setOffset({ x: 0, y: 0 }); };
 
-  const areaMap = new Map(areas.map((a, i) => [a.id, { area: a, index: i }]));
-  const equipmentMap = new Map(equipment.map(eq => [eq.id, eq]));
+  const areaMap = useMemo(
+    () => new Map(areas.map((a, i) => [a.id, { area: a, index: i }])),
+    [areas]
+  );
+  const equipmentMap = useMemo(
+    () => new Map(equipment.map(eq => [eq.id, eq])),
+    [equipment]
+  );
 
   const handleHover = useCallback((_id: string | null) => {}, []);
 
@@ -195,7 +201,7 @@ export function PlantVisualMap({
             />
           )}
 
-          {imageUrl && overlays.length === 0 && !editMode && (
+          {overlays.length === 0 && !editMode && (
             <div
               style={{
                 position: "absolute", top: 12, left: 12,
