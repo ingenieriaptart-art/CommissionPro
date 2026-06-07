@@ -30,13 +30,5 @@ ALTER TABLE plant_map_layouts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "project members can manage plant map"
   ON plant_map_layouts
   FOR ALL
-  USING (
-    project_id IN (
-      SELECT project_id FROM project_members WHERE user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    project_id IN (
-      SELECT project_id FROM project_members WHERE user_id = auth.uid()
-    )
-  );
+  USING (app_in_project(project_id))
+  WITH CHECK (app_in_project(project_id));

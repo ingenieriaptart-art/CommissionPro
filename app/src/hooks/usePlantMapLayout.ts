@@ -135,20 +135,38 @@ export function usePlantMapLayout(
   const edgeConfigs = pendingEdges ?? savedEdgeConfigs;
   const edges = toFlowEdges(edgeConfigs);
 
-  // Upsert layout
+  // Upsert layout — manual select+insert/update because PostgREST can't resolve
+  // conflicts on expression-based unique indexes (COALESCE on nullable parent_id).
   const upsertMutation = useMutation({
     mutationFn: async (payload: Partial<PlantMapLayout>) => {
       const supabase = createClient();
-      const { error } = await supabase
+      const q = supabase
         .from("plant_map_layouts")
-        .upsert({
-          project_id: projectId,
-          level,
-          parent_id: parentId,
-          ...payload,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "project_id,level,parent_id" });
-      if (error) throw error;
+        .select("id")
+        .eq("project_id", projectId)
+        .eq("level", level);
+      const { data: existing } = parentId
+        ? await q.eq("parent_id", parentId).maybeSingle()
+        : await q.is("parent_id", null).maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from("plant_map_layouts")
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("plant_map_layouts")
+          .insert({
+            project_id: projectId,
+            level,
+            parent_id: parentId,
+            ...payload,
+            updated_at: new Date().toISOString(),
+          });
+        if (error) throw error;
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qKey }),
   });
