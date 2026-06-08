@@ -61,7 +61,7 @@ export function PlantVisualToolbar({
         .from("plant-maps")
         .getPublicUrl(path);
 
-      onImageUploaded(publicUrl);
+      onImageUploaded(`${publicUrl}?t=${Date.now()}`);
     } catch (err) {
       setUploadError("Error al subir la imagen. Intentá de nuevo.");
       console.error(err);
