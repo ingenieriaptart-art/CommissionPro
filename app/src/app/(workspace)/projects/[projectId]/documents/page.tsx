@@ -9,9 +9,9 @@ import Link from "next/link";
 import {
   FileText, FileType2, FileSpreadsheet, Image, File,
   Loader2, CheckCircle, AlertCircle, Clock,
-  ChevronRight, FolderOpen, RotateCcw,
+  ChevronRight, FolderOpen, RotateCcw, Trash2,
 } from "lucide-react";
-import { useReprocessDocument } from "@/hooks/useDocuments";
+import { useReprocessDocument, useDeleteDocument } from "@/hooks/useDocuments";
 import type { Document, DocumentProcessingStatus } from "@/types";
 
 interface Props { params: Promise<{ projectId: string }> }
@@ -55,6 +55,7 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
   const cfg        = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   const meta       = doc.processing_metadata as { tags_found?: number } | undefined;
   const reprocess  = useReprocessDocument();
+  const deleteMut  = useDeleteDocument();
 
   return (
     <div className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors rounded-xl">
@@ -110,6 +111,20 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
           Ver tags <ChevronRight size={12} />
         </Link>
       )}
+
+      {/* Eliminar */}
+      <button
+        title="Eliminar documento"
+        disabled={deleteMut.isPending}
+        onClick={() => {
+          if (confirm(`¿Eliminar "${doc.name}"? Esta acción no se puede deshacer.`)) {
+            deleteMut.mutate({ document: doc, projectId });
+          }
+        }}
+        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50 flex-shrink-0"
+      >
+        {deleteMut.isPending ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+      </button>
     </div>
   );
 }
