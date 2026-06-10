@@ -2,16 +2,16 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { X, ExternalLink, Play } from "lucide-react";
+import { X, ExternalLink, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  getEquipmentById,
-  getTemplatesForEquipment,
-} from "@/lib/inspection-mock-data";
+import { getEquipmentById } from "@/lib/inspection-mock-data";
 import { equipmentStatusColor } from "@/components/plant-map/visual/EquipmentOverlay";
+import { useEquipmentInspectionTemplates } from "@/hooks/useInspectionData";
+import type { Equipment } from "@/types";
 
 interface FloatingEquipmentPanelProps {
   equipmentId: string;
+  equipment?: Equipment;      // pasado desde el padre (real o undefined)
   anchorX: number;
   anchorY: number;
   projectId: string;
@@ -32,14 +32,18 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function FloatingEquipmentPanel({
-  equipmentId, anchorX, anchorY, projectId, returnTo, imageUrl, onClose,
+  equipmentId, equipment: equipmentProp,
+  anchorX, anchorY, projectId, returnTo, imageUrl, onClose,
 }: FloatingEquipmentPanelProps) {
-  const router    = useRouter();
-  const panelRef  = useRef<HTMLDivElement>(null);
-  const equipment = getEquipmentById(equipmentId);
-  const templates = getTemplatesForEquipment(equipmentId);
+  const router   = useRouter();
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // Position: prefer right of click, fallback left if near right edge
+  // Prop del padre tiene prioridad; fallback a mock para IDs mock
+  const equipment = equipmentProp ?? getEquipmentById(equipmentId);
+
+  const { data: templates = [], isLoading: templatesLoading } =
+    useEquipmentInspectionTemplates(equipmentId);
+
   const panelWidth = 256;
   const viewW = typeof window !== "undefined" ? window.innerWidth : 1200;
   const left  = anchorX + 12 + panelWidth > viewW ? anchorX - panelWidth - 12 : anchorX + 12;
@@ -47,9 +51,7 @@ export function FloatingEquipmentPanel({
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
     }
     function escHandler(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -98,10 +100,7 @@ export function FloatingEquipmentPanel({
             </span>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="text-slate-500 hover:text-white transition-colors p-0.5"
-        >
+        <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors p-0.5">
           <X size={14} />
         </button>
       </div>
@@ -120,7 +119,7 @@ export function FloatingEquipmentPanel({
             "text-[10px] font-medium capitalize",
             equipment.criticality === "alta" ? "text-red-400" : "text-slate-300"
           )}>
-            {equipment.criticality}
+            {equipment.criticality ?? "—"}
           </span>
         </div>
         {equipment.ccm_panel && (
@@ -134,9 +133,13 @@ export function FloatingEquipmentPanel({
       {/* Templates */}
       <div className="px-3 py-2">
         <p className="text-[9px] text-slate-500 uppercase tracking-wider mb-2">
-          Plantillas ({templates.length})
+          {templatesLoading ? "Cargando plantillas…" : `Plantillas (${templates.length})`}
         </p>
-        {templates.length === 0 ? (
+        {templatesLoading ? (
+          <div className="flex items-center justify-center py-3">
+            <Loader2 size={14} className="text-slate-600 animate-spin" />
+          </div>
+        ) : templates.length === 0 ? (
           <p className="text-[10px] text-slate-600 italic">Sin plantillas asignadas</p>
         ) : (
           <div className="space-y-1.5">

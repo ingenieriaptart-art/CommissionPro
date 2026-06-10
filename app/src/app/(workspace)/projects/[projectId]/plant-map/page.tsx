@@ -28,7 +28,7 @@ export default function PlantMapPage() {
   const [editMode, setEditMode]     = useState(false);
   const [pendingOverlays, setPendingOverlays] = useState<PlantMapAreaOverlay[] | null>(null);
   const [activeTab, setActiveTab]   = useState<'unifilar' | 'diagrama'>('unifilar');
-  const [floatingPanel, setFloatingPanel] = useState<{ equipmentId: string; x: number; y: number } | null>(null);
+  const [floatingPanel, setFloatingPanel] = useState<{ equipmentId: string; x: number; y: number; equipmentObj?: import("@/types").Equipment } | null>(null);
 
   // Reset tab, panel, and edit state on drill level change
   useEffect(() => {
@@ -94,7 +94,8 @@ export default function PlantMapPage() {
   };
 
   const handleEquipmentOverlayClick = (equipmentId: string, event?: React.MouseEvent) => {
-    setFloatingPanel({ equipmentId, x: event?.clientX ?? 400, y: event?.clientY ?? 300 });
+    const equipmentObj = equipment.find(e => e.id === equipmentId);
+    setFloatingPanel({ equipmentId, x: event?.clientX ?? 400, y: event?.clientY ?? 300, equipmentObj });
   };
 
   const handleExploreArea = (areaId: string) => {
@@ -319,6 +320,7 @@ export default function PlantMapPage() {
           anchorY={floatingPanel.y}
           projectId={projectId}
           returnTo={`/projects/${projectId}/plant-map`}
+          equipment={floatingPanel.equipmentObj}
           imageUrl={layout.imageUrl ?? undefined}
           onClose={() => setFloatingPanel(null)}
         />

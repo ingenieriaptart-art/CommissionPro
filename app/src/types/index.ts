@@ -141,13 +141,14 @@ export interface Equipment {
   created_at: string;
   updated_at: string;
   deleted_at?: string;
-  // Sprint 2: campos de ingeniería (migración 0016)
+  // Sprint 2: campos de ingeniería (migraciones 0016 + 0020)
   service?: string;
   io_type?: string;
   rtu_destination?: string;
   location_system?: string;
   pid_reference?: string;
   power_kw?: number;
+  ccm_panel?: string;
   // sync
   version?: number;
   sync_status?: SyncStatus;

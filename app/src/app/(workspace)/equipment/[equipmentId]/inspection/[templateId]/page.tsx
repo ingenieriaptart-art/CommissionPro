@@ -1,0 +1,273 @@
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import { ArrowLeft, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useEquipmentForInspection, useInspectionTemplate } from "@/hooks/useInspectionData";
+import { SectionSidebar } from "@/components/inspection/SectionSidebar";
+import { DynamicFormSection } from "@/components/inspection/DynamicFormSection";
+import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
+import type { InspectionState, SectionStatus } from "@/types/inspection";
+
+function buildInitialState(
+  equipmentId: string,
+  templateId: string,
+  sectionCodes: string[],
+): InspectionState {
+  const sectionStatus: Record<string, SectionStatus> = {};
+  for (const code of sectionCodes) sectionStatus[code] = "pending";
+  return {
+    equipmentId,
+    templateId,
+    activeSectionIndex: 0,
+    answers: {},
+    evidences: {},
+    sectionStatus,
+    savedAt: null,
+    isDirty: false,
+  };
+}
+
+const STORAGE_KEY = (eqId: string, tplId: string) =>
+  `inspection_${eqId}_${tplId}`;
+
+export default function InspectionPage() {
+  const params       = useParams() as { equipmentId: string; templateId: string };
+  const searchParams = useSearchParams();
+  const router       = useRouter();
+
+  const { equipmentId, templateId } = params;
+  const returnTo = searchParams.get("returnTo") ?? "/";
+
+  const { data: equipment, isLoading: eqLoading }  = useEquipmentForInspection(equipmentId);
+  const { data: template,  isLoading: tplLoading } = useInspectionTemplate(templateId);
+
+  const [state, setState] = useState<InspectionState | null>(null);
+
+  // Load or initialize state from sessionStorage
+  useEffect(() => {
+    if (!template) return;
+    const key = STORAGE_KEY(equipmentId, templateId);
+    try {
+      const stored = sessionStorage.getItem(key);
+      if (stored) {
+        setState(JSON.parse(stored) as InspectionState);
+        return;
+      }
+    } catch { /* ignore */ }
+    setState(
+      buildInitialState(
+        equipmentId,
+        templateId,
+        template.sections.map(s => s.code),
+      )
+    );
+  }, [equipmentId, templateId, template]);
+
+  // Persist state on every change
+  useEffect(() => {
+    if (!state) return;
+    const key = STORAGE_KEY(equipmentId, templateId);
+    try {
+      sessionStorage.setItem(key, JSON.stringify(state));
+    } catch { /* quota exceeded — ignore for prototype */ }
+  }, [state, equipmentId, templateId]);
+
+  const handleAnswerChange = useCallback((fieldKey: string, value: unknown) => {
+    setState(prev => {
+      if (!prev) return prev;
+      const section = template?.sections[prev.activeSectionIndex];
+      if (!section) return prev;
+      const newAnswers = { ...prev.answers, [fieldKey]: value };
+      // Recompute section status
+      const allRequired = section.fields.filter(f => f.required);
+      const allFilled = allRequired.every(f => {
+        const v = newAnswers[f.key];
+        return v !== undefined && v !== null && v !== "";
+      });
+      const hasFail = section.fields.some(
+        f => newAnswers[f.key] === "FALLA" || newAnswers[f.key] === "NO" || newAnswers[f.key] === "RECHAZADO"
+      );
+      const sectionStatus: SectionStatus = allFilled
+        ? (hasFail ? "failed" : "complete")
+        : "in_progress";
+      return {
+        ...prev,
+        answers: newAnswers,
+        sectionStatus: { ...prev.sectionStatus, [section.code]: sectionStatus },
+        isDirty: true,
+        savedAt: new Date().toISOString(),
+      };
+    });
+  }, [template]);
+
+  const handleEvidenceAdd = useCallback((fieldKey: string, url: string) => {
+    setState(prev => {
+      if (!prev) return prev;
+      const existing = prev.evidences[fieldKey] ?? [];
+      if (existing.length >= 5) return prev; // prototype limit
+      return {
+        ...prev,
+        evidences: {
+          ...prev.evidences,
+          [fieldKey]: [
+            ...existing,
+            { fieldKey, url, caption: "", stage: "general" as const, timestamp: new Date().toISOString() },
+          ],
+        },
+        isDirty: true,
+      };
+    });
+  }, []);
+
+  const handleEvidenceRemove = useCallback((fieldKey: string, index: number) => {
+    setState(prev => {
+      if (!prev) return prev;
+      const existing = prev.evidences[fieldKey] ?? [];
+      const updated = existing.filter((_, i) => i !== index);
+      return { ...prev, evidences: { ...prev.evidences, [fieldKey]: updated }, isDirty: true };
+    });
+  }, []);
+
+  const handleSectionSelect = useCallback((index: number) => {
+    setState(prev => prev ? { ...prev, activeSectionIndex: index } : prev);
+  }, []);
+
+  const handleNext = useCallback(() => {
+    setState(prev => {
+      if (!prev || !template) return prev;
+      const next = Math.min(prev.activeSectionIndex + 1, template.sections.length - 1);
+      return { ...prev, activeSectionIndex: next };
+    });
+  }, [template]);
+
+  const handlePrev = useCallback(() => {
+    setState(prev => {
+      if (!prev) return prev;
+      return { ...prev, activeSectionIndex: Math.max(0, prev.activeSectionIndex - 1) };
+    });
+  }, []);
+
+  const handleComplete = useCallback(() => {
+    router.push(`/equipment/${equipmentId}/inspection/${templateId}/summary?returnTo=${encodeURIComponent(returnTo)}`);
+  }, [router, equipmentId, templateId, returnTo]);
+
+  if (eqLoading || tplLoading || !state) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-slate-500">Cargando…</p>
+      </div>
+    );
+  }
+
+  if (!equipment || !template) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-slate-500">
+          {!equipment ? "Equipo no encontrado" : "Plantilla no encontrada"}
+        </p>
+      </div>
+    );
+  }
+
+  const activeSection = template.sections[state.activeSectionIndex];
+  const isLastSection = state.activeSectionIndex === template.sections.length - 1;
+  const allComplete   = template.sections.every(s =>
+    state.sectionStatus[s.code] === "complete" || state.sectionStatus[s.code] === "failed"
+  );
+
+  return (
+    <>
+      {/* HEADER */}
+      <header className="h-14 bg-slate-900 border-b border-slate-800 flex items-center px-4 gap-3 flex-shrink-0">
+        <button
+          onClick={() => router.push(returnTo)}
+          className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors"
+        >
+          <ArrowLeft size={16} /> Plano
+        </button>
+        <span className="text-slate-700">|</span>
+        <span className="text-sm font-mono font-bold text-blue-400">{equipment.tag}</span>
+        <span className="text-slate-600 text-sm">—</span>
+        <span className="text-sm text-slate-300 truncate">{equipment.name}</span>
+        <span className="text-slate-700 text-sm">›</span>
+        <span className="text-sm text-slate-400 truncate">{template.code}</span>
+        <div className="ml-auto flex items-center gap-2">
+          {state.savedAt && (
+            <span className="text-[10px] text-slate-600">
+              Guardado {new Date(state.savedAt).toLocaleTimeString("es-CO")}
+            </span>
+          )}
+          {allComplete && (
+            <button
+              onClick={handleComplete}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
+            >
+              <CheckCircle size={14} /> Revisar y Cerrar
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* BODY: sidebar + form + minimap */}
+      <div className="flex flex-1 overflow-hidden">
+        <SectionSidebar
+          sections={template.sections}
+          activeSectionIndex={state.activeSectionIndex}
+          sectionStatus={state.sectionStatus}
+          answers={state.answers}
+          onSectionSelect={handleSectionSelect}
+        />
+
+        <main className="flex-1 overflow-y-auto bg-slate-950">
+          <DynamicFormSection
+            section={activeSection}
+            answers={state.answers}
+            evidences={state.evidences}
+            onAnswerChange={handleAnswerChange}
+            onEvidenceAdd={handleEvidenceAdd}
+            onEvidenceRemove={handleEvidenceRemove}
+          />
+        </main>
+
+        <InspectionMiniMap
+          equipmentId={equipmentId}
+          equipmentTag={equipment.tag}
+        />
+      </div>
+
+      {/* FOOTER */}
+      <footer className="h-13 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 flex-shrink-0">
+        <button
+          onClick={handlePrev}
+          disabled={state.activeSectionIndex === 0}
+          className={cn(
+            "flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors",
+            state.activeSectionIndex === 0
+              ? "text-slate-700 cursor-not-allowed"
+              : "text-slate-400 hover:text-white hover:bg-slate-800"
+          )}
+        >
+          ← {state.activeSectionIndex > 0 ? template.sections[state.activeSectionIndex - 1].name : ""}
+        </button>
+
+        <span className="text-[10px] text-slate-600">
+          Sección {state.activeSectionIndex + 1} de {template.sections.length}
+        </span>
+
+        <button
+          onClick={handleNext}
+          disabled={isLastSection}
+          className={cn(
+            "flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors",
+            isLastSection
+              ? "text-slate-700 cursor-not-allowed"
+              : "text-white bg-blue-700 hover:bg-blue-600"
+          )}
+        >
+          {!isLastSection ? template.sections[state.activeSectionIndex + 1].name : "Última sección"} →
+        </button>
+      </footer>
+    </>
+  );
+}
