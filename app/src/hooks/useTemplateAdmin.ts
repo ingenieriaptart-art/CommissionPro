@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 
-// ── Tipos ─────────────────────────────────────────────────────────────────────
+// ── Tipos públicos ────────────────────────────────────────────────────────────
 
 export interface FormTemplate {
   id: string;
@@ -20,18 +20,50 @@ export interface EquipmentType {
   sort_order: number;
 }
 
+export type AssignmentSource =
+  | "equipment"
+  | "subsystem"
+  | "system"
+  | "equipment_type"
+  | "default";
+
 export interface TemplateAssignment {
   id: string;
   template_id: string;
   template: Pick<FormTemplate, "id" | "key" | "name" | "test_type">;
 }
 
-export interface EntityWithAssignments<TEntity> {
-  entity: TEntity;
-  assignments: TemplateAssignment[];
+// Una fila de la resolución bulk (del RPC get_project_templates_resolution)
+export interface EquipmentResolutionRow {
+  equipment_id:   string;
+  equipment_tag:  string;
+  equipment_name: string;
+  template_id:    string | null;
+  template_key:   string | null;
+  template_name:  string | null;
+  discipline:     string | null;
+  source:         AssignmentSource | null;
+  assignment_id:  string | null;
+  total_count:    number;
 }
 
-// ── Plantillas globales ───────────────────────────────────────────────────────
+// Forma agrupada para la UI: un equipo con todos sus templates efectivos
+export interface EquipmentResolved {
+  id:        string;
+  tag:       string;
+  name:      string;
+  templates: Array<{
+    id:           string;
+    key:          string;
+    name:         string;
+    discipline:   string;
+    source:       AssignmentSource;
+    assignmentId: string;
+  }>;
+  totalCount: number;
+}
+
+// ── Catálogo global de templates ─────────────────────────────────────────────
 
 export function useFormTemplates() {
   return useQuery({
@@ -88,8 +120,9 @@ export function useEquipmentTypeAssignments() {
           template_id: row.template_id,
           template: { id: ft.id, key: ft.key, name: ft.name, test_type: ft.test_type },
         };
-        if (!map[row.equipment_type_id]) map[row.equipment_type_id] = [];
-        map[row.equipment_type_id].push(entry);
+        const k = row.equipment_type_id;
+        if (!map[k]) map[k] = [];
+        map[k].push(entry);
       }
       return map;
     },
@@ -100,42 +133,39 @@ export function useEquipmentTypeAssignments() {
 export function useSystemAssignments(projectId: string) {
   return useQuery({
     queryKey: ["assignments", "system", projectId],
-    queryFn: async (): Promise<{ systems: { id: string; name: string; area_name: string }[]; map: Record<string, TemplateAssignment[]> }> => {
+    queryFn: async () => {
       const supabase = createClient();
 
-      // Obtener sistemas del proyecto vía areas
-      const { data: areas } = await supabase
+      // Sistemas del proyecto (join a areas)
+      const { data: areaRows } = await supabase
         .from("areas").select("id").eq("project_id", projectId);
-      const areaIds = (areas ?? []).map(a => a.id);
-      if (!areaIds.length) return { systems: [], map: {} };
+      const areaIds = (areaRows ?? []).map(a => a.id);
+      if (!areaIds.length) return { systems: [] as { id: string; name: string; area_name: string }[], map: {} as Record<string, TemplateAssignment[]> };
 
-      const { data: systemRows } = await supabase
+      const { data: sysRows } = await supabase
         .from("systems")
         .select("id, name, area_id, areas(name)")
         .in("area_id", areaIds)
         .order("name");
 
-      const systems = (systemRows ?? []).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        area_name: s.areas?.name ?? "",
+      const systems = (sysRows ?? []).map((s: any) => ({
+        id: s.id, name: s.name, area_name: s.areas?.name ?? "",
       }));
 
-      const systemIds = systems.map(s => s.id);
-      if (!systemIds.length) return { systems, map: {} };
+      const sysIds = systems.map(s => s.id);
+      if (!sysIds.length) return { systems, map: {} };
 
       const { data: assignRows } = await supabase
         .from("system_templates")
         .select("id, system_id, template_id, form_templates(id, key, name, test_type)")
-        .in("system_id", systemIds);
+        .in("system_id", sysIds);
 
       const map: Record<string, TemplateAssignment[]> = {};
       for (const row of (assignRows ?? [])) {
         const ft = (row as any).form_templates;
         if (!ft) continue;
         const entry: TemplateAssignment = {
-          id: row.id,
-          template_id: row.template_id,
+          id: row.id, template_id: row.template_id,
           template: { id: ft.id, key: ft.key, name: ft.name, test_type: ft.test_type },
         };
         if (!map[row.system_id]) map[row.system_id] = [];
@@ -151,30 +181,28 @@ export function useSystemAssignments(projectId: string) {
 export function useSubsystemAssignments(projectId: string) {
   return useQuery({
     queryKey: ["assignments", "subsystem", projectId],
-    queryFn: async (): Promise<{ subsystems: { id: string; name: string; system_name: string }[]; map: Record<string, TemplateAssignment[]> }> => {
+    queryFn: async () => {
       const supabase = createClient();
 
-      const { data: areas } = await supabase
+      const { data: areaRows } = await supabase
         .from("areas").select("id").eq("project_id", projectId);
-      const areaIds = (areas ?? []).map(a => a.id);
-      if (!areaIds.length) return { subsystems: [], map: {} };
+      const areaIds = (areaRows ?? []).map(a => a.id);
+      if (!areaIds.length) return { subsystems: [] as { id: string; name: string; system_name: string }[], map: {} as Record<string, TemplateAssignment[]> };
 
-      const { data: systemRows } = await supabase
+      const { data: sysRows } = await supabase
         .from("systems").select("id, name").in("area_id", areaIds);
-      const systemIds = (systemRows ?? []).map(s => s.id);
-      const systemNames: Record<string, string> = Object.fromEntries((systemRows ?? []).map(s => [s.id, s.name]));
-      if (!systemIds.length) return { subsystems: [], map: {} };
+      const sysIds = (sysRows ?? []).map(s => s.id);
+      const sysNames: Record<string, string> = Object.fromEntries((sysRows ?? []).map(s => [s.id, s.name]));
+      if (!sysIds.length) return { subsystems: [], map: {} };
 
       const { data: subRows } = await supabase
         .from("subsystems")
         .select("id, name, system_id")
-        .in("system_id", systemIds)
+        .in("system_id", sysIds)
         .order("name");
 
       const subsystems = (subRows ?? []).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        system_name: systemNames[s.system_id] ?? "",
+        id: s.id, name: s.name, system_name: sysNames[s.system_id] ?? "",
       }));
 
       const subIds = subsystems.map(s => s.id);
@@ -190,8 +218,7 @@ export function useSubsystemAssignments(projectId: string) {
         const ft = (row as any).form_templates;
         if (!ft) continue;
         const entry: TemplateAssignment = {
-          id: row.id,
-          template_id: row.template_id,
+          id: row.id, template_id: row.template_id,
           template: { id: ft.id, key: ft.key, name: ft.name, test_type: ft.test_type },
         };
         if (!map[row.subsystem_id]) map[row.subsystem_id] = [];
@@ -204,12 +231,35 @@ export function useSubsystemAssignments(projectId: string) {
   });
 }
 
+export function useDefaultTemplates(projectId: string) {
+  return useQuery({
+    queryKey: ["assignments", "default", projectId],
+    queryFn: async (): Promise<TemplateAssignment[]> => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("project_default_templates")
+        .select("id, template_id, form_templates(id, key, name, test_type)")
+        .eq("project_id", projectId)
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []).flatMap(row => {
+        const ft = (row as any).form_templates;
+        if (!ft) return [];
+        return [{ id: row.id, template_id: row.template_id,
+          template: { id: ft.id, key: ft.key, name: ft.name, test_type: ft.test_type } }];
+      });
+    },
+    enabled: !!projectId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// Asignaciones directas por equipo (solo nivel "equipment")
 export function useEquipmentDirectAssignments(projectId: string, search: string) {
   return useQuery({
-    queryKey: ["assignments", "equipment", projectId, search],
+    queryKey: ["assignments", "equipment-direct", projectId, search],
     queryFn: async (): Promise<{ equipment: { id: string; tag: string; name: string }[]; map: Record<string, TemplateAssignment[]> }> => {
       const supabase = createClient();
-
       let query = supabase
         .from("equipment")
         .select("id, tag, name")
@@ -217,28 +267,23 @@ export function useEquipmentDirectAssignments(projectId: string, search: string)
         .is("deleted_at", null)
         .order("tag")
         .limit(60);
-
       if (search.trim()) {
         query = query.or(`tag.ilike.%${search}%,name.ilike.%${search}%`);
       }
-
       const { data: eqRows } = await query;
       const equipment = (eqRows ?? []).map(e => ({ id: e.id, tag: e.tag, name: e.name }));
       const eqIds = equipment.map(e => e.id);
       if (!eqIds.length) return { equipment, map: {} };
-
       const { data: assignRows } = await supabase
         .from("equipment_templates")
         .select("id, equipment_id, template_id, form_templates(id, key, name, test_type)")
         .in("equipment_id", eqIds);
-
       const map: Record<string, TemplateAssignment[]> = {};
       for (const row of (assignRows ?? [])) {
         const ft = (row as any).form_templates;
         if (!ft) continue;
         const entry: TemplateAssignment = {
-          id: row.id,
-          template_id: row.template_id,
+          id: row.id, template_id: row.template_id,
           template: { id: ft.id, key: ft.key, name: ft.name, test_type: ft.test_type },
         };
         if (!map[row.equipment_id]) map[row.equipment_id] = [];
@@ -251,15 +296,69 @@ export function useEquipmentDirectAssignments(projectId: string, search: string)
   });
 }
 
+// Resolución completa (bulk, paginada) — llama al RPC del servidor
+export function useProjectEquipmentResolution(
+  projectId: string,
+  search: string,
+  page: number,
+  pageSize = 50,
+) {
+  return useQuery({
+    queryKey: ["resolution", projectId, search, page, pageSize],
+    queryFn: async (): Promise<{ rows: EquipmentResolved[]; totalCount: number }> => {
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc("get_project_templates_resolution", {
+        p_project_id: projectId,
+        p_search:     search.trim() || null,
+        p_limit:      pageSize,
+        p_offset:     page * pageSize,
+      });
+      if (error) throw error;
+
+      // Agrupar filas por equipment_id
+      const byEquipment = new Map<string, EquipmentResolved>();
+      let totalCount = 0;
+      for (const row of ((data ?? []) as EquipmentResolutionRow[])) {
+        totalCount = row.total_count;
+        if (!byEquipment.has(row.equipment_id)) {
+          byEquipment.set(row.equipment_id, {
+            id: row.equipment_id, tag: row.equipment_tag, name: row.equipment_name,
+            templates: [], totalCount: row.total_count,
+          });
+        }
+        if (row.template_id) {
+          byEquipment.get(row.equipment_id)!.templates.push({
+            id:           row.template_id,
+            key:          row.template_key!,
+            name:         row.template_name!,
+            discipline:   row.discipline ?? "",
+            source:       row.source!,
+            assignmentId: row.assignment_id!,
+          });
+        }
+      }
+      return { rows: Array.from(byEquipment.values()), totalCount };
+    },
+    enabled: !!projectId,
+    staleTime: 30 * 1000,
+    placeholderData: prev => prev,
+  });
+}
+
 // ── Mutaciones ────────────────────────────────────────────────────────────────
 
-type AssignLevel = "equipment_type" | "system" | "subsystem" | "equipment";
+export type AssignLevel =
+  | "equipment_type"
+  | "system"
+  | "subsystem"
+  | "equipment"
+  | "default";
 
 interface AssignPayload {
-  level: AssignLevel;
-  entityId: string;
+  level:      AssignLevel;
+  entityId:   string;      // equipment_type_id | system_id | subsystem_id | equipment_id
   templateId: string;
-  projectId?: string;
+  projectId?: string;      // requerido para system, subsystem, default
 }
 
 const LEVEL_TABLE: Record<AssignLevel, string> = {
@@ -267,6 +366,7 @@ const LEVEL_TABLE: Record<AssignLevel, string> = {
   system:         "system_templates",
   subsystem:      "subsystem_templates",
   equipment:      "equipment_templates",
+  default:        "project_default_templates",
 };
 
 const LEVEL_FK: Record<AssignLevel, string> = {
@@ -274,25 +374,36 @@ const LEVEL_FK: Record<AssignLevel, string> = {
   system:         "system_id",
   subsystem:      "subsystem_id",
   equipment:      "equipment_id",
+  default:        "project_id",
 };
 
 export function useAssignTemplate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ level, entityId, templateId }: AssignPayload) => {
+    mutationFn: async ({ level, entityId, templateId, projectId }: AssignPayload) => {
       const supabase = createClient();
-      const { error } = await supabase
-        .from(LEVEL_TABLE[level])
-        .insert({ [LEVEL_FK[level]]: entityId, template_id: templateId });
+      const fk      = LEVEL_FK[level];
+      const row: Record<string, string> = {
+        [fk]:        level === "default" ? projectId! : entityId,
+        template_id: templateId,
+      };
+      // Para system/subsystem, pasar project_id explícito (el trigger también lo rellena,
+      // pero pasarlo garantiza que la política RLS lo vea antes de persistir)
+      if ((level === "system" || level === "subsystem") && projectId) {
+        row.project_id = projectId;
+      }
+      const { error } = await supabase.from(LEVEL_TABLE[level]).insert(row);
       if (error) throw error;
     },
     onSuccess: (_, { level, projectId }) => {
-      if (level === "equipment_type") {
-        qc.invalidateQueries({ queryKey: ["assignments", "equipment-type"] });
-      } else {
-        qc.invalidateQueries({ queryKey: ["assignments", level, projectId] });
-      }
+      const k = level === "equipment_type"
+        ? ["assignments", "equipment-type"]
+        : level === "default"
+          ? ["assignments", "default", projectId]
+          : ["assignments", level, projectId];
+      qc.invalidateQueries({ queryKey: k });
       qc.invalidateQueries({ queryKey: ["equipment-inspection-templates"] });
+      qc.invalidateQueries({ queryKey: ["resolution", projectId] });
     },
   });
 }
@@ -303,18 +414,18 @@ export function useRemoveAssignment() {
     mutationFn: async ({ level, assignmentId }: { level: AssignLevel; assignmentId: string; projectId?: string }) => {
       const supabase = createClient();
       const { error } = await supabase
-        .from(LEVEL_TABLE[level])
-        .delete()
-        .eq("id", assignmentId);
+        .from(LEVEL_TABLE[level]).delete().eq("id", assignmentId);
       if (error) throw error;
     },
     onSuccess: (_, { level, projectId }) => {
-      if (level === "equipment_type") {
-        qc.invalidateQueries({ queryKey: ["assignments", "equipment-type"] });
-      } else {
-        qc.invalidateQueries({ queryKey: ["assignments", level, projectId] });
-      }
+      const k = level === "equipment_type"
+        ? ["assignments", "equipment-type"]
+        : level === "default"
+          ? ["assignments", "default", projectId]
+          : ["assignments", level, projectId];
+      qc.invalidateQueries({ queryKey: k });
       qc.invalidateQueries({ queryKey: ["equipment-inspection-templates"] });
+      qc.invalidateQueries({ queryKey: ["resolution", projectId] });
     },
   });
 }

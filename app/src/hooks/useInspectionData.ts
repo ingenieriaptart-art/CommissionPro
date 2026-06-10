@@ -19,6 +19,7 @@ export interface TemplateRef {
   code: string;
   name: string;
   discipline: string;
+  source?: "equipment" | "subsystem" | "system" | "equipment_type" | "default";
 }
 
 // ── 1. Equipment (mock o Supabase) ────────────────────────────────────────────
@@ -73,6 +74,7 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
             code:       row.template_key,
             name:       row.template_name,
             discipline: row.discipline ?? "",
+            source:     row.source as TemplateRef["source"],
           });
         }
       }

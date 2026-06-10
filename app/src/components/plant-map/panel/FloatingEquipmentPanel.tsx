@@ -20,6 +20,22 @@ interface FloatingEquipmentPanelProps {
   onClose: () => void;
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  equipment:      "Directo",
+  subsystem:      "Subsistema",
+  system:         "Sistema",
+  equipment_type: "Tipo",
+  default:        "Default",
+};
+
+const SOURCE_COLOR: Record<string, string> = {
+  equipment:      "text-blue-400",
+  subsystem:      "text-violet-400",
+  system:         "text-amber-400",
+  equipment_type: "text-emerald-400",
+  default:        "text-slate-500",
+};
+
 const STATUS_LABELS: Record<string, string> = {
   pendiente:          "Pendiente",
   en_ejecucion:       "En ejecución",
@@ -149,10 +165,17 @@ export function FloatingEquipmentPanel({
                 onClick={() => handleStartInspection(tpl.id)}
                 className="w-full flex items-center justify-between gap-2 px-2.5 py-2 bg-slate-900 hover:bg-blue-900/30 border border-slate-700 hover:border-blue-700 rounded-lg text-left transition-colors group"
               >
-                <div className="min-w-0">
-                  <p className="text-[10px] font-medium text-slate-200 group-hover:text-blue-300 truncate">
-                    {tpl.code}
-                  </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[10px] font-medium text-slate-200 group-hover:text-blue-300 truncate font-mono">
+                      {tpl.code}
+                    </p>
+                    {tpl.source && tpl.source !== "equipment" && (
+                      <span className={cn("text-[8px] shrink-0", SOURCE_COLOR[tpl.source])}>
+                        {SOURCE_LABELS[tpl.source]}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[9px] text-slate-500 truncate">{tpl.name}</p>
                 </div>
                 <Play size={11} className="text-slate-600 group-hover:text-blue-400 flex-shrink-0" />
