@@ -13,6 +13,7 @@ export interface ParsedEquipmentRow {
   location_system?: string;
   pid_reference?: string;
   power_kw?: number;
+  ccm_panel?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -22,11 +23,14 @@ export interface ParseResult {
   rows: ParsedEquipmentRow[];
   skipped: number;
   totalRows: number;
+  detectedHeaders: string[];
 }
 
 // ── Mapas de columnas (case-insensitive, sin acentos) ────────
 
 type ColMap = Partial<Record<keyof ParsedEquipmentRow | "hp" | "voltage", string[]>>;
+
+const CCM_VARIANTS = ["ccm", "tablero ccm", "panel ccm", "ccm controlador", "ccm alimentador", "tablero", "alimentado por", "alimentado desde", "centro control motores"];
 
 const INSTRUMENT_MAP: ColMap = {
   tag:             ["tag", "codigo", "cod", "codigo tag"],
@@ -36,16 +40,18 @@ const INSTRUMENT_MAP: ColMap = {
   rtu_destination: ["rtu destino", "rtu_destino", "rtu"],
   location_system: ["ubicacion o sistema", "ubicación o sistema", "ubicacion", "sistema", "location"],
   pid_reference:   ["p&id", "pid", "plano", "p_id", "referencia pid"],
+  ccm_panel:       CCM_VARIANTS,
 };
 
 const POWER_MAP: ColMap = {
-  tag:      ["tag", "codigo", "cod"],
-  name:     ["descripcion", "descripción", "nombre"],
-  service:  ["servicio"],
-  io_type:  ["tipo"],
-  power_kw: ["kw"],
-  hp:       ["hp"],
-  voltage:  ["voltaje", "voltage"],
+  tag:       ["tag", "codigo", "cod"],
+  name:      ["descripcion", "descripción", "nombre"],
+  service:   ["servicio"],
+  io_type:   ["tipo"],
+  power_kw:  ["kw"],
+  hp:        ["hp"],
+  voltage:   ["voltaje", "voltage"],
+  ccm_panel: CCM_VARIANTS,
 };
 
 const EQUIPMENT_LIST_MAP: ColMap = {
@@ -55,6 +61,7 @@ const EQUIPMENT_LIST_MAP: ColMap = {
   pid_reference:   ["p&id", "pid", "plano"],
   service:         ["servicio"],
   location_system: ["ubicacion", "ubicación", "sistema"],
+  ccm_panel:       CCM_VARIANTS,
 };
 
 // ── Helpers ─────────────────────────────────────────────────
@@ -127,12 +134,13 @@ function parseInstrumentRow(
 
   return {
     tag,
-    name:            pick(row, idx, INSTRUMENT_MAP.name!)       ?? tag,
+    name:            pick(row, idx, INSTRUMENT_MAP.name!)            ?? tag,
     service:         pick(row, idx, INSTRUMENT_MAP.service!),
     io_type:         pick(row, idx, INSTRUMENT_MAP.io_type!),
     rtu_destination: pick(row, idx, INSTRUMENT_MAP.rtu_destination!),
     location_system: pick(row, idx, INSTRUMENT_MAP.location_system!),
     pid_reference:   pick(row, idx, INSTRUMENT_MAP.pid_reference!),
+    ccm_panel:       pick(row, idx, INSTRUMENT_MAP.ccm_panel!),
   };
 }
 
@@ -151,11 +159,12 @@ function parsePowerRow(
 
   return {
     tag,
-    name:     pick(row, idx, POWER_MAP.name!)     ?? tag,
-    service:  pick(row, idx, POWER_MAP.service!),
-    io_type:  pick(row, idx, POWER_MAP.io_type!),
-    power_kw: toNumber(pick(row, idx, POWER_MAP.power_kw!)),
-    metadata: Object.keys(extraMeta).length > 0 ? extraMeta : undefined,
+    name:      pick(row, idx, POWER_MAP.name!)      ?? tag,
+    service:   pick(row, idx, POWER_MAP.service!),
+    io_type:   pick(row, idx, POWER_MAP.io_type!),
+    power_kw:  toNumber(pick(row, idx, POWER_MAP.power_kw!)),
+    ccm_panel: pick(row, idx, POWER_MAP.ccm_panel!),
+    metadata:  Object.keys(extraMeta).length > 0 ? extraMeta : undefined,
   };
 }
 
@@ -168,11 +177,12 @@ function parseEquipmentListRow(
 
   return {
     tag,
-    name:            pick(row, idx, EQUIPMENT_LIST_MAP.name!)          ?? tag,
+    name:            pick(row, idx, EQUIPMENT_LIST_MAP.name!)            ?? tag,
     io_type:         pick(row, idx, EQUIPMENT_LIST_MAP.io_type!),
     pid_reference:   pick(row, idx, EQUIPMENT_LIST_MAP.pid_reference!),
     service:         pick(row, idx, EQUIPMENT_LIST_MAP.service!),
     location_system: pick(row, idx, EQUIPMENT_LIST_MAP.location_system!),
+    ccm_panel:       pick(row, idx, EQUIPMENT_LIST_MAP.ccm_panel!),
   };
 }
 
@@ -189,7 +199,7 @@ export function parseExcelEquipment(
     : wb.SheetNames[0];
 
   if (!targetSheet || !wb.Sheets[targetSheet]) {
-    return { sheetType: "unknown", sheetName: sheetName ?? "", rows: [], skipped: 0, totalRows: 0 };
+    return { sheetType: "unknown", sheetName: sheetName ?? "", rows: [], skipped: 0, totalRows: 0, detectedHeaders: [] };
   }
 
   const raw: unknown[][] = XLSX.utils.sheet_to_json(wb.Sheets[targetSheet], {
@@ -198,12 +208,13 @@ export function parseExcelEquipment(
   });
 
   if (raw.length < 2) {
-    return { sheetType: "unknown", sheetName: targetSheet, rows: [], skipped: 0, totalRows: 0 };
+    return { sheetType: "unknown", sheetName: targetSheet, rows: [], skipped: 0, totalRows: 0, detectedHeaders: [] };
   }
 
   const headers   = raw[0] as string[];
   const headerIdx = buildHeaderIndex(headers);
   const sheetType = detectSheetType(headerIdx);
+  const detectedHeaders = headers.map(h => String(h ?? "")).filter(h => h.trim() !== "");
 
   const dataRows = raw.slice(1);
   const rows: ParsedEquipmentRow[] = [];
@@ -229,7 +240,7 @@ export function parseExcelEquipment(
     }
   }
 
-  return { sheetType, sheetName: targetSheet, rows, skipped, totalRows: dataRows.length };
+  return { sheetType, sheetName: targetSheet, rows, skipped, totalRows: dataRows.length, detectedHeaders };
 }
 
 export function listSheets(buffer: Buffer): string[] {
