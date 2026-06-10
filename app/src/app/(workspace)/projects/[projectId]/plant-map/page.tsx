@@ -11,6 +11,7 @@ import { PlantVisualToolbar } from "@/components/plant-map/visual/PlantVisualToo
 import { PlantFlowCanvas } from "@/components/plant-map/flow/PlantFlowCanvas";
 import { PlantMapPanel } from "@/components/plant-map/panel/PlantMapPanel";
 import { FloatingEquipmentPanel } from "@/components/plant-map/panel/FloatingEquipmentPanel";
+import { AreaProgressDashboard } from "@/components/plant-map/AreaProgressDashboard";
 import { PlantMapBreadcrumb } from "@/components/plant-map/PlantMapBreadcrumb";
 import type { DrillLevel, PanelState, PlantMapAreaOverlay, Area, System, Subsystem } from "@/types";
 
@@ -218,6 +219,12 @@ export default function PlantMapPage() {
             onAreaClick={handleAreaClick}
             onUploadClick={() => { /* manejado por PlantVisualToolbar */ }}
             onOverlaysChange={setPendingOverlays}
+          />
+          <AreaProgressDashboard
+            areas={areas}
+            equipment={equipment}
+            subToSystem={subToSystem}
+            sysToArea={sysToArea}
           />
         </>
       )}
