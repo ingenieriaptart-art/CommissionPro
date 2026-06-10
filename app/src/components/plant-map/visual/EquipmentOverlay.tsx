@@ -5,13 +5,13 @@ import type { Equipment, PlantMapAreaOverlay } from "@/types";
 const STATUS_COLORS: Record<string, string> = {
   pendiente:          "#3b82f6",
   en_ejecucion:       "#f59e0b",
-  aprobado:           "#eab308",
+  aprobado:           "#22c55e",
   revisado:           "#eab308",
-  listo_energizacion: "#84cc16",
+  listo_energizacion: "#06b6d4",
   listo_arranque:     "#84cc16",
   operativo:          "#22c55e",
   rechazado:          "#ef4444",
-  bloqueado:          "#ef4444",
+  bloqueado:          "#475569",
 };
 
 export function equipmentStatusColor(status: string): string {
@@ -23,7 +23,7 @@ interface EquipmentOverlayProps {
   equipment: Equipment;
   selected: boolean;
   onHover: (id: string | null) => void;
-  onClick: (id: string) => void;
+  onClick: (id: string, event: React.MouseEvent) => void;
 }
 
 export function EquipmentOverlay({
@@ -32,19 +32,23 @@ export function EquipmentOverlay({
   const [hovered, setHovered] = useState(false);
   const color = equipmentStatusColor(equipment.status);
 
-  const fillOpacity  = selected ? 0.35 : hovered ? 0.2 : 0.08;
+  const fillOpacity   = selected ? 0.35 : hovered ? 0.2 : 0.08;
   const strokeOpacity = selected ? 1 : hovered ? 0.9 : 0.6;
-  const strokeWidth  = selected ? 2.5 : hovered ? 2 : 1.5;
+  const strokeWidth   = selected ? 2.5 : hovered ? 2 : 1.5;
 
   const tooltipX = overlay.x + overlay.width + 6;
   const tooltipY = overlay.y;
+
+  // Status badge dot — top-right corner
+  const badgeX = overlay.x + overlay.width - 6;
+  const badgeY = overlay.y + 6;
 
   return (
     <g
       style={{ cursor: "pointer" }}
       onMouseEnter={() => { setHovered(true); onHover(equipment.id); }}
       onMouseLeave={() => { setHovered(false); onHover(null); }}
-      onClick={() => onClick(equipment.id)}
+      onClick={(e) => onClick(equipment.id, e)}
     >
       <rect
         x={overlay.x} y={overlay.y}
@@ -67,6 +71,14 @@ export function EquipmentOverlay({
       >
         {equipment.tag}
       </text>
+
+      {/* Status badge dot */}
+      <circle
+        cx={badgeX} cy={badgeY} r={5}
+        fill={color}
+        stroke="#0f172a" strokeWidth={1.5}
+        style={{ pointerEvents: "none" }}
+      />
 
       {/* Tooltip al hover */}
       {(hovered || selected) && (

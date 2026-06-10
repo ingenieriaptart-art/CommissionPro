@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useProject } from "@/hooks/useProject";
@@ -10,6 +10,7 @@ import { PlantVisualMap } from "@/components/plant-map/visual/PlantVisualMap";
 import { PlantVisualToolbar } from "@/components/plant-map/visual/PlantVisualToolbar";
 import { PlantFlowCanvas } from "@/components/plant-map/flow/PlantFlowCanvas";
 import { PlantMapPanel } from "@/components/plant-map/panel/PlantMapPanel";
+import { FloatingEquipmentPanel } from "@/components/plant-map/panel/FloatingEquipmentPanel";
 import { PlantMapBreadcrumb } from "@/components/plant-map/PlantMapBreadcrumb";
 import type { DrillLevel, PanelState, PlantMapAreaOverlay, Area, System, Subsystem } from "@/types";
 
@@ -26,11 +27,13 @@ export default function PlantMapPage() {
   const [editMode, setEditMode]     = useState(false);
   const [pendingOverlays, setPendingOverlays] = useState<PlantMapAreaOverlay[] | null>(null);
   const [activeTab, setActiveTab]   = useState<'unifilar' | 'diagrama'>('unifilar');
+  const [floatingPanel, setFloatingPanel] = useState<{ equipmentId: string; x: number; y: number } | null>(null);
 
   // Reset tab, panel, and edit state on drill level change
   useEffect(() => {
     setActiveTab('unifilar');
     setPanelState({ open: false });
+    setFloatingPanel(null);
     setEditMode(false);
     setPendingOverlays(null);
   }, [drill.level]);
@@ -89,8 +92,8 @@ export default function PlantMapPage() {
     setPanelState({ open: true, view: 'area', areaId });
   };
 
-  const handleEquipmentOverlayClick = (equipmentId: string) => {
-    setPanelState({ open: true, view: 'detail', equipmentId });
+  const handleEquipmentOverlayClick = (equipmentId: string, event?: React.MouseEvent) => {
+    setFloatingPanel({ equipmentId, x: event?.clientX ?? 400, y: event?.clientY ?? 300 });
   };
 
   const handleExploreArea = (areaId: string) => {
@@ -270,11 +273,7 @@ export default function PlantMapPage() {
                 areas={areas}
                 equipment={equipment}
                 pctByArea={pctByArea}
-                selectedAreaId={
-                  panelState.open && panelState.view === 'detail'
-                    ? panelState.equipmentId
-                    : null
-                }
+                selectedAreaId={floatingPanel?.equipmentId ?? null}
                 editMode={editMode}
                 onAreaClick={handleEquipmentOverlayClick}
                 onUploadClick={() => { /* manejado por PlantVisualToolbar */ }}
@@ -304,6 +303,19 @@ export default function PlantMapPage() {
         onNavigateTests={() => router.push(`/projects/${projectId}/tests`)}
         onNavigateDocs={() => router.push(`/projects/${projectId}/documents`)}
       />
+
+      {/* Floating equipment panel — portal rendered in document.body */}
+      {floatingPanel && (
+        <FloatingEquipmentPanel
+          equipmentId={floatingPanel.equipmentId}
+          anchorX={floatingPanel.x}
+          anchorY={floatingPanel.y}
+          projectId={projectId}
+          returnTo={`/projects/${projectId}/plant-map`}
+          imageUrl={layout.imageUrl ?? undefined}
+          onClose={() => setFloatingPanel(null)}
+        />
+      )}
     </div>
   );
 }

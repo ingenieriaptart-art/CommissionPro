@@ -16,7 +16,7 @@ interface PlantVisualMapProps {
   pctByArea: Record<string, number>;
   selectedAreaId: string | null;
   editMode: boolean;
-  onAreaClick: (id: string) => void;
+  onAreaClick: (id: string, event?: React.MouseEvent) => void;
   onUploadClick: () => void;
   onOverlaysChange: (overlays: PlantMapAreaOverlay[]) => void;
 }
@@ -163,7 +163,7 @@ export function PlantVisualMap({
                         equipment={eq}
                         selected={selectedAreaId === overlay.id}
                         onHover={handleHover}
-                        onClick={onAreaClick}
+                        onClick={(id, event) => onAreaClick(id, event)}
                       />
                     </g>
                   );
