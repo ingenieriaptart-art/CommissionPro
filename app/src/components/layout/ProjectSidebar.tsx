@@ -6,7 +6,7 @@ import { useUIStore } from "@/stores/ui.store";
 import { useProject } from "@/hooks/useProject";
 import {
   LayoutDashboard, Wrench, CheckSquare, AlertTriangle,
-  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map,
+  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList,
 } from "lucide-react";
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { segment: "tests",       icon: CheckSquare,     label: "Pruebas"      },
   { segment: "punch",       icon: AlertTriangle,   label: "Punch List"   },
   { segment: "documents",   icon: FileText,        label: "Documentos"   },
+  { segment: "templates",   icon: ClipboardList,   label: "Templates"    },
   { segment: "engineering", icon: Cpu,             label: "Ing. Digital" },
 ];
 

@@ -55,44 +55,26 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
       }
       const supabase = createClient();
 
-      // Asignaciones directas equipment → template
-      const { data: directRows } = await supabase
-        .from("equipment_templates")
-        .select("form_templates(id, key, name, test_type)")
-        .eq("equipment_id", equipmentId);
+      // Usa el RPC unificado que combina los 4 niveles:
+      // tipo de equipo → sistema → subsistema → directo
+      const { data: rows, error } = await supabase
+        .rpc("get_equipment_templates", { p_equipment_id: equipmentId });
 
-      // Asignaciones por tipo de equipo
-      const { data: eqRow } = await supabase
-        .from("equipment")
-        .select("equipment_type_id")
-        .eq("id", equipmentId)
-        .single();
+      if (error) throw error;
 
-      let typeRefs: TemplateRef[] = [];
-      if (eqRow?.equipment_type_id) {
-        const { data: typeRows } = await supabase
-          .from("equipment_type_templates")
-          .select("form_templates(id, key, name, test_type)")
-          .eq("equipment_type_id", eqRow.equipment_type_id);
-
-        typeRefs = (typeRows ?? []).flatMap(row => {
-          const ft = (row as any).form_templates;
-          if (!ft) return [];
-          return [{ id: ft.id, code: ft.key, name: ft.name, discipline: ft.test_type ?? "" }];
-        });
-      }
-
-      const directRefs: TemplateRef[] = (directRows ?? []).flatMap(row => {
-        const ft = (row as any).form_templates;
-        if (!ft) return [];
-        return [{ id: ft.id, code: ft.key, name: ft.name, discipline: ft.test_type ?? "" }];
-      });
-
-      // Merge y deduplicar por id
+      // Deduplicar por template_id (pueden aparecer desde varios niveles)
       const seen = new Set<string>();
       const result: TemplateRef[] = [];
-      for (const t of [...directRefs, ...typeRefs]) {
-        if (!seen.has(t.id)) { seen.add(t.id); result.push(t); }
+      for (const row of (rows ?? [])) {
+        if (!seen.has(row.template_id)) {
+          seen.add(row.template_id);
+          result.push({
+            id:         row.template_id,
+            code:       row.template_key,
+            name:       row.template_name,
+            discipline: row.discipline ?? "",
+          });
+        }
       }
       return result;
     },

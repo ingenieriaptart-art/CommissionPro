@@ -1,28 +1,60 @@
 -- ============================================================
--- 0022 — Seed plantillas de inspección para PTAR Zipaquirá
+-- 0022 — Plantillas genéricas de inspección (sin asignaciones)
 --
--- Requiere: 0021 ejecutado (template_sections, section_fields,
---           form_template_sections, equipment_templates).
+-- Requiere: 0021 ejecutado (template_sections, section_fields, etc.)
 --
--- Crea:
---   - 4 form_templates (P_MEC_001, P_MEC_002, P_IC_001, P_ELE_001)
---   - Campos para secciones no-universales
---   - form_template_sections (solo secciones no-universales;
---     las universales aparecen automáticamente vía get_template_sections)
---   - equipment_templates bulk por prefijo de TAG
+-- Cambios:
+--   - form_templates.project_id pasa a nullable
+--     (NULL = plantilla global disponible en todos los proyectos)
+--   - Actualiza la política RLS de form_template_sections para que
+--     los miembros de cualquier proyecto puedan leer plantillas globales
+--   - Seed: 4 plantillas globales + campos de secciones no-universales
+--     + form_template_sections (NO incluye asignaciones de equipo)
 -- ============================================================
 
 BEGIN;
 
+-- ── 1. Hacer project_id nullable en form_templates ────────────────────────────
+-- NULL = plantilla global; UUID = plantilla exclusiva de un proyecto.
+
+ALTER TABLE form_templates ALTER COLUMN project_id DROP NOT NULL;
+
+-- ── 2. Corregir política RLS de form_template_sections ───────────────────────
+-- La política original bloqueaba acceso a plantillas globales (project_id IS NULL).
+
+DROP POLICY IF EXISTS "fts_select" ON form_template_sections;
+
+CREATE POLICY "fts_select" ON form_template_sections
+  FOR SELECT USING (
+    -- Plantillas globales: accesibles por cualquier usuario autenticado
+    EXISTS (
+      SELECT 1 FROM form_templates ft
+      WHERE ft.id = form_template_sections.template_id
+        AND ft.project_id IS NULL
+    )
+    OR
+    -- Plantillas de proyecto: solo miembros del proyecto
+    EXISTS (
+      SELECT 1 FROM project_members pm
+      JOIN form_templates ft ON ft.id = form_template_sections.template_id
+      WHERE pm.user_id = auth.uid() AND pm.project_id = ft.project_id
+    )
+  );
+
+-- Agregar política de escritura para admin sobre plantillas globales
+CREATE POLICY "fts_write_admin" ON form_template_sections
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM users u WHERE u.id = auth.uid() AND u.role = 'admin')
+  );
+
+
+-- ── 3. Seed: 4 plantillas globales ───────────────────────────────────────────
+
 DO $$
 DECLARE
-  v_zip  UUID := '9023a92f-5294-4a20-ac20-1c579662340a';
-
-  -- template IDs
   t_mec1 UUID; t_mec2 UUID; t_ic1 UUID; t_ele1 UUID;
 
   -- section IDs (no-universales)
-  s_an UUID;  -- ANCLAJE_NIVELACION  (universal pero con sort_order override)
   s_pa UUID;  -- PRUEBA_AISLAMIENTO
   s_pc UUID;  -- PRUEBA_CONTINUIDAD
   s_pt UUID;  -- PUESTA_TIERRA
@@ -31,22 +63,46 @@ DECLARE
   s_al UUID;  -- ALINEAMIENTO
 BEGIN
 
-  -- ── 1. form_templates ──────────────────────────────────────────────────────
-  INSERT INTO form_templates (key, name, test_type, project_id)
-    VALUES ('P_MEC_001', 'Motor Eléctrico',    'precomisionamiento', v_zip) RETURNING id INTO t_mec1;
+  -- ── form_templates globales (project_id = NULL) ──────────────────────────
+  INSERT INTO form_templates (key, name, test_type)
+    VALUES ('P_MEC_001', 'Motor Eléctrico',    'precomisionamiento')
+    ON CONFLICT DO NOTHING
+    RETURNING id INTO t_mec1;
 
-  INSERT INTO form_templates (key, name, test_type, project_id)
-    VALUES ('P_MEC_002', 'Bomba Centrífuga',   'precomisionamiento', v_zip) RETURNING id INTO t_mec2;
+  -- Obtener el ID si ya existía
+  IF t_mec1 IS NULL THEN
+    SELECT id INTO t_mec1 FROM form_templates WHERE key = 'P_MEC_001' AND project_id IS NULL;
+  END IF;
 
-  INSERT INTO form_templates (key, name, test_type, project_id)
-    VALUES ('P_IC_001',  'Instrumento I&C',    'precomisionamiento', v_zip) RETURNING id INTO t_ic1;
+  INSERT INTO form_templates (key, name, test_type)
+    VALUES ('P_MEC_002', 'Bomba Centrífuga',   'precomisionamiento')
+    ON CONFLICT DO NOTHING
+    RETURNING id INTO t_mec2;
 
-  INSERT INTO form_templates (key, name, test_type, project_id)
-    VALUES ('P_ELE_001', 'Tablero / CCM',      'precomisionamiento', v_zip) RETURNING id INTO t_ele1;
+  IF t_mec2 IS NULL THEN
+    SELECT id INTO t_mec2 FROM form_templates WHERE key = 'P_MEC_002' AND project_id IS NULL;
+  END IF;
+
+  INSERT INTO form_templates (key, name, test_type)
+    VALUES ('P_IC_001',  'Instrumento I&C',    'precomisionamiento')
+    ON CONFLICT DO NOTHING
+    RETURNING id INTO t_ic1;
+
+  IF t_ic1 IS NULL THEN
+    SELECT id INTO t_ic1 FROM form_templates WHERE key = 'P_IC_001' AND project_id IS NULL;
+  END IF;
+
+  INSERT INTO form_templates (key, name, test_type)
+    VALUES ('P_ELE_001', 'Tablero / CCM',      'precomisionamiento')
+    ON CONFLICT DO NOTHING
+    RETURNING id INTO t_ele1;
+
+  IF t_ele1 IS NULL THEN
+    SELECT id INTO t_ele1 FROM form_templates WHERE key = 'P_ELE_001' AND project_id IS NULL;
+  END IF;
 
 
-  -- ── 2. IDs de secciones ────────────────────────────────────────────────────
-  SELECT id INTO s_an FROM template_sections WHERE code = 'ANCLAJE_NIVELACION';
+  -- ── IDs de secciones ──────────────────────────────────────────────────────
   SELECT id INTO s_pa FROM template_sections WHERE code = 'PRUEBA_AISLAMIENTO';
   SELECT id INTO s_pc FROM template_sections WHERE code = 'PRUEBA_CONTINUIDAD';
   SELECT id INTO s_pt FROM template_sections WHERE code = 'PUESTA_TIERRA';
@@ -55,15 +111,7 @@ BEGIN
   SELECT id INTO s_al FROM template_sections WHERE code = 'ALINEAMIENTO';
 
 
-  -- ── 3. Campos de secciones no-universales ──────────────────────────────────
-
-  -- ANCLAJE_NIVELACION
-  INSERT INTO section_fields (section_id, key, label, type, required, options, sort_order) VALUES
-    (s_an, 'pernos_anclaje',  'Pernos de anclaje',   'checkbox', true,  '["OK","FALLA","N/A"]', 10),
-    (s_an, 'nivelacion',      'Nivelación correcta', 'checkbox', true,  '["OK","FALLA","N/A"]', 20),
-    (s_an, 'alineacion_base', 'Alineación con base', 'checkbox', true,  '["OK","FALLA","N/A"]', 30),
-    (s_an, 'obs_anclaje',     'Observaciones',       'textarea', false, NULL,                   40)
-  ON CONFLICT (section_id, key) DO NOTHING;
+  -- ── 4. Campos de secciones no-universales ────────────────────────────────
 
   -- PRUEBA_AISLAMIENTO
   INSERT INTO section_fields (section_id, key, label, type, required, options, validations, sort_order) VALUES
@@ -117,89 +165,58 @@ BEGIN
 
   -- ALINEAMIENTO
   INSERT INTO section_fields (section_id, key, label, type, required, options, validations, sort_order) VALUES
-    (s_al, 'offset_radial',          'Offset radial',         'numero',   false, NULL, '{"unit":"mm"}', 10),
-    (s_al, 'offset_angular',         'Offset angular',        'numero',   false, NULL, '{"unit":"mm"}', 20),
-    (s_al, 'alineamiento_laser',     'Alineamiento con láser','checkbox', true,  '["OK","FALLA","N/A"]', NULL, 30),
-    (s_al, 'obs_alineamiento',       'Observaciones',         'textarea', false, NULL, NULL, 40),
-    (s_al, 'resultado_alineamiento', 'Resultado',             'select',   true,  '["APROBADO","RECHAZADO"]', NULL, 50)
+    (s_al, 'offset_radial',          'Offset radial',          'numero',   false, NULL, '{"unit":"mm"}', 10),
+    (s_al, 'offset_angular',         'Offset angular',         'numero',   false, NULL, '{"unit":"mm"}', 20),
+    (s_al, 'alineamiento_laser',     'Alineamiento con láser', 'checkbox', true,  '["OK","FALLA","N/A"]', NULL, 30),
+    (s_al, 'obs_alineamiento',       'Observaciones',          'textarea', false, NULL, NULL, 40),
+    (s_al, 'resultado_alineamiento', 'Resultado',              'select',   true,  '["APROBADO","RECHAZADO"]', NULL, 50)
   ON CONFLICT (section_id, key) DO NOTHING;
 
 
-  -- ── 4. form_template_sections (solo secciones NO-universales) ─────────────
+  -- ── 5. form_template_sections (solo secciones NO-universales) ────────────
   -- Las secciones universales (DATOS_GENERALES, INSPECCION_VISUAL,
   -- ANCLAJE_NIVELACION, CAMBIOS_DISENO_REDLINE, FIRMAS) aparecen
   -- automáticamente vía get_template_sections().
 
-  -- P_MEC_001: Motor Eléctrico
+  -- P_MEC_001 Motor Eléctrico: aislamiento + continuidad + puesta a tierra
   INSERT INTO form_template_sections (template_id, section_id, sort_order) VALUES
     (t_mec1, s_pa, 50),
     (t_mec1, s_pc, 60),
     (t_mec1, s_pt, 70)
   ON CONFLICT (template_id, section_id) DO NOTHING;
 
-  -- P_MEC_002: Bomba Centrífuga
+  -- P_MEC_002 Bomba Centrífuga: alineamiento + prueba operativa
   INSERT INTO form_template_sections (template_id, section_id, sort_order) VALUES
     (t_mec2, s_al, 50),
     (t_mec2, s_op, 60)
   ON CONFLICT (template_id, section_id) DO NOTHING;
 
-  -- P_IC_001: Instrumento I&C
+  -- P_IC_001 Instrumento I&C: loop check
   INSERT INTO form_template_sections (template_id, section_id, sort_order) VALUES
     (t_ic1, s_lc, 80)
   ON CONFLICT (template_id, section_id) DO NOTHING;
 
-  -- P_ELE_001: Tablero / CCM
+  -- P_ELE_001 Tablero / CCM: aislamiento + continuidad + puesta a tierra
   INSERT INTO form_template_sections (template_id, section_id, sort_order) VALUES
     (t_ele1, s_pa, 50),
     (t_ele1, s_pc, 60),
     (t_ele1, s_pt, 70)
   ON CONFLICT (template_id, section_id) DO NOTHING;
 
-
-  -- ── 5. equipment_templates — asignación bulk por prefijo de TAG ────────────
-
-  -- Instrumentos → P_IC_001
-  INSERT INTO equipment_templates (equipment_id, template_id)
-  SELECT e.id, t_ic1 FROM equipment e
-  WHERE e.project_id = v_zip
-    AND e.deleted_at IS NULL
-    AND e.tag ~ '^(FT|PT|LT|AT|TT|CT|XT|QT|WT|PIC|TIC|LIC|FIC|AIC|FI|PI|LI|AI|TI|II|ZI|ZT|ST|CV|SP)\-'
-  ON CONFLICT (equipment_id, template_id) DO NOTHING;
-
-  -- Motores → P_MEC_001
-  INSERT INTO equipment_templates (equipment_id, template_id)
-  SELECT e.id, t_mec1 FROM equipment e
-  WHERE e.project_id = v_zip
-    AND e.deleted_at IS NULL
-    AND e.tag ~ '^(MTR|MCC|ME|MOT|MV)\-'
-  ON CONFLICT (equipment_id, template_id) DO NOTHING;
-
-  -- Bombas / compresores / sopladores / válvulas → P_MEC_002
-  INSERT INTO equipment_templates (equipment_id, template_id)
-  SELECT e.id, t_mec2 FROM equipment e
-  WHERE e.project_id = v_zip
-    AND e.deleted_at IS NULL
-    AND e.tag ~ '^(BBA|BOM|COM|SOP|BLO|SOB|AG)\-'
-  ON CONFLICT (equipment_id, template_id) DO NOTHING;
-
-  -- Tableros / CCM / PLC / drives → P_ELE_001
-  INSERT INTO equipment_templates (equipment_id, template_id)
-  SELECT e.id, t_ele1 FROM equipment e
-  WHERE e.project_id = v_zip
-    AND e.deleted_at IS NULL
-    AND e.tag ~ '^(CCM|PLC|SWG|TD|TBL|PCM|SCADA|UPS|GEN|VFD|VSD|ATS|TR|TRS|GE|GA|GB)\-'
-  ON CONFLICT (equipment_id, template_id) DO NOTHING;
-
-  -- Resto sin template asignado → P_IC_001 como fallback
-  INSERT INTO equipment_templates (equipment_id, template_id)
-  SELECT e.id, t_ic1 FROM equipment e
-  WHERE e.project_id = v_zip
-    AND e.deleted_at IS NULL
-    AND NOT EXISTS (
-      SELECT 1 FROM equipment_templates et WHERE et.equipment_id = e.id
-    )
-  ON CONFLICT (equipment_id, template_id) DO NOTHING;
-
 END $$;
 
 COMMIT;
+
+
+-- ============================================================
+-- ROLLBACK:
+-- BEGIN;
+-- DELETE FROM form_template_sections
+--   WHERE template_id IN (
+--     SELECT id FROM form_templates WHERE key IN ('P_MEC_001','P_MEC_002','P_IC_001','P_ELE_001')
+--   );
+-- DELETE FROM form_templates
+--   WHERE key IN ('P_MEC_001','P_MEC_002','P_IC_001','P_ELE_001') AND project_id IS NULL;
+-- ALTER TABLE form_templates ALTER COLUMN project_id SET NOT NULL;
+-- COMMIT;
+-- ============================================================
