@@ -21,14 +21,23 @@ export function AssignProjectModal({ userId, existingMembers, onClose }: Props) 
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedRoleId,    setSelectedRoleId]    = useState("");
   const [error,             setError]             = useState<string | null>(null);
+  const [loadingProjects,   setLoadingProjects]   = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    setLoadingProjects(true);
     createClient()
       .from("projects")
       .select("id, name, code")
       .is("deleted_at", null)
       .order("name")
-      .then(({ data }) => setAllProjects((data as Project[]) ?? []));
+      .then(({ data, error }) => {
+        if (!isMounted) return;
+        if (error) setError(error.message);
+        else setAllProjects((data as Project[]) ?? []);
+        setLoadingProjects(false);
+      });
+    return () => { isMounted = false; };
   }, []);
 
   const assignedIds = new Set(existingMembers.map((m) => m.project_id));
@@ -50,13 +59,13 @@ export function AssignProjectModal({ userId, existingMembers, onClose }: Props) 
       <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl w-full max-w-sm mx-4">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
           <h2 className="text-sm font-bold text-slate-100">Asignar proyecto</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300"><X size={16} /></button>
+          <button onClick={onClose} aria-label="Cerrar" className="text-slate-500 hover:text-slate-300"><X size={16} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
           <div>
             <label className="block text-[10px] text-slate-500 mb-1">Proyecto *</label>
-            <select required value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} className={selectCls}>
+            <select required disabled={loadingProjects} value={selectedProjectId} onChange={(e) => setSelectedProjectId(e.target.value)} className={selectCls}>
               <option value="">Seleccioná un proyecto…</option>
               {available.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>

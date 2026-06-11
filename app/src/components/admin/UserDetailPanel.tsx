@@ -44,7 +44,7 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
       status:    user.status,
     });
     setSaveError(null);
-  }, [user.id]);
+  }, [user.id, user.updated_at]);
 
   const set = (field: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -75,7 +75,11 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
 
   const handleRemoveProject = async (projectId: string, projectName: string) => {
     if (!window.confirm(`¿Remover a ${user.full_name} de ${projectName}?`)) return;
-    await removeProject.mutateAsync(projectId);
+    try {
+      await removeProject.mutateAsync(projectId);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Error al remover proyecto");
+    }
   };
 
   return (
@@ -172,9 +176,9 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
         ) : (
           <div className="space-y-2">
             {members.map((m) => {
-              const projectName = (m.project as { name: string } | undefined)?.name ?? m.project_id;
-              const roleName    = (m.role    as { name: string; key: string } | undefined)?.name ?? "";
-              const roleKey     = (m.role    as { name: string; key: string } | undefined)?.key  ?? "";
+              const projectName = m.project?.name ?? m.project_id;
+              const roleName    = m.role?.name    ?? "";
+              const roleKey     = m.role?.key     ?? "";
               return (
                 <div key={m.project_id}
                   className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg px-3 py-2">

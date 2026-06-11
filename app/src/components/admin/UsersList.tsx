@@ -31,7 +31,7 @@ export function UsersList({ users, roles, selectedId, onSelect, onNew }: Props) 
 
   const filtered = users.filter((u) => {
     const matchSearch =
-      u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      (u.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
     const roleKey   = (u.role as Role | undefined)?.key ?? "";
     const matchRole = roleFilter === "todos" || roleKey === roleFilter;

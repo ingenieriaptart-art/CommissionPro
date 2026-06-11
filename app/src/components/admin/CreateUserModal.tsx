@@ -33,6 +33,10 @@ export function CreateUserModal({ onClose, onCreated }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!form.role_id) {
+      setError("Seleccioná un rol");
+      return;
+    }
     try {
       const user = await createUser.mutateAsync({
         email:     form.email.trim(),
@@ -53,7 +57,7 @@ export function CreateUserModal({ onClose, onCreated }: Props) {
       <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl w-full max-w-md mx-4">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
           <h2 className="text-sm font-bold text-slate-100">Nuevo usuario</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={onClose} aria-label="Cerrar" className="text-slate-500 hover:text-slate-300 transition-colors">
             <X size={16} />
           </button>
         </div>
