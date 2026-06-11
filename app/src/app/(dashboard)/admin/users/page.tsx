@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUserList, useRoles } from "@/hooks/useUsers";
 import { UsersList }       from "@/components/admin/UsersList";
 import { UserDetailPanel } from "@/components/admin/UserDetailPanel";
@@ -10,6 +11,7 @@ export default function UsersPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showCreate,     setShowCreate]     = useState(false);
 
+  const queryClient = useQueryClient();
   const { data: users = [], isLoading, isError } = useUserList();
   const { data: roles = [] }                     = useRoles();
 
@@ -21,6 +23,11 @@ export default function UsersPage() {
     setShowCreate(false);
     setSelectedUserId(user.id);
   }, []);
+  const handleUpdated = useCallback((updated: User) => {
+    queryClient.setQueryData<User[]>(["users"], (prev) =>
+      prev ? prev.map((u) => (u.id === updated.id ? updated : u)) : prev
+    );
+  }, [queryClient]);
 
   if (isLoading) {
     return (
@@ -52,7 +59,7 @@ export default function UsersPage() {
         <UserDetailPanel
           key={selectedUser.id}
           user={selectedUser}
-          onUpdated={() => {}}
+          onUpdated={handleUpdated}
         />
       ) : (
         <div className="flex-1 flex items-center justify-center bg-slate-950">

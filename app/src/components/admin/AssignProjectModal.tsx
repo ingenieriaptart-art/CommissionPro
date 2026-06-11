@@ -69,7 +69,7 @@ export function AssignProjectModal({ userId, existingMembers, onClose }: Props) 
               <option value="">Seleccioná un proyecto…</option>
               {available.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            {available.length === 0 && (
+            {!loadingProjects && available.length === 0 && (
               <p className="text-[10px] text-slate-600 mt-1">El usuario ya está en todos los proyectos</p>
             )}
           </div>
