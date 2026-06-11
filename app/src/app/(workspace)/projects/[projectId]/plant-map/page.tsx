@@ -185,8 +185,8 @@ export default function PlantMapPage() {
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full relative">
-      {/* Breadcrumb — visible cuando no estamos en el nivel visual */}
-      {drill.level !== 'visual' && (
+      {/* Breadcrumb — solo nivel sistema (flota sobre el canvas sin chocar con tabs) */}
+      {drill.level === 'system' && (
         <PlantMapBreadcrumb
           drill={drill}
           projectName={project?.name ?? "Proyecto"}
@@ -233,12 +233,28 @@ export default function PlantMapPage() {
       {/* ── NIVEL ÁREA — con tabs Unifilar / Diagrama ── */}
       {drill.level === 'area' && (
         <>
-          {/* Tab bar */}
-          <div className="h-10 bg-slate-800 border-b border-slate-700 flex items-center px-4 gap-1 flex-shrink-0">
+          {/* Barra superior: breadcrumb + tabs en una sola fila */}
+          <div className="h-10 bg-slate-800 border-b border-slate-700 flex items-center px-3 gap-2 flex-shrink-0">
+            {/* Breadcrumb inline */}
+            <button
+              onClick={() => handleBreadcrumbNavigate({ level: 'visual' })}
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              ← {project?.name ?? "Proyecto"}
+            </button>
+            <span className="text-slate-600 text-xs">/</span>
+            <span className="text-xs text-slate-200 font-semibold truncate max-w-[140px]">
+              {drill.areaName}
+            </span>
+
+            {/* Separador */}
+            <div className="w-px h-5 bg-slate-700 mx-1 flex-shrink-0" />
+
+            {/* Tabs */}
             <button
               onClick={() => setActiveTab('unifilar')}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                "px-3 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0",
                 activeTab === 'unifilar'
                   ? "bg-blue-600 text-white"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-700"
@@ -249,7 +265,7 @@ export default function PlantMapPage() {
             <button
               onClick={() => setActiveTab('diagrama')}
               className={cn(
-                "px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                "px-3 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0",
                 activeTab === 'diagrama'
                   ? "bg-blue-600 text-white"
                   : "text-slate-400 hover:text-slate-200 hover:bg-slate-700"

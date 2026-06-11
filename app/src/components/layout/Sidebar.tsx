@@ -7,7 +7,7 @@ import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   LayoutDashboard, FolderKanban, Wrench, CheckSquare,
-  AlertTriangle, FileText, Users, Settings, ChevronLeft, Zap,
+  AlertTriangle, FileText, Users, Settings, ChevronLeft, Zap, BookOpen,
 } from "lucide-react";
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
   { href: "/tests",     icon: CheckSquare,     label: "Pruebas",    permission: "test.create" },
   { href: "/punch",     icon: AlertTriangle,   label: "Punch List", permission: "punch.create" },
   { href: "/documents", icon: FileText,        label: "Documentos", permission: null },
+  { href: "/help",      icon: BookOpen,        label: "Manual",     permission: null },
   { href: "/admin/users",icon: Users,          label: "Usuarios",   permission: "user.create" },
   { href: "/admin/forms",icon: Settings,       label: "Formularios",permission: "form.configure" },
 ];
