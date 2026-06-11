@@ -36,6 +36,11 @@ export async function PATCH(
     .select("*, role:roles(id,key,name)")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    if (error.code === "PGRST116") {
+      return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json(data);
 }

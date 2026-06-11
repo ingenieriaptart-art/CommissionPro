@@ -25,12 +25,15 @@ export async function requireAdmin(req: NextRequest): Promise<AdminAuthResult> {
     return { ok: false, response: NextResponse.json({ error: "Token inválido" }, { status: 401 }) };
   }
 
-  const { data: appUser } = await serviceClient
+  const { data: appUser, error: userErr } = await serviceClient
     .from("users")
     .select("id, role:roles(key)")
     .eq("auth_user_id", authUser.id)
     .maybeSingle();
 
+  if (userErr) {
+    return { ok: false, response: NextResponse.json({ error: "Error interno" }, { status: 500 }) };
+  }
   if (!appUser) {
     return { ok: false, response: NextResponse.json({ error: "Sin acceso" }, { status: 403 }) };
   }

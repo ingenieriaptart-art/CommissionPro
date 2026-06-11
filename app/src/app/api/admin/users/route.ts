@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (authErr) {
-    const is409 = authErr.message.toLowerCase().includes("already");
+    const is409 = authErr.status === 422;
     return NextResponse.json(
       { error: is409 ? "Este email ya está registrado" : authErr.message },
       { status: is409 ? 409 : 500 }
