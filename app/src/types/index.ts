@@ -80,6 +80,15 @@ export interface User {
   role?: Role;
 }
 
+export interface ProjectMember {
+  project_id: string;
+  user_id:    string;
+  role_id:    string;
+  added_at:   string;
+  project?:   Pick<Project, "id" | "name">;
+  role?:      Pick<Role,    "id" | "key" | "name">;
+}
+
 export interface Project {
   id: string;
   code: string;
