@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useUserList, useRoles } from "@/hooks/useUsers";
 import { UsersList }       from "@/components/admin/UsersList";
 import { UserDetailPanel } from "@/components/admin/UserDetailPanel";
@@ -10,15 +10,30 @@ export default function UsersPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showCreate,     setShowCreate]     = useState(false);
 
-  const { data: users = [], isLoading } = useUserList();
-  const { data: roles = [] }            = useRoles();
+  const { data: users = [], isLoading, isError } = useUserList();
+  const { data: roles = [] }                     = useRoles();
 
   const selectedUser = users.find((u) => u.id === selectedUserId) ?? null;
+
+  const handleSelect  = useCallback((u: User) => setSelectedUserId(u.id), []);
+  const handleNew     = useCallback(() => setShowCreate(true), []);
+  const handleCreated = useCallback((user: User) => {
+    setShowCreate(false);
+    setSelectedUserId(user.id);
+  }, []);
 
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center bg-slate-950">
         <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex h-full items-center justify-center bg-slate-950">
+        <p className="text-sm text-red-400">Error al cargar usuarios. Recargá la página.</p>
       </div>
     );
   }
@@ -29,17 +44,15 @@ export default function UsersPage() {
         users={users}
         roles={roles}
         selectedId={selectedUserId}
-        onSelect={(u: User) => setSelectedUserId(u.id)}
-        onNew={() => setShowCreate(true)}
+        onSelect={handleSelect}
+        onNew={handleNew}
       />
 
       {selectedUser ? (
         <UserDetailPanel
           key={selectedUser.id}
           user={selectedUser}
-          onUpdated={(updated: User) => {
-            setSelectedUserId(updated.id);
-          }}
+          onUpdated={() => {}}
         />
       ) : (
         <div className="flex-1 flex items-center justify-center bg-slate-950">
@@ -50,10 +63,7 @@ export default function UsersPage() {
       {showCreate && (
         <CreateUserModal
           onClose={() => setShowCreate(false)}
-          onCreated={(user: User) => {
-            setShowCreate(false);
-            setSelectedUserId(user.id);
-          }}
+          onCreated={handleCreated}
         />
       )}
     </div>
