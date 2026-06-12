@@ -10,6 +10,7 @@ const equipmentStatusMap: Record<EquipmentStatus, { label: string; variant: "def
   listo_energizacion: { label: "Listo energización",   variant: "purple" },
   listo_arranque:     { label: "Listo arranque",        variant: "purple" },
   operativo:          { label: "Operativo",             variant: "success" },
+  futuro:             { label: "Futuro",                variant: "default" },
 };
 
 const testStatusMap: Record<TestStatus, { label: string; variant: "default"|"success"|"warning"|"danger"|"info"|"purple" }> = {
@@ -38,7 +39,7 @@ const punchPriorityMap: Record<PunchPriority, { label: string; variant: "default
 };
 
 export function EquipmentStatusBadge({ status }: { status: EquipmentStatus }) {
-  const m = equipmentStatusMap[status];
+  const m = equipmentStatusMap[status] ?? { label: status, variant: "default" as const };
   return <Badge variant={m.variant}>{m.label}</Badge>;
 }
 

@@ -10,7 +10,8 @@ export type Criticality = "alta" | "media" | "baja";
 
 export type EquipmentStatus =
   | "pendiente" | "en_ejecucion" | "aprobado" | "rechazado"
-  | "bloqueado" | "listo_energizacion" | "listo_arranque" | "operativo";
+  | "bloqueado" | "listo_energizacion" | "listo_arranque" | "operativo"
+  | "futuro";
 
 export type TestType =
   | "precomisionamiento" | "fat" | "sat"
