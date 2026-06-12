@@ -72,7 +72,7 @@ const EQUIPMENT_LIST_MAP: ColMap = {
   ccm_panel:       CCM_VARIANTS,
 };
 
-const INSTRUMENTATION_LDC_MAP = {
+const INSTRUMENTATION_LDC_MAP: Record<string, string[]> = {
   tag:          ["tag nuevo", "tag"],
   name:         ["aplicacion / descripcion", "aplicacion/descripcion", "descripcion"],
   io_type:      ["senal salida"],
@@ -82,7 +82,7 @@ const INSTRUMENTATION_LDC_MAP = {
   power_supply: ["alimentacion"],
   instr_type:   ["tipo de medidor de instrumento"],
   pipe_diam:    ["diametro externo tuberia"],
-} as const;
+};
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -213,31 +213,31 @@ function parseLdcInstrumentRow(
   row: unknown[],
   idx: Map<string, number>
 ): ParsedEquipmentRow | null {
-  const tag = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.tag])?.toUpperCase();
+  const tag = pick(row, idx, INSTRUMENTATION_LDC_MAP.tag!)?.toUpperCase();
   if (!tag || tag.length < 2) return null;
 
-  const ubicacion = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.ubicacion])?.toUpperCase() ?? "";
+  const ubicacion = pick(row, idx, INSTRUMENTATION_LDC_MAP.ubicacion!)?.toUpperCase() ?? "";
   const isFuturo  = ubicacion === "FUTURO";
 
   const meta: Record<string, unknown> = {};
   if (ubicacion) meta.en_planos = ubicacion;
   if (isFuturo)  meta.is_futuro = true;
 
-  const cm = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.cable_meters]);
-  const ps = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.power_supply]);
-  const it = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.instr_type]);
-  const pd = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.pipe_diam]);
+  const cm = pick(row, idx, INSTRUMENTATION_LDC_MAP.cable_meters!);
+  const ps = pick(row, idx, INSTRUMENTATION_LDC_MAP.power_supply!);
+  const it = pick(row, idx, INSTRUMENTATION_LDC_MAP.instr_type!);
+  const pd = pick(row, idx, INSTRUMENTATION_LDC_MAP.pipe_diam!);
 
-  if (cm) meta.cable_meters    = cm;
+  if (cm) meta.cable_meters    = toNumber(cm) ?? cm;
   if (ps) meta.power_supply    = ps;
   if (it) meta.instrument_type = it;
   if (pd) meta.pipe_diameter   = pd;
 
   return {
     tag,
-    name:          pick(row, idx, [...INSTRUMENTATION_LDC_MAP.name])          ?? tag,
-    io_type:       pick(row, idx, [...INSTRUMENTATION_LDC_MAP.io_type]),
-    pid_reference: pick(row, idx, [...INSTRUMENTATION_LDC_MAP.pid_reference]),
+    name:          pick(row, idx, INSTRUMENTATION_LDC_MAP.name!)          ?? tag,
+    io_type:       pick(row, idx, INSTRUMENTATION_LDC_MAP.io_type!),
+    pid_reference: pick(row, idx, INSTRUMENTATION_LDC_MAP.pid_reference!),
     status:        isFuturo ? "futuro" : "pendiente",
     metadata:      Object.keys(meta).length > 0 ? meta : undefined,
   };
