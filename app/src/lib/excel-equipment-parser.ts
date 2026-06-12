@@ -2,7 +2,14 @@ import * as XLSX from "xlsx";
 
 // ── Tipos públicos ────────────────────────────────────────────
 
-export type SheetType = "instrument_index" | "power_equipment" | "equipment_list" | "unknown";
+export type SheetType =
+  | "instrument_index"
+  | "power_equipment"
+  | "equipment_list"
+  | "instrumentation_ldc"
+  | "unknown";
+
+export type EquipmentImportStatus = "pendiente" | "futuro";
 
 export interface ParsedEquipmentRow {
   tag: string;
@@ -14,6 +21,7 @@ export interface ParsedEquipmentRow {
   pid_reference?: string;
   power_kw?: number;
   ccm_panel?: string;
+  status?: EquipmentImportStatus;
   metadata?: Record<string, unknown>;
 }
 
@@ -64,6 +72,18 @@ const EQUIPMENT_LIST_MAP: ColMap = {
   ccm_panel:       CCM_VARIANTS,
 };
 
+const INSTRUMENTATION_LDC_MAP = {
+  tag:          ["tag nuevo", "tag"],
+  name:         ["aplicacion / descripcion", "aplicacion/descripcion", "descripcion"],
+  io_type:      ["senal salida"],
+  pid_reference:["tag anterior"],
+  ubicacion:    ["ubicacion en plano"],
+  cable_meters: ["ms"],
+  power_supply: ["alimentacion"],
+  instr_type:   ["tipo de medidor de instrumento"],
+  pipe_diam:    ["diametro externo tuberia"],
+} as const;
+
 // ── Helpers ─────────────────────────────────────────────────
 
 function normalizeHeader(h: string): string {
@@ -106,6 +126,9 @@ function toNumber(value: string | undefined): number | undefined {
 function detectSheetType(headerIdx: Map<string, number>): SheetType {
   const has = (...variants: string[]) =>
     variants.some(v => headerIdx.has(normalizeHeader(v)));
+
+  // LDC instrumentation: combinación única de "TAG Nuevo" + "SEÑAL SALIDA"
+  if (has("tag nuevo") && has("senal salida")) return "instrumentation_ldc";
 
   const hasTag = has("tag", "codigo", "cod");
   if (!hasTag) return "unknown";
@@ -186,6 +209,40 @@ function parseEquipmentListRow(
   };
 }
 
+function parseLdcInstrumentRow(
+  row: unknown[],
+  idx: Map<string, number>
+): ParsedEquipmentRow | null {
+  const tag = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.tag])?.toUpperCase();
+  if (!tag || tag.length < 2) return null;
+
+  const ubicacion = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.ubicacion])?.toUpperCase() ?? "";
+  const isFuturo  = ubicacion === "FUTURO";
+
+  const meta: Record<string, unknown> = {};
+  if (ubicacion) meta.en_planos = ubicacion;
+  if (isFuturo)  meta.is_futuro = true;
+
+  const cm = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.cable_meters]);
+  const ps = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.power_supply]);
+  const it = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.instr_type]);
+  const pd = pick(row, idx, [...INSTRUMENTATION_LDC_MAP.pipe_diam]);
+
+  if (cm) meta.cable_meters    = cm;
+  if (ps) meta.power_supply    = ps;
+  if (it) meta.instrument_type = it;
+  if (pd) meta.pipe_diameter   = pd;
+
+  return {
+    tag,
+    name:          pick(row, idx, [...INSTRUMENTATION_LDC_MAP.name])          ?? tag,
+    io_type:       pick(row, idx, [...INSTRUMENTATION_LDC_MAP.io_type]),
+    pid_reference: pick(row, idx, [...INSTRUMENTATION_LDC_MAP.pid_reference]),
+    status:        isFuturo ? "futuro" : "pendiente",
+    metadata:      Object.keys(meta).length > 0 ? meta : undefined,
+  };
+}
+
 // ── Función principal ────────────────────────────────────────
 
 export function parseExcelEquipment(
@@ -223,7 +280,9 @@ export function parseExcelEquipment(
   for (const row of dataRows) {
     let parsed: ParsedEquipmentRow | null = null;
 
-    if (sheetType === "instrument_index") {
+    if (sheetType === "instrumentation_ldc") {
+      parsed = parseLdcInstrumentRow(row as unknown[], headerIdx);
+    } else if (sheetType === "instrument_index") {
       parsed = parseInstrumentRow(row as unknown[], headerIdx);
     } else if (sheetType === "power_equipment") {
       parsed = parsePowerRow(row as unknown[], headerIdx);
