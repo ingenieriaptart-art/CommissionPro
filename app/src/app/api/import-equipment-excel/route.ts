@@ -42,25 +42,35 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── Membresía al proyecto ────────────────────────────────
+  // ── Verificar acceso al proyecto vía RLS ─────────────────
+  const userClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    }
+  );
+
+  const { data: projectAccess } = await userClient
+    .from("projects")
+    .select("id")
+    .eq("id", project_id)
+    .maybeSingle();
+
+  if (!projectAccess) {
+    return NextResponse.json({ error: "Sin acceso al proyecto" }, { status: 403 });
+  }
+
+  // Resolver app user id para auditoría
   const { data: appUser } = await serviceClient
     .from("users")
     .select("id")
     .eq("auth_user_id", authUser.id)
-    .single();
+    .maybeSingle();
 
   if (!appUser) {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 403 });
-  }
-
-  const { count } = await serviceClient
-    .from("project_members")
-    .select("*", { count: "exact", head: true })
-    .eq("project_id", project_id)
-    .eq("user_id", appUser.id);
-
-  if (!count || count === 0) {
-    return NextResponse.json({ error: "Sin acceso al proyecto" }, { status: 403 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -75,12 +85,12 @@ export async function POST(req: NextRequest) {
 
   if (parsed.rows.length === 0) {
     return NextResponse.json({
-      message: "No se encontraron filas válidas",
+      error:     `No se encontraron filas válidas. Encabezados detectados: [${parsed.detectedHeaders.join(" | ")}]`,
       sheetType: parsed.sheetType,
       sheetName: parsed.sheetName,
       skipped:   parsed.skipped,
       totalRows: parsed.totalRows,
-    });
+    }, { status: 422 });
   }
 
   // ── Obtener subsistema SIN CLASIFICAR ────────────────────
@@ -95,7 +105,12 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Deduplicación ────────────────────────────────────────
-  const incomingTags = parsed.rows.map(r => r.tag);
+  // Primero deduplicar dentro del Excel (mismo TAG en múltiples filas → última gana)
+  const uniqueRowsMap = new Map<string, typeof parsed.rows[0]>();
+  for (const r of parsed.rows) uniqueRowsMap.set(r.tag, r);
+  const uniqueRows = Array.from(uniqueRowsMap.values());
+
+  const incomingTags = uniqueRows.map(r => r.tag);
 
   const { data: existing } = await serviceClient
     .from("equipment")
@@ -106,8 +121,8 @@ export async function POST(req: NextRequest) {
 
   const existingSet = new Set((existing ?? []).map((e: { tag: string }) => e.tag));
 
-  const toInsert = parsed.rows.filter(r => !existingSet.has(r.tag));
-  const toUpdate = parsed.rows.filter(r =>  existingSet.has(r.tag));
+  const toInsert = uniqueRows.filter(r => !existingSet.has(r.tag));
+  const toUpdate = uniqueRows.filter(r =>  existingSet.has(r.tag));
 
   let created = 0;
   let updated = 0;
@@ -126,8 +141,9 @@ export async function POST(req: NextRequest) {
       location_system: r.location_system ?? null,
       pid_reference:   r.pid_reference   ?? null,
       power_kw:        r.power_kw        ?? null,
+      ccm_panel:       r.ccm_panel       ?? null,
       criticality:     "media" as const,
-      status:          "pendiente" as const,
+      status:          r.status ?? "pendiente",
       metadata: {
         unclassified: true,
         from_excel:   true,
@@ -159,6 +175,7 @@ export async function POST(req: NextRequest) {
     if (r.location_system)  updateFields.location_system  = r.location_system;
     if (r.pid_reference)    updateFields.pid_reference    = r.pid_reference;
     if (r.power_kw != null) updateFields.power_kw         = r.power_kw;
+    if (r.ccm_panel)        updateFields.ccm_panel        = r.ccm_panel;
 
     if (Object.keys(updateFields).length === 0) continue;
 
