@@ -7,9 +7,12 @@ interface InspectionSummaryProps {
   template: MockInspectionTemplate;
   state: InspectionState;
   onClose: () => void;
+  onSave?: () => Promise<void>;
+  isSaving?: boolean;
+  saveError?: string | null;
 }
 
-export function InspectionSummary({ template, state, onClose }: InspectionSummaryProps) {
+export function InspectionSummary({ template, state, onClose, onSave, isSaving, saveError }: InspectionSummaryProps) {
   const failures: { sectionName: string; fieldLabel: string; observation: string }[] = [];
 
   for (const section of template.sections) {
@@ -128,20 +131,27 @@ export function InspectionSummary({ template, state, onClose }: InspectionSummar
 
       {/* CTA */}
       <div className="mt-6 pt-4 border-t border-slate-800">
+        {saveError && (
+          <p className="text-xs text-red-400 text-center mb-3 bg-red-950/30 border border-red-800 rounded-lg px-3 py-2">
+            {saveError}
+          </p>
+        )}
         <button
-          onClick={onClose}
+          disabled={isSaving}
+          onClick={onSave ?? onClose}
           className={cn(
-            "w-full py-3 rounded-xl font-semibold text-sm transition-colors",
+            "w-full py-3 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed",
             isApproved
               ? "bg-green-700 hover:bg-green-600 text-white"
               : "bg-orange-700 hover:bg-orange-600 text-white"
           )}
         >
-          {isApproved ? "✓ Generar Certificado y Cerrar" : "⚠ Cerrar con Observaciones"}
+          {isSaving
+            ? "Guardando en Supabase…"
+            : isApproved
+              ? "✓ Guardar y Cerrar Inspección"
+              : "⚠ Guardar con Observaciones"}
         </button>
-        <p className="text-[10px] text-slate-600 text-center mt-2">
-          Prototipo: el certificado se generará al ejecutar migración 0021
-        </p>
       </div>
     </div>
   );

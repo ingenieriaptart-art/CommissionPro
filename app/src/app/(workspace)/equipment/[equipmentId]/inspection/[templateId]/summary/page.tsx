@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getEquipmentById, getTemplateById } from "@/lib/inspection-mock-data";
+import { useEquipmentForInspection, useInspectionTemplate } from "@/hooks/useInspectionData";
+import { useSubmitInspection } from "@/hooks/useSubmitInspection";
 import { InspectionSummary } from "@/components/inspection/InspectionSummary";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
@@ -18,26 +19,37 @@ export default function InspectionSummaryPage() {
   const { equipmentId, templateId } = params;
   const returnTo = searchParams.get("returnTo") ?? "/";
 
-  const equipment = getEquipmentById(equipmentId);
-  const template  = getTemplateById(templateId);
+  const { data: equipment } = useEquipmentForInspection(equipmentId);
+  const { data: template  } = useInspectionTemplate(templateId);
+  const { submit, isSubmitting, error: saveError } = useSubmitInspection();
+
   const [state, setState] = useState<InspectionState | null>(null);
 
   useEffect(() => {
     if (!template) return;
-    const key = STORAGE_KEY(equipmentId, templateId);
     try {
-      const stored = sessionStorage.getItem(key);
+      const stored = sessionStorage.getItem(STORAGE_KEY(equipmentId, templateId));
       if (stored) setState(JSON.parse(stored) as InspectionState);
     } catch { /* ignore */ }
   }, [equipmentId, templateId, template]);
 
-  const handleClose = () => {
+  const handleSave = useCallback(async () => {
+    if (!state || !equipment?.project_id || !template) return;
+
+    const result = await submit(state, equipment.project_id, template.code);
+    if (!result) return; // error shown via saveError
+
+    // Limpiar sesión y volver al plano
     try { sessionStorage.removeItem(STORAGE_KEY(equipmentId, templateId)); } catch { /* ignore */ }
     router.push(returnTo);
-  };
+  }, [state, equipment, template, submit, equipmentId, templateId, returnTo, router]);
 
   if (!equipment || !template || !state) {
-    return <div className="flex-1 flex items-center justify-center"><p className="text-slate-500">Cargando…</p></div>;
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-slate-500">Cargando…</p>
+      </div>
+    );
   }
 
   return (
@@ -64,7 +76,14 @@ export default function InspectionSummaryPage() {
           onSectionSelect={() => {}}
         />
         <main className="flex-1 overflow-y-auto bg-slate-950">
-          <InspectionSummary template={template} state={state} onClose={handleClose} />
+          <InspectionSummary
+            template={template}
+            state={state}
+            onClose={handleSave}
+            onSave={handleSave}
+            isSaving={isSubmitting}
+            saveError={saveError}
+          />
         </main>
         <InspectionMiniMap equipmentId={equipmentId} equipmentTag={equipment.tag} />
       </div>

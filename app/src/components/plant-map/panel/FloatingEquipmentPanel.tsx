@@ -4,7 +4,6 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X, ExternalLink, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getEquipmentById } from "@/lib/inspection-mock-data";
 import { equipmentStatusColor } from "@/components/plant-map/visual/EquipmentOverlay";
 import { useEquipmentInspectionTemplates } from "@/hooks/useInspectionData";
 import type { Equipment } from "@/types";
@@ -54,8 +53,7 @@ export function FloatingEquipmentPanel({
   const router   = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Prop del padre tiene prioridad; fallback a mock para IDs mock
-  const equipment = equipmentProp ?? getEquipmentById(equipmentId);
+  const equipment = equipmentProp;
 
   const { data: templates = [], isLoading: templatesLoading } =
     useEquipmentInspectionTemplates(equipmentId);

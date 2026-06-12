@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PLANTA DE GAS LDC — SCADA</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#dde3ea;
+    color:#1e293b;
+    font-family:'Courier New', monospace;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ── HEADER ── */
+  .hdr {
+    background:linear-gradient(90deg,#1e3a5f,#1d4ed8,#1e3a5f);
+    border-bottom:2px solid #1d4ed8;
+    padding:10px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .hdr-left { display:flex; align-items:center; gap:16px; }
+  .logo {
+    width:36px; height:36px; border-radius:8px;
+    background:linear-gradient(135deg,#ffffff33,#ffffff11);
+    border:1px solid #ffffff44;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:bold; color:white;
+  }
+  .hdr-title { line-height:1.2; }
+  .hdr-title .plant { font-size:17px; font-weight:bold; color:#ffffff; letter-spacing:2px; }
+  .hdr-title .sub   { font-size:12px; color:#93c5fd; letter-spacing:1px; }
+  .hdr-right { display:flex; align-items:center; gap:24px; }
+  .hdr-stat  { text-align:right; line-height:1.4; }
+  .hdr-stat .label { font-size:11px; color:#93c5fd; text-transform:uppercase; letter-spacing:1px; }
+  .hdr-stat .val   { font-size:14px; color:#ffffff; font-weight:bold; }
+  .status-badge {
+    padding:4px 12px; border-radius:4px; font-size:12px; font-weight:bold; letter-spacing:1px;
+    background:#14532d; border:1px solid #4ade80; color:#bbf7d0;
+  }
+
+  /* ── PROCESS FLOW ── */
+  .flow-strip {
+    background:#c8d3dc; border-bottom:2px solid #94a3b8;
+    padding:10px 24px; display:flex; align-items:center; gap:0; overflow-x:auto;
+  }
+  .flow-label { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-right:12px; white-space:nowrap; font-weight:bold; }
+  .flow-node {
+    background:#ffffff; border:1.5px solid #3b82f6; border-radius:4px;
+    padding:5px 10px; font-size:12px; color:#1e40af; white-space:nowrap;
+    position:relative; box-shadow:0 1px 3px rgba(0,0,0,.15);
+  }
+  .flow-node.green  { border-color:#16a34a; color:#14532d; background:#f0fdf4; }
+  .flow-node.cyan   { border-color:#0891b2; color:#164e63; background:#ecfeff; }
+  .flow-node.orange { border-color:#c2410c; color:#7c2d12; background:#fff7ed; }
+  .flow-node.exit   { border-color:#16a34a; color:#14532d; background:#dcfce7; font-weight:bold; border-width:2px; }
+  .flow-node .fn-name { font-size:13px; font-weight:bold; }
+  .flow-node .fn-sub  { font-size:10px; color:#64748b; display:block; margin-top:1px; }
+  .flow-arrow { color:#94a3b8; font-size:18px; padding:0 6px; flex-shrink:0; }
+  .flow-arrow.green { color:#16a34a; }
+  .flow-arrow.blue  { color:#3b82f6; }
+
+  /* ── SUBESTACIÓN ── */
+  .sub-strip {
+    margin:12px 16px 0;
+    background:#e8edf3; border:1.5px solid #94a3b8;
+    border-radius:6px; padding:10px 16px;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+  }
+  .sub-strip-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .sub-strip-title { font-size:13px; color:#475569; letter-spacing:2px; text-transform:uppercase; font-weight:bold; }
+  .sub-strip-line  { flex:1; height:1px; background:#cbd5e1; }
+  .sub-eq-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .sub-eq {
+    background:#ffffff; border:1.5px solid #cbd5e1; border-radius:5px;
+    padding:8px 14px; min-width:145px; position:relative; cursor:pointer;
+    transition:border-color .15s, box-shadow .15s; box-shadow:0 1px 3px rgba(0,0,0,.08);
+    overflow:visible;
+  }
+  .sub-eq:hover { border-color:#64748b; box-shadow:0 3px 8px rgba(0,0,0,.15); }
+  .sub-eq:hover .tooltip { display:block; }
+  .sub-eq-tag  { font-size:12px; font-weight:bold; color:#1e293b; }
+  .sub-eq-name { font-size:10px; color:#64748b; margin-top:2px; }
+  .sub-eq-data { font-size:11px; color:#475569; margin-top:4px; font-weight:bold; }
+
+  /* ── CCM CARDS (vista principal) ── */
+  .ccm-cards {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:12px; padding:12px 16px 16px;
+  }
+  .ccm-card {
+    border-radius:8px; cursor:pointer; overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,.12);
+    transition:transform .15s, box-shadow .15s;
+    user-select:none;
+  }
+  .ccm-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,.18); }
+  .ccm-card:active { transform:translateY(-1px); }
+  .ccm-card.blue  { background:#f0f6ff; border:1.5px solid #93c5fd; }
+  .ccm-card.green { background:#f0fdf4; border:1.5px solid #86efac; }
+  .ccm-card.orange{ background:#fff7ed; border:1.5px solid #fdba74; }
+  .ccm-card-bar { height:5px; }
+  .ccm-card.blue  .ccm-card-bar { background:linear-gradient(90deg,#1d4ed8,#0ea5e9); }
+  .ccm-card.green .ccm-card-bar { background:linear-gradient(90deg,#16a34a,#4ade80); }
+  .ccm-card.orange .ccm-card-bar { background:linear-gradient(90deg,#c2410c,#f97316); }
+  .ccm-card-body { padding:16px 18px; }
+  .ccm-card-title { font-size:14px; font-weight:bold; letter-spacing:1px; margin-bottom:3px; }
+  .ccm-card.blue  .ccm-card-title { color:#1d4ed8; }
+  .ccm-card.green .ccm-card-title { color:#15803d; }
+  .ccm-card.orange .ccm-card-title{ color:#c2410c; }
+  .ccm-card-sub { font-size:10px; color:#64748b; margin-bottom:14px; letter-spacing:0.3px; }
+  .ccm-card-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+  .ccm-stat { text-align:center; padding:8px 0; background:#ffffff44; border-radius:5px; }
+  .ccm-stat-val { font-size:24px; font-weight:bold; color:#1e293b; line-height:1; }
+  .ccm-stat-lbl { font-size:9px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-top:3px; }
+  .ccm-card-badges { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px; }
+  .ccm-badge { font-size:10px; font-weight:bold; padding:3px 8px; border-radius:3px; }
+  .ccm-badge.n { background:#dbeafe; color:#1d4ed8; }
+  .ccm-badge.e { background:#dcfce7; color:#15803d; }
+  .ccm-badge.f { background:#ede9fe; color:#6d28d9; }
+  .ccm-card-cta {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:9px; border-radius:5px; font-size:12px; font-weight:bold; letter-spacing:0.5px;
+  }
+  .ccm-card.blue  .ccm-card-cta { background:#dbeafe; color:#1d4ed8; }
+  .ccm-card.green .ccm-card-cta { background:#dcfce7; color:#15803d; }
+  .ccm-card.orange .ccm-card-cta{ background:#ffedd5; color:#c2410c; }
+
+  /* ── DETAIL NAV ── */
+  .detail-nav {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:10px 16px; background:#c8d3dc; border-bottom:2px solid #94a3b8;
+  }
+  .back-btn {
+    background:#1e293b; color:#e2e8f0; border:none; padding:7px 14px;
+    border-radius:5px; cursor:pointer; font-family:'Courier New',monospace;
+    font-size:12px; font-weight:bold; letter-spacing:0.5px; transition:background .15s;
+    white-space:nowrap;
+  }
+  .back-btn:hover { background:#334155; }
+  .detail-nav-title {
+    font-size:14px; font-weight:bold; letter-spacing:1.5px; color:#1e293b; flex:1;
+    white-space:nowrap;
+  }
+  .view-toggle { display:flex; gap:4px; }
+  .toggle-btn {
+    background:#e2e8f0; color:#64748b; border:1.5px solid #cbd5e1;
+    padding:6px 14px; border-radius:5px; cursor:pointer;
+    font-family:'Courier New',monospace; font-size:12px; font-weight:bold;
+    letter-spacing:0.5px; transition:all .15s;
+  }
+  .toggle-btn.active { background:#1d4ed8; color:#ffffff; border-color:#1d4ed8; }
+
+  /* ── DETAIL CONTENT ── */
+  .detail-content { padding:12px 16px; }
+  .detail-ccm { display:none; }
+  .detail-ccm.visible { display:block; }
+
+  /* Hier view: two columns N / E */
+  .hier-view { display:block; }
+  .hier-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .hier-col {
+    background:#ffffff; border-radius:7px; padding:14px;
+    box-shadow:0 1px 5px rgba(0,0,0,.08);
+  }
+  .hier-col-header {
+    font-size:13px; font-weight:bold; letter-spacing:1.5px;
+    padding:6px 12px; border-radius:4px; margin-bottom:12px; text-align:center;
+    display:block;
+  }
+  .hier-col-header.side-n { background:#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe; }
+  .hier-col-header.side-e { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+  .hier-col .eq-grid { justify-content:center; }
+  .hier-group-label {
+    font-size:9px; text-transform:uppercase; letter-spacing:1px; color:#94a3b8;
+    font-weight:bold; margin:8px 0 4px; padding-bottom:3px; border-bottom:1px dashed #e2e8f0;
+  }
+
+  /* Proc view */
+  .proc-view { display:none; }
+  .proc-view.visible { display:block; }
+  .ccm-panel { border-radius:6px; padding:12px; position:relative; overflow:visible; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  .ccm-panel::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:6px 6px 0 0; }
+  .ccm-panel.blue  { background:#f0f6ff; border:1.5px solid #93c5fd; }
+  .ccm-panel.blue::before  { background:linear-gradient(90deg,#1d4ed8,#0ea5e9); }
+  .ccm-panel.green { background:#f0fdf4; border:1.5px solid #86efac; }
+  .ccm-panel.green::before { background:linear-gradient(90deg,#16a34a,#4ade80); }
+  .ccm-panel.orange{ background:#fff7ed; border:1.5px solid #fdba74; }
+  .ccm-panel.orange::before{ background:linear-gradient(90deg,#c2410c,#f97316); }
+  .ccm-header { margin-bottom:10px; }
+  .ccm-title  { font-size:14px; font-weight:bold; letter-spacing:1.5px; margin-bottom:2px; }
+  .ccm-sub    { font-size:11px; color:#64748b; letter-spacing:0.5px; }
+  .ccm-panel.blue   .ccm-title { color:#1d4ed8; }
+  .ccm-panel.green  .ccm-title { color:#15803d; }
+  .ccm-panel.orange .ccm-title { color:#c2410c; }
+  .ccm-section { margin-bottom:12px; }
+  .ccm-section-label {
+    font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#64748b;
+    margin-bottom:6px; padding-bottom:3px; border-bottom:1px solid #cbd5e1; font-weight:bold;
+  }
+  .eq-grid { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; }
+  .ne-block { margin-bottom:7px; }
+  .ne-header {
+    font-size:9px; font-weight:bold; letter-spacing:1px;
+    padding:2px 7px; border-radius:3px; display:inline-block; margin-bottom:4px;
+  }
+  .ne-header.side-n { background:#dbeafe; color:#1d4ed8; }
+  .ne-header.side-e { background:#dcfce7; color:#15803d; }
+
+  /* ── EQUIPMENT ITEM ── */
+  .eq {
+    position:relative; width:80px; background:#ffffff;
+    border:1px solid #cbd5e1; border-radius:5px; padding:8px 6px 6px;
+    cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+  }
+  .eq:hover { transform:translateY(-2px); border-color:#3b82f6; box-shadow:0 4px 12px rgba(59,130,246,.25); z-index:10; }
+  .eq-status { width:10px; height:10px; border-radius:50%; margin:0 auto 5px; position:relative; }
+  .eq-status.pending { background:#94a3b8; }
+  .eq-status.ok      { background:#16a34a; box-shadow:0 0 6px #16a34a; }
+  .eq-status.warn    { background:#ca8a04; box-shadow:0 0 6px #ca8a04; }
+  .eq-status.fault   { background:#dc2626; box-shadow:0 0 6px #dc2626; }
+  .eq-status.future  { background:#a5b4fc; border:1px dashed #6366f1; }
+  .eq-tag  { font-size:13px; font-weight:bold; text-align:center; color:#1e293b; line-height:1.2; }
+  .eq-kw   { font-size:11px; text-align:center; color:#475569; margin-top:3px; font-weight:600; }
+  .eq-type { font-size:10px; text-align:center; margin-top:3px; padding:1px 4px; border-radius:3px; font-weight:bold; letter-spacing:0.3px; }
+  .eq-type.side-n { background:#dbeafe; color:#1d4ed8; }
+  .eq-type.side-e { background:#dcfce7; color:#15803d; }
+  .eq-type.side-f { background:#ede9fe; color:#6d28d9; }
+
+  /* ── TOOLTIP ── */
+  .tooltip {
+    display:none; position:absolute; bottom:calc(100% + 8px);
+    left:50%; transform:translateX(-50%);
+    background:#1e293b; border:1px solid #334155; border-radius:6px;
+    padding:8px 10px; min-width:180px; max-width:220px;
+    z-index:200; white-space:normal; box-shadow:0 4px 20px rgba(0,0,0,.3); color:#e2e8f0;
+  }
+  .tooltip::after {
+    content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+    border:5px solid transparent; border-top-color:#334155;
+  }
+  .eq:hover .tooltip, .sub-eq:hover .tooltip { display:block; }
+  .tt-tag  { font-size:13px; font-weight:bold; color:#38bdf8; margin-bottom:4px; }
+  .tt-name { font-size:11.5px; color:#cbd5e1; margin-bottom:6px; line-height:1.4; }
+  .tt-row  { display:flex; justify-content:space-between; font-size:10.5px; margin-bottom:2px; }
+  .tt-row .k { color:#64748b; }
+  .tt-row .v { color:#94a3b8; font-weight:bold; }
+  .tt-status { margin-top:5px; font-size:10px; text-align:center; padding:2px 6px; border-radius:3px; }
+  .tt-status.pending { background:#334155; color:#94a3b8; }
+  .tt-status.future  { background:#1e1b4b; color:#818cf8; }
+
+  /* ── LEGEND ── */
+  .legend {
+    display:flex; align-items:center; gap:16px; padding:6px 24px; font-size:11px;
+    background:#c8d3dc; border-top:1px solid #94a3b8; flex-wrap:wrap;
+  }
+  .legend-title { color:#475569; text-transform:uppercase; letter-spacing:1px; margin-right:4px; font-weight:bold; }
+  .leg-item { display:flex; align-items:center; gap:5px; color:#475569; }
+  .leg-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding:5px 24px; background:#c8d3dc; border-top:1px solid #94a3b8;
+    display:flex; justify-content:space-between; font-size:10px; color:#64748b;
+  }
+
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:#dde3ea; }
+  ::-webkit-scrollbar-thumb { background:#94a3b8; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="logo">⚡</div>
+    <div class="hdr-title">
+      <div class="plant">PLANTA DE GAS LDC</div>
+      <div class="sub">BEBEDOURO, BRASIL · LDC-001 · BIOTEC</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-stat">
+      <div class="label">Equipos</div>
+      <div class="val">40 / 40</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="label">CCMs</div>
+      <div class="val">CCM1 · CCM2 · CCM3</div>
+    </div>
+    <div class="hdr-stat">
+      <div class="label">Tensión</div>
+      <div class="val">440/220 V · 60 Hz</div>
+    </div>
+    <div class="status-badge">● PRE-COMISIONAMIENTO</div>
+  </div>
+</div>
+
+<!-- ═══ PROCESS FLOW ═══ -->
+<div class="flow-strip">
+  <span class="flow-label">Flujo de proceso →</span>
+  <div class="flow-node"><span class="fn-name">ENTRADA CRUDO</span><span class="fn-sub">Sustrato orgánico</span></div>
+  <span class="flow-arrow blue">→</span>
+  <div class="flow-node cyan"><span class="fn-name">B1 · B2 · B3 · B4</span><span class="fn-sub">Bombas alimentación · 145 KW · CCM1</span></div>
+  <span class="flow-arrow blue">→</span>
+  <div class="flow-node cyan"><span class="fn-name">REACTORES RAFA × 5</span><span class="fn-sub">Digestión anaerobia ← SA1·SA2·SA3 (aire)</span></div>
+  <span class="flow-arrow green">→</span>
+  <div class="flow-node green"><span class="fn-name">PRODUCCIÓN BIOGÁS</span><span class="fn-sub">CH₄ + CO₂</span></div>
+  <span class="flow-arrow green">→</span>
+  <div class="flow-node green"><span class="fn-name">SB1–SB6</span><span class="fn-sub">Sopladores biogás · 75 KW · CCM3</span></div>
+  <span class="flow-arrow green">→</span>
+  <div class="flow-node green"><span class="fn-name">TORRES LAVADO</span><span class="fn-sub">B11·B12·B13·B14 · 40 KW</span></div>
+  <span class="flow-arrow green">→</span>
+  <div class="flow-node exit"><span class="fn-name">↑ BIOMETANO</span><span class="fn-sub">Gas purificado · salida red</span></div>
+  <span class="flow-arrow" style="margin-left:auto; color:#cbd5e1">│</span>
+  <div class="flow-node orange" style="margin-left:8px;"><span class="fn-name">LODOS → CCM2</span><span class="fn-sub">Purga · Deshidratación · Nutrientes</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  VISTA PRINCIPAL  →  Subestación + 3 CCM cards  -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="view-main">
+
+  <!-- ── SUBESTACIÓN (siempre visible, primer nivel) ── -->
+  <div class="sub-strip">
+    <div class="sub-strip-header">
+      <span class="sub-strip-title">⚡ Subestación Eléctrica</span>
+      <div class="sub-strip-line"></div>
+      <span style="font-size:11px;color:#64748b;font-weight:bold">13.8 kV entrada → 440/220V distribución</span>
+    </div>
+
+    <div class="sub-row-label" style="font-size:10px;font-weight:bold;color:#7c3aed;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding:3px 6px;background:#ede9fe;border-radius:3px;display:inline-block;">
+      ① Media Tensión — 13.8 kV
+    </div>
+    <div class="sub-eq-row" style="margin-bottom:10px;">
+      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
+        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-REMONTE</div>
+        <div class="sub-eq-name">Celda de remonte</div>
+        <div class="sub-eq-data">Acometida MT · 13.8 kV · Entrada</div>
+        <div class="tooltip"><div class="tt-tag">CELDA REMONTE</div><div class="tt-name">Celda de remonte — acometida media tensión</div><div class="tt-row"><span class="k">Tensión:</span><span class="v">13.8 kV</span></div><div class="tt-row"><span class="k">Función:</span><span class="v">Entrada MT desde red pública</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
+        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-MEDIDA</div>
+        <div class="sub-eq-name">Celda de medida</div>
+        <div class="sub-eq-data">kWh · kVArh · Medidor Siemens</div>
+        <div class="tooltip"><div class="tt-tag">CELDA MEDIDA</div><div class="tt-name">Celda de medida MT</div><div class="tt-row"><span class="k">Equipos:</span><span class="v">TC + TP tipo interior</span></div><div class="tt-row"><span class="k">Medidor:</span><span class="v">Electrónico Siemens + telemetría</span></div><div class="tt-row"><span class="k">Registra:</span><span class="v">kWh / kVArh</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
+        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-PROTEC</div>
+        <div class="sub-eq-name">Celda de protección MT</div>
+        <div class="sub-eq-data">Siemens 8MF8SE 13.2 kV · ANSI 50/51</div>
+        <div class="tooltip"><div class="tt-tag">CELDA PROTECCIÓN MT</div><div class="tt-name">Celda de protección en media tensión</div><div class="tt-row"><span class="k">Celda:</span><span class="v">Siemens 8MF8SE 13.2 kV</span></div><div class="tt-row"><span class="k">Relé:</span><span class="v">ANSI 50/51 sobreintensidad</span></div><div class="tt-row"><span class="k">Fuente ctrl:</span><span class="v">24–230V AC/DC</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
+        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-TRAFO</div>
+        <div class="sub-eq-name">Celda transformador TR-1</div>
+        <div class="sub-eq-data">2000 KVA · 13.8 kV → 440/220V</div>
+        <div class="tooltip"><div class="tt-tag">CELDA TRANSFORMADOR · TR-1</div><div class="tt-name">Celda con transformador principal de potencia</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">2000 KVA</span></div><div class="tt-row"><span class="k">Relación:</span><span class="v">13.8 kV → 440/220V</span></div><div class="tt-row"><span class="k">Cable entrada:</span><span class="v">150 mm² Cu XLPE</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+    </div>
+
+    <div class="sub-row-label" style="font-size:10px;font-weight:bold;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding:3px 6px;background:#e0f2fe;border-radius:3px;display:inline-block;">
+      ② Baja Tensión — 440 / 220 V
+    </div>
+    <div class="sub-eq-row">
+      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
+        <div class="sub-eq-tag">TR-2</div>
+        <div class="sub-eq-name">Transformador auxiliar</div>
+        <div class="sub-eq-data">150 KVA · 440V → 220/208V · SECO</div>
+        <div class="tooltip"><div class="tt-tag">TR-2</div><div class="tt-name">Transformador auxiliar seco para TGD220</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">150 KVA</span></div><div class="tt-row"><span class="k">Relación:</span><span class="v">440V → 220/208V</span></div><div class="tt-row"><span class="k">Tipo:</span><span class="v">Seco Clase H</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
+        <div class="sub-eq-tag">TGD220</div>
+        <div class="sub-eq-name">Tablero distribución 220V</div>
+        <div class="sub-eq-data">800A · 220/208V · 60Hz · IP55</div>
+        <div class="tooltip"><div class="tt-tag">TGD220</div><div class="tt-name">Tablero general distribución 220V</div><div class="tt-row"><span class="k">Barras:</span><span class="v">800A · 220/208V 60Hz</span></div><div class="tt-row"><span class="k">Alimenta:</span><span class="v">TA_1 · TA_2 · TA_3 · UPS</span></div><div class="tt-row"><span class="k">Fuente:</span><span class="v">TR-2 (150KVA)</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
+        <div class="sub-eq-tag">GED</div>
+        <div class="sub-eq-name">Grupo electrógeno diesel</div>
+        <div class="sub-eq-data">1200 KW · 440V / 3F / 60Hz</div>
+        <div class="tooltip"><div class="tt-tag">GED</div><div class="tt-name">Grupo electrógeno diesel de emergencia</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">1200 KW</span></div><div class="tt-row"><span class="k">Tensión:</span><span class="v">440V / 3F / 60Hz</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
+        <div class="sub-eq-tag">TGE</div>
+        <div class="sub-eq-name">Tablero Gral. Emergencia</div>
+        <div class="sub-eq-data">440V · Alimentado por GED</div>
+        <div class="tooltip"><div class="tt-tag">TGE</div><div class="tt-name">Tablero General de Emergencia</div><div class="tt-row"><span class="k">Tensión:</span><span class="v">440V 3F 60Hz</span></div><div class="tt-row"><span class="k">Fuente:</span><span class="v">Grupo electrógeno GED</span></div><div class="tt-row"><span class="k">Alimenta:</span><span class="v">CCM1E · CCM2E · CCM3E</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
+        <div class="sub-eq-tag">BCOND</div>
+        <div class="sub-eq-name">Banco condensadores</div>
+        <div class="sub-eq-data">~254 KVAR · 10 pasos · Control FP</div>
+        <div class="tooltip"><div class="tt-tag">BCOND</div><div class="tt-name">Banco de condensadores — compensación FP</div><div class="tt-row"><span class="k">Capacidad:</span><span class="v">~254 KVAR</span></div><div class="tt-row"><span class="k">Pasos:</span><span class="v">9+15+30×8 KVAR</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
+        <div class="sub-eq-tag">UPS-1</div>
+        <div class="sub-eq-name">UPS cuarto operaciones</div>
+        <div class="sub-eq-data">6 KVA · Tablero regulado TR_1</div>
+        <div class="tooltip"><div class="tt-tag">UPS-1</div><div class="tt-name">UPS para cuarto de operaciones</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">6 KVA</span></div><div class="tt-row"><span class="k">Alimenta:</span><span class="v">Tablero regulado TR_1</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
+        <div class="sub-eq-tag">PAC3220</div>
+        <div class="sub-eq-name">Analizadores de potencia</div>
+        <div class="sub-eq-data">Siemens PAC3220 · 1 por CCM × 3</div>
+        <div class="tooltip"><div class="tt-tag">PAC3220</div><div class="tt-name">Medidor multifuncional Siemens</div><div class="tt-row"><span class="k">Modelo:</span><span class="v">PAC3220 Siemens</span></div><div class="tt-row"><span class="k">Cantidad:</span><span class="v">1 por CCM (×3)</span></div><div class="tt-row"><span class="k">Conexión:</span><span class="v">3P4W · 400A primario</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3 CCM CARDS ── -->
+  <div class="ccm-cards">
+
+    <!-- CARD CCM1 -->
+    <div class="ccm-card blue" onclick="openCcm('1')">
+      <div class="ccm-card-bar"></div>
+      <div class="ccm-card-body">
+        <div class="ccm-card-title">CCM 1 — ALIMENTACIÓN</div>
+        <div class="ccm-card-sub">CCM1N · CCM1E · 1200A · 440/254V 60Hz · VDF PowerFlex 755</div>
+        <div class="ccm-card-stats">
+          <div class="ccm-stat"><div class="ccm-stat-val">4</div><div class="ccm-stat-lbl">Equipos</div></div>
+          <div class="ccm-stat"><div class="ccm-stat-val">580</div><div class="ccm-stat-lbl">KW Total</div></div>
+        </div>
+        <div class="ccm-card-badges">
+          <span class="ccm-badge n">2 Normal</span>
+          <span class="ccm-badge e">2 Emergencia</span>
+        </div>
+        <div class="ccm-card-cta">VER DETALLE →</div>
+      </div>
+    </div>
+
+    <!-- CARD CCM3 -->
+    <div class="ccm-card green" onclick="openCcm('3')">
+      <div class="ccm-card-bar"></div>
+      <div class="ccm-card-body">
+        <div class="ccm-card-title">CCM 3 — BIOGÁS + FILTRACIÓN</div>
+        <div class="ccm-card-sub">CCM3N 1200A · CCM3E 2000A · 440/254V 60Hz</div>
+        <div class="ccm-card-stats">
+          <div class="ccm-stat"><div class="ccm-stat-val">17</div><div class="ccm-stat-lbl">Equipos</div></div>
+          <div class="ccm-stat"><div class="ccm-stat-val">811</div><div class="ccm-stat-lbl">KW Total</div></div>
+        </div>
+        <div class="ccm-card-badges">
+          <span class="ccm-badge n">6 Normal</span>
+          <span class="ccm-badge e">11 Emergencia</span>
+        </div>
+        <div class="ccm-card-cta">VER DETALLE →</div>
+      </div>
+    </div>
+
+    <!-- CARD CCM2 -->
+    <div class="ccm-card orange" onclick="openCcm('2')">
+      <div class="ccm-card-bar"></div>
+      <div class="ccm-card-body">
+        <div class="ccm-card-title">CCM 2 — LODOS + NUTRIENTES</div>
+        <div class="ccm-card-sub">CCM2N 1200A · CCM2E 200A · 440/254V 60Hz</div>
+        <div class="ccm-card-stats">
+          <div class="ccm-stat"><div class="ccm-stat-val">14</div><div class="ccm-stat-lbl">Equipos</div></div>
+          <div class="ccm-stat"><div class="ccm-stat-val">~76</div><div class="ccm-stat-lbl">KW Activos</div></div>
+        </div>
+        <div class="ccm-card-badges">
+          <span class="ccm-badge n">9 Normal</span>
+          <span class="ccm-badge e">3 Emergencia</span>
+          <span class="ccm-badge f">2 Futuro</span>
+        </div>
+        <div class="ccm-card-cta">VER DETALLE →</div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /view-main -->
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  VISTA DETALLE  →  drill-down de un CCM         -->
+<!-- ═══════════════════════════════════════════════ -->
+<div id="view-detail" style="display:none;">
+
+  <!-- Barra de navegación -->
+  <div class="detail-nav">
+    <button class="back-btn" onclick="goBack()">← Volver</button>
+    <span class="detail-nav-title" id="detail-nav-title">CCM —</span>
+    <div class="view-toggle">
+      <button class="toggle-btn active" id="btn-hier" onclick="setMode('hier')">Por Jerarquía</button>
+      <button class="toggle-btn" id="btn-proc" onclick="setMode('proc')">Por Proceso</button>
+    </div>
+  </div>
+
+  <div class="detail-content">
+
+    <!-- ═══ DETALLE CCM1 ═══ -->
+    <div id="detail-ccm1" class="detail-ccm">
+
+      <!-- HIER VIEW: N izquierda / E derecha -->
+      <div class="hier-view" id="hier-1">
+        <div class="hier-cols">
+          <div class="hier-col">
+            <span class="hier-col-header side-n">CCM1N — Normal · 1200A</span>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B2</div><div class="eq-kw">145 KW</div><div class="eq-type side-n">CCM1N</div><div class="tooltip"><div class="tt-tag">B2</div><div class="tt-name">Bomba alimentación crudo #2</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">145 KW</span></div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-row"><span class="k">Cable:</span><span class="v">3×185+3G35 mm²</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B4</div><div class="eq-kw">145 KW</div><div class="eq-type side-n">CCM1N</div><div class="tooltip"><div class="tt-tag">B4</div><div class="tt-name">Bomba alimentación crudo #4</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">145 KW</span></div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-row"><span class="k">Cable:</span><span class="v">3×185+3G35 mm²</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+          <div class="hier-col">
+            <span class="hier-col-header side-e">CCM1E — Emergencia · 1200A</span>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B1</div><div class="eq-kw">145 KW</div><div class="eq-type side-e">CCM1E</div><div class="tooltip"><div class="tt-tag">B1</div><div class="tt-name">Bomba alimentación crudo #1</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">145 KW</span></div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-row"><span class="k">Cable:</span><span class="v">3×185+3G35 mm²</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B3</div><div class="eq-kw">145 KW</div><div class="eq-type side-e">CCM1E</div><div class="tooltip"><div class="tt-tag">B3</div><div class="tt-name">Bomba alimentación crudo #3</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">145 KW</span></div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-row"><span class="k">Cable:</span><span class="v">3×185+3G35 mm²</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROC VIEW: por tipo de equipo -->
+      <div class="proc-view" id="proc-1">
+        <div class="ccm-panel blue">
+          <div class="ccm-header"><div class="ccm-title">CCM 1 — ALIMENTACIÓN CRUDO</div><div class="ccm-sub">CCM1N · CCM1E · 1200A · VDF PowerFlex 755 · Cable 3×185+3G35mm²</div></div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Bombas alimentación crudo · 145 KW c/u</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B1</div><div class="eq-kw">145 KW</div><div class="eq-type side-e">CCM1E</div><div class="tooltip"><div class="tt-tag">B1</div><div class="tt-name">Bomba alimentación crudo #1</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM1E · Emergencia</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B2</div><div class="eq-kw">145 KW</div><div class="eq-type side-n">CCM1N</div><div class="tooltip"><div class="tt-tag">B2</div><div class="tt-name">Bomba alimentación crudo #2</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM1N · Normal</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B3</div><div class="eq-kw">145 KW</div><div class="eq-type side-e">CCM1E</div><div class="tooltip"><div class="tt-tag">B3</div><div class="tt-name">Bomba alimentación crudo #3</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM1E · Emergencia</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B4</div><div class="eq-kw">145 KW</div><div class="eq-type side-n">CCM1N</div><div class="tooltip"><div class="tt-tag">B4</div><div class="tt-name">Bomba alimentación crudo #4</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM1N · Normal</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /detail-ccm1 -->
+
+
+    <!-- ═══ DETALLE CCM3 ═══ -->
+    <div id="detail-ccm3" class="detail-ccm">
+
+      <!-- HIER VIEW -->
+      <div class="hier-view" id="hier-3">
+        <div class="hier-cols">
+          <div class="hier-col">
+            <span class="hier-col-header side-n">CCM3N — Normal · 1200A</span>
+            <div class="hier-group-label">Sopladores biogás · 75 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB4</div><div class="eq-kw">75 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SB4</div><div class="tt-name">Soplador biogás SB4</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB5</div><div class="eq-kw">75 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SB5</div><div class="tt-name">Soplador biogás SB5</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB6</div><div class="eq-kw">75 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SB6</div><div class="tt-name">Soplador biogás SB6</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+            <div class="hier-group-label">Torres lavado · 40 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B12</div><div class="eq-kw">40 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">B12</div><div class="tt-name">Bomba torre lavado #1B</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">40 KW</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B14</div><div class="eq-kw">40 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">B14</div><div class="tt-name">Bomba torre lavado #2B</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">40 KW</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+            <div class="hier-group-label">Soplador RAFAC · 5 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SA3</div><div class="eq-kw">5 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SA3</div><div class="tt-name">Soplador aire RAFAC-3</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 525</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+          <div class="hier-col">
+            <span class="hier-col-header side-e">CCM3E — Emergencia · 2000A</span>
+            <div class="hier-group-label">Sopladores biogás · 75 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB1</div><div class="eq-kw">75 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SB1</div><div class="tt-name">Soplador biogás SB1</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB2</div><div class="eq-kw">75 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SB2</div><div class="tt-name">Soplador biogás SB2</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB3</div><div class="eq-kw">75 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SB3</div><div class="tt-name">Soplador biogás SB3</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 755</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+            <div class="hier-group-label">Torres lavado · 40 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B11</div><div class="eq-kw">40 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">B11</div><div class="tt-name">Bomba torre lavado #1A</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">40 KW</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B13</div><div class="eq-kw">40 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">B13</div><div class="tt-name">Bomba torre lavado #2A</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">40 KW</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+            <div class="hier-group-label">Secadores + Chiller · 90 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SEC-1</div><div class="eq-kw">90 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SEC-1</div><div class="tt-name">Secador + Chiller filtración #1</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q8 · 3×200A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SEC-2</div><div class="eq-kw">90 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SEC-2</div><div class="tt-name">Secador + Chiller filtración #2</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q9 · 3×200A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+            <div class="hier-group-label">Sopladores RAFAC 5KW · Aireadores 3KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SA1</div><div class="eq-kw">5 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SA1</div><div class="tt-name">Soplador aire RAFAC-1</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 525</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SA2</div><div class="eq-kw">5 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SA2</div><div class="tt-name">Soplador aire RAFAC-2</div><div class="tt-row"><span class="k">VDF:</span><span class="v">PowerFlex 525</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">A1</div><div class="eq-kw">3 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">A1</div><div class="tt-name">Aireador filtración biogás #1</div><div class="tt-row"><span class="k">Relé:</span><span class="v">E300</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">A2</div><div class="eq-kw">3 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">A2</div><div class="tt-name">Aireador filtración biogás #2</div><div class="tt-row"><span class="k">Relé:</span><span class="v">E300</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROC VIEW -->
+      <div class="proc-view" id="proc-3">
+        <div class="ccm-panel green">
+          <div class="ccm-header"><div class="ccm-title">CCM 3 — BIOGÁS + FILTRACIÓN</div><div class="ccm-sub">CCM3N 1200A · CCM3E 2000A · 440/254V 60Hz</div></div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Sopladores biogás · 75 KW · VDF PowerFlex 755</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB1</div><div class="eq-kw">75 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SB1</div><div class="tt-name">Soplador biogás SB1</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E · Emergencia</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB2</div><div class="eq-kw">75 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SB2</div><div class="tt-name">Soplador biogás SB2</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB3</div><div class="eq-kw">75 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SB3</div><div class="tt-name">Soplador biogás SB3</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB4</div><div class="eq-kw">75 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SB4</div><div class="tt-name">Soplador biogás SB4</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3N · Normal</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB5</div><div class="eq-kw">75 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SB5</div><div class="tt-name">Soplador biogás SB5</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SB6</div><div class="eq-kw">75 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SB6</div><div class="tt-name">Soplador biogás SB6</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Bombas torres lavado · 40 KW · VDF PF525</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B11</div><div class="eq-kw">40 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">B11</div><div class="tt-name">Bomba torre lavado #1A</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B12</div><div class="eq-kw">40 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">B12</div><div class="tt-name">Bomba torre lavado #1B</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B13</div><div class="eq-kw">40 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">B13</div><div class="tt-name">Bomba torre lavado #2A</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B14</div><div class="eq-kw">40 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">B14</div><div class="tt-name">Bomba torre lavado #2B</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Secadores + Chiller · 90 KW · CCM3E · Cable 3×50+25mm²</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SEC-1</div><div class="eq-kw">90 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SEC-1</div><div class="tt-name">Secador + Chiller filtración #1</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q8 · 3×200A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SEC-2</div><div class="eq-kw">90 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SEC-2</div><div class="tt-name">Secador + Chiller filtración #2</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q9 · 3×200A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Sopladores RAFAC · 5 KW · VDF PF525 · Aireadores · 3 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SA1</div><div class="eq-kw">5 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SA1</div><div class="tt-name">Soplador RAFAC-1</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SA2</div><div class="eq-kw">5 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">SA2</div><div class="tt-name">Soplador RAFAC-2</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">SA3</div><div class="eq-kw">5 KW</div><div class="eq-type side-n">CCM3N</div><div class="tooltip"><div class="tt-tag">SA3</div><div class="tt-name">Soplador RAFAC-3</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">A1</div><div class="eq-kw">3 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">A1</div><div class="tt-name">Aireador filtración biogás #1</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">A2</div><div class="eq-kw">3 KW</div><div class="eq-type side-e">CCM3E</div><div class="tooltip"><div class="tt-tag">A2</div><div class="tt-name">Aireador filtración biogás #2</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM3E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /detail-ccm3 -->
+
+
+    <!-- ═══ DETALLE CCM2 ═══ -->
+    <div id="detail-ccm2" class="detail-ccm">
+
+      <!-- HIER VIEW -->
+      <div class="hier-view" id="hier-2">
+        <div class="hier-cols">
+          <div class="hier-col">
+            <span class="hier-col-header side-n">CCM2N — Normal · 1200A</span>
+            <div class="hier-group-label">Bombas purga lodos · 5.6 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B6</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B6</div><div class="tt-name">Bomba purga lodos #2</div><div class="tt-row"><span class="k">Relé:</span><span class="v">E300</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B7</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B7</div><div class="tt-name">Bomba purga lodos #3</div><div class="tt-row"><span class="k">Relé:</span><span class="v">E300</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B8</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B8</div><div class="tt-name">Bomba purga lodos #4</div><div class="tt-row"><span class="k">Relé:</span><span class="v">E300</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+            <div class="hier-group-label">Deshidratadores lodos · 21 KW</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DL1</div><div class="eq-kw">21 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DL1</div><div class="tt-name">Deshidratador lodos #1</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q5 · 3×40A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DL2</div><div class="eq-kw">21 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DL2</div><div class="tt-name">Deshidratador lodos #2</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q6 · 3×40A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+            <div class="hier-group-label">Nutrientes · Dosificación · Misc.</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B10</div><div class="eq-kw">0.75 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B10</div><div class="tt-name">Bomba inyección nutrientes #2</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DOS-1</div><div class="eq-kw">2 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DOS-1</div><div class="tt-name">Dosificador #1</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DOS-2</div><div class="eq-kw">2 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DOS-2</div><div class="tt-name">Dosificador #2</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status future"></div><div class="eq-tag">CAL01</div><div class="eq-kw">7.5 KW</div><div class="eq-type side-f">FUTURO</div><div class="tooltip"><div class="tt-tag">CAL01</div><div class="tt-name">Calderin (futuro)</div><div class="tt-status future">◈ FUTURO</div></div></div>
+            </div>
+            <div class="hier-group-label">Secadores lodos · 100 KW · FUTUROS</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status future"></div><div class="eq-tag">SEC-L1</div><div class="eq-kw">100 KW</div><div class="eq-type side-f">FUTURO</div><div class="tooltip"><div class="tt-tag">SEC-L1</div><div class="tt-name">Secador lodos #1 (futuro)</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q11 · 3×200A</span></div><div class="tt-status future">◈ FUTURO</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status future"></div><div class="eq-tag">SEC-L2</div><div class="eq-kw">100 KW</div><div class="eq-type side-f">FUTURO</div><div class="tooltip"><div class="tt-tag">SEC-L2</div><div class="tt-name">Secador lodos #2 (futuro)</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q12 · 3×200A</span></div><div class="tt-status future">◈ FUTURO</div></div></div>
+            </div>
+          </div>
+          <div class="hier-col">
+            <span class="hier-col-header side-e">CCM2E — Emergencia · 200A</span>
+            <div class="hier-group-label">Bombas purga · Agitador · Misc.</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B5</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-e">CCM2E</div><div class="tooltip"><div class="tt-tag">B5</div><div class="tt-name">Bomba purga lodos #1</div><div class="tt-row"><span class="k">Relé:</span><span class="v">E300</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">AGI</div><div class="eq-kw">2 KW</div><div class="eq-type side-e">CCM2E</div><div class="tooltip"><div class="tt-tag">AGI</div><div class="tt-name">Agitador sistema nutrientes</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B9</div><div class="eq-kw">0.75 KW</div><div class="eq-type side-e">CCM2E</div><div class="tooltip"><div class="tt-tag">B9</div><div class="tt-name">Bomba inyección nutrientes #1</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROC VIEW -->
+      <div class="proc-view" id="proc-2">
+        <div class="ccm-panel orange">
+          <div class="ccm-header"><div class="ccm-title">CCM 2 — LODOS + NUTRIENTES</div><div class="ccm-sub">CCM2N 1200A · CCM2E 200A · 440/254V 60Hz</div></div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Bombas purga lodos · 5.6 KW · Relé E300</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B5</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-e">CCM2E</div><div class="tooltip"><div class="tt-tag">B5</div><div class="tt-name">Bomba purga lodos #1</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM2E</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B6</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B6</div><div class="tt-name">Bomba purga lodos #2</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM2N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B7</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B7</div><div class="tt-name">Bomba purga lodos #3</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM2N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B8</div><div class="eq-kw">5.6 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B8</div><div class="tt-name">Bomba purga lodos #4</div><div class="tt-row"><span class="k">CCM:</span><span class="v">CCM2N</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Deshidratadores lodos · 21 KW · Cable 4G6mm²</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DL1</div><div class="eq-kw">21 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DL1</div><div class="tt-name">Deshidratador lodos #1</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q5 · 3×40A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DL2</div><div class="eq-kw">21 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DL2</div><div class="tt-name">Deshidratador lodos #2</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q6 · 3×40A</span></div><div class="tt-status pending">● PENDIENTE</div></div></div>
+            </div>
+          </div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Nutrientes · Agitador · Dosificación</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">AGI</div><div class="eq-kw">2 KW</div><div class="eq-type side-e">CCM2E</div><div class="tooltip"><div class="tt-tag">AGI</div><div class="tt-name">Agitador nutrientes</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B9</div><div class="eq-kw">0.75 KW</div><div class="eq-type side-e">CCM2E</div><div class="tooltip"><div class="tt-tag">B9</div><div class="tt-name">Bomba iny. nutrientes #1</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">B10</div><div class="eq-kw">0.75 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">B10</div><div class="tt-name">Bomba iny. nutrientes #2</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DOS-1</div><div class="eq-kw">2 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DOS-1</div><div class="tt-name">Dosificador #1</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status pending"></div><div class="eq-tag">DOS-2</div><div class="eq-kw">2 KW</div><div class="eq-type side-n">CCM2N</div><div class="tooltip"><div class="tt-tag">DOS-2</div><div class="tt-name">Dosificador #2</div><div class="tt-status pending">● PENDIENTE</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status future"></div><div class="eq-tag">CAL01</div><div class="eq-kw">7.5 KW</div><div class="eq-type side-f">FUTURO</div><div class="tooltip"><div class="tt-tag">CAL01</div><div class="tt-name">Calderin (futuro)</div><div class="tt-status future">◈ FUTURO</div></div></div>
+            </div>
+          </div>
+          <div class="ccm-section">
+            <div class="ccm-section-label">Secadores de lodos · 100 KW · CCM2N · FUTUROS</div>
+            <div class="eq-grid">
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status future"></div><div class="eq-tag">SEC-L1</div><div class="eq-kw">100 KW</div><div class="eq-type side-f">FUTURO</div><div class="tooltip"><div class="tt-tag">SEC-L1</div><div class="tt-name">Secador lodos #1</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q11 · 3×200A</span></div><div class="tt-status future">◈ FUTURO</div></div></div>
+              <div class="eq" onclick="clickEquip(this)"><div class="eq-status future"></div><div class="eq-tag">SEC-L2</div><div class="eq-kw">100 KW</div><div class="eq-type side-f">FUTURO</div><div class="tooltip"><div class="tt-tag">SEC-L2</div><div class="tt-name">Secador lodos #2</div><div class="tt-row"><span class="k">Breaker:</span><span class="v">Q12 · 3×200A</span></div><div class="tt-status future">◈ FUTURO</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /detail-ccm2 -->
+
+  </div><!-- /detail-content -->
+</div><!-- /view-detail -->
+
+
+<!-- ═══ LEGEND ═══ -->
+<div class="legend">
+  <span class="legend-title">Estado:</span>
+  <div class="leg-item"><div class="leg-dot" style="background:#94a3b8"></div>Pendiente inspección</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#16a34a"></div>Operativo / OK</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#ca8a04"></div>Advertencia</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#dc2626"></div>Falla</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#a5b4fc;border:1px dashed #6366f1"></div>Futuro</div>
+  <span style="margin-left:auto;color:#94a3b8">Clic en un equipo para iniciar inspección · Cursor para detalles</span>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<div class="footer">
+  <span>PLANTA DE GAS LDC · LDC-001 · Bebedouro, Brasil · Cliente: LDC</span>
+  <span>Elaborado por BIOTEC · Pre-Comisionamiento 2026 · 40 equipos registrados</span>
+  <span id="ts"></span>
+</div>
+
+<script>
+  document.getElementById('ts').textContent = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  const CCM_TITLES = {
+    '1': 'CCM 1 — ALIMENTACIÓN CRUDO',
+    '2': 'CCM 2 — LODOS + NUTRIENTES',
+    '3': 'CCM 3 — BIOGÁS + FILTRACIÓN'
+  };
+
+  let currentCcm = null;
+  let currentMode = 'hier';
+
+  function openCcm(id) {
+    currentCcm = id;
+    document.getElementById('view-main').style.display = 'none';
+    document.getElementById('view-detail').style.display = 'block';
+    document.getElementById('detail-nav-title').textContent = CCM_TITLES[id] || ('CCM ' + id);
+    ['1','2','3'].forEach(n => {
+      const el = document.getElementById('detail-ccm'+n);
+      el.classList.toggle('visible', n === id);
+    });
+    setMode('hier');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function goBack() {
+    document.getElementById('view-detail').style.display = 'none';
+    document.getElementById('view-main').style.display = 'block';
+    currentCcm = null;
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function setMode(mode) {
+    currentMode = mode;
+    if (!currentCcm) return;
+    const hierEl = document.getElementById('hier-' + currentCcm);
+    const procEl = document.getElementById('proc-' + currentCcm);
+    if (hierEl) hierEl.style.display = mode === 'hier' ? 'block' : 'none';
+    if (procEl) procEl.style.display = mode === 'proc' ? 'block' : 'none';
+    document.getElementById('btn-hier').classList.toggle('active', mode === 'hier');
+    document.getElementById('btn-proc').classList.toggle('active', mode === 'proc');
+  }
+
+  // Repositiona tooltips que se salen del viewport
+  document.querySelectorAll('.eq, .sub-eq').forEach(card => {
+    const tip = card.querySelector('.tooltip');
+    if (!tip) return;
+    card.addEventListener('mouseenter', () => {
+      tip.style.left = '50%';
+      tip.style.right = 'auto';
+      tip.style.transform = 'translateX(-50%)';
+      const cardRect = card.getBoundingClientRect();
+      const tipW = 220;
+      const margin = 8;
+      const vw = window.innerWidth;
+      let ideal = cardRect.left + cardRect.width / 2 - tipW / 2;
+      let clamped = Math.max(margin, Math.min(ideal, vw - tipW - margin));
+      let cssLeft = clamped - cardRect.left;
+      tip.style.left = cssLeft + 'px';
+      tip.style.transform = 'none';
+    });
+  });
+
+  // ── Integración CommissionPro: click equipo → postMessage al parent ──────
+  function clickEquip(el) {
+    const tagEl = el.querySelector('.eq-tag') || el.querySelector('.sub-eq-tag');
+    if (!tagEl) return;
+    const tag = tagEl.textContent.trim();
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top;
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'ldc-equip-click', tag, x: cx, y: cy }, '*');
+    }
+  }
+
+</script>
+</body>
+</html>

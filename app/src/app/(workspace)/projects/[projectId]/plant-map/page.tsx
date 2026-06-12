@@ -1,7 +1,9 @@
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+
+const LDC_PROJECT_ID = "eba099c0-32ca-4be7-823f-4ab7f3480004";
 import { useProject } from "@/hooks/useProject";
 import { useAreas, useSystems, useSubsystems } from "@/hooks/useHierarchy";
 import { useEquipment } from "@/hooks/useEquipment";
@@ -97,6 +99,23 @@ export default function PlantMapPage() {
     const equipmentObj = equipment.find(e => e.id === equipmentId);
     setFloatingPanel({ equipmentId, x: event?.clientX ?? 400, y: event?.clientY ?? 300, equipmentObj });
   };
+
+  // ── SCADA iframe: escucha clicks de equipos desde ldc-scada.html ───────────
+  const handleEquipmentTagClick = useCallback((tag: string, x: number, y: number) => {
+    const eq = equipment.find(e => e.tag === tag);
+    if (!eq) return;
+    setFloatingPanel({ equipmentId: eq.id, x, y, equipmentObj: eq });
+  }, [equipment]);
+
+  useEffect(() => {
+    if (projectId !== LDC_PROJECT_ID) return;
+    function onMessage(e: MessageEvent) {
+      if (e.data?.type !== 'ldc-equip-click') return;
+      handleEquipmentTagClick(e.data.tag, e.data.x ?? 400, e.data.y ?? 300);
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [projectId, handleEquipmentTagClick]);
 
   const handleExploreArea = (areaId: string) => {
     const area = areas.find(a => a.id === areaId);
@@ -197,30 +216,41 @@ export default function PlantMapPage() {
       {/* ── NIVEL VISUAL ── */}
       {drill.level === 'visual' && (
         <>
-          <PlantVisualToolbar
-            overlayMode="area"
-            projectId={projectId}
-            hasImage={!!layout.imageUrl}
-            editMode={editMode}
-            hasPendingOverlays={pendingOverlays !== null}
-            onEditModeChange={setEditMode}
-            onImageUploaded={handleImageUploaded}
-            onSaveOverlays={handleSaveOverlays}
-            onCancelEdit={handleCancelEdit}
-          />
-          <PlantVisualMap
-            overlayMode="area"
-            imageUrl={layout.imageUrl}
-            overlays={pendingOverlays ?? layout.overlays}
-            areas={areas}
-            equipment={equipment}
-            pctByArea={pctByArea}
-            selectedAreaId={panelState.open && panelState.view === 'area' ? panelState.areaId : null}
-            editMode={editMode}
-            onAreaClick={handleAreaClick}
-            onUploadClick={() => { /* manejado por PlantVisualToolbar */ }}
-            onOverlaysChange={setPendingOverlays}
-          />
+          {projectId === LDC_PROJECT_ID ? (
+            /* SCADA interactivo LDC: iframe con postMessage → FloatingEquipmentPanel */
+            <iframe
+              src="/ldc-scada.html"
+              className="flex-1 w-full border-0 block"
+              title="SCADA PLANTA DE GAS LDC"
+            />
+          ) : (
+            <>
+              <PlantVisualToolbar
+                overlayMode="area"
+                projectId={projectId}
+                hasImage={!!layout.imageUrl}
+                editMode={editMode}
+                hasPendingOverlays={pendingOverlays !== null}
+                onEditModeChange={setEditMode}
+                onImageUploaded={handleImageUploaded}
+                onSaveOverlays={handleSaveOverlays}
+                onCancelEdit={handleCancelEdit}
+              />
+              <PlantVisualMap
+                overlayMode="area"
+                imageUrl={layout.imageUrl}
+                overlays={pendingOverlays ?? layout.overlays}
+                areas={areas}
+                equipment={equipment}
+                pctByArea={pctByArea}
+                selectedAreaId={panelState.open && panelState.view === 'area' ? panelState.areaId : null}
+                editMode={editMode}
+                onAreaClick={handleAreaClick}
+                onUploadClick={() => { /* manejado por PlantVisualToolbar */ }}
+                onOverlaysChange={setPendingOverlays}
+              />
+            </>
+          )}
           <AreaProgressDashboard
             areas={areas}
             equipment={equipment}

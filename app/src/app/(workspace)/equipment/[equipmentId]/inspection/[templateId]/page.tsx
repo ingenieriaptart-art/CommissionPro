@@ -8,19 +8,35 @@ import { SectionSidebar } from "@/components/inspection/SectionSidebar";
 import { DynamicFormSection } from "@/components/inspection/DynamicFormSection";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
 import type { InspectionState, SectionStatus } from "@/types/inspection";
+import type { Equipment } from "@/types";
 
 function buildInitialState(
   equipmentId: string,
   templateId: string,
   sectionCodes: string[],
+  equipment?: Equipment | null,
 ): InspectionState {
   const sectionStatus: Record<string, SectionStatus> = {};
   for (const code of sectionCodes) sectionStatus[code] = "pending";
+
+  // Pre-llenar sección DATOS_GENERALES con datos conocidos del equipo
+  const answers: Record<string, unknown> = {};
+  if (equipment) {
+    if (equipment.tag)            answers.tag            = equipment.tag;
+    if (equipment.name)           answers.nombre_equipo  = equipment.name;
+    if (equipment.manufacturer)   answers.fabricante     = equipment.manufacturer;
+    if (equipment.model)          answers.modelo         = equipment.model;
+    if (equipment.serial_number)  answers.no_serie       = equipment.serial_number;
+    if (equipment.pid_reference)  answers.pid_referencia = equipment.pid_reference;
+    if (equipment.location_system || equipment.service)
+      answers.ubicacion = equipment.location_system ?? equipment.service;
+  }
+
   return {
     equipmentId,
     templateId,
     activeSectionIndex: 0,
-    answers: {},
+    answers,
     evidences: {},
     sectionStatus,
     savedAt: null,
@@ -46,7 +62,7 @@ export default function InspectionPage() {
 
   // Load or initialize state from sessionStorage
   useEffect(() => {
-    if (!template) return;
+    if (!template || !equipment) return;
     const key = STORAGE_KEY(equipmentId, templateId);
     try {
       const stored = sessionStorage.getItem(key);
@@ -60,9 +76,10 @@ export default function InspectionPage() {
         equipmentId,
         templateId,
         template.sections.map(s => s.code),
+        equipment,
       )
     );
-  }, [equipmentId, templateId, template]);
+  }, [equipmentId, templateId, template, equipment]);
 
   // Persist state on every change
   useEffect(() => {
