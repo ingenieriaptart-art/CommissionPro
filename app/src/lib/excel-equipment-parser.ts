@@ -268,12 +268,20 @@ export function parseExcelEquipment(
     return { sheetType: "unknown", sheetName: targetSheet, rows: [], skipped: 0, totalRows: 0, detectedHeaders: [] };
   }
 
-  const headers   = raw[0] as string[];
+  // Auto-detect header row: first row with ≥ 3 non-empty cells
+  // Handles sheets with title rows or empty rows before the actual headers
+  let headerRowIdx = 0;
+  for (let i = 0; i < Math.min(raw.length, 15); i++) {
+    const nonEmpty = (raw[i] as unknown[]).filter(v => String(v ?? "").trim() !== "").length;
+    if (nonEmpty >= 3) { headerRowIdx = i; break; }
+  }
+
+  const headers   = raw[headerRowIdx] as string[];
   const headerIdx = buildHeaderIndex(headers);
   const sheetType = detectSheetType(headerIdx);
   const detectedHeaders = headers.map(h => String(h ?? "")).filter(h => h.trim() !== "");
 
-  const dataRows = raw.slice(1);
+  const dataRows = raw.slice(headerRowIdx + 1);
   const rows: ParsedEquipmentRow[] = [];
   let skipped = 0;
 
