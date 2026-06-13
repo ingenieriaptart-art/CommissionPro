@@ -35,30 +35,29 @@
       height: 38px;
       border-radius: 50%;
       border: 2px solid #38bdf8;
-      background: rgba(14, 116, 144, 0.55);
+      background: rgba(14, 116, 144, 0.60);
       backdrop-filter: blur(2px);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 6.5px;
+      font-size: 10px;
       font-weight: 700;
-      color: #e0f2fe;
+      color: #000;
       text-align: center;
-      line-height: 1.15;
+      line-height: 1.25;
       transition: background 0.15s, transform 0.15s, border-color 0.15s;
       z-index: 20;
     }
     .instr:hover {
       background: rgba(2, 132, 199, 0.85);
       border-color: #7dd3fc;
-      transform: translate(-50%, -50%) scale(1.25);
     }
     .instr.futuro {
       border-style: dashed;
       border-color: #64748b;
       background: rgba(51, 65, 85, 0.45);
-      color: #94a3b8;
+      color: #000;
     }
     .instr.futuro:hover {
       background: rgba(71, 85, 105, 0.7);
@@ -293,14 +292,14 @@
     <div class="instr futuro" style="left:52%;top:82%" data-tag="IVL-103">IVL<br>103</div>
 
     <!-- Sensores posición ISC / ISO -->
-    <div class="instr" style="left:23.25%;top:43.93%" data-tag="ISC-VL-04">ISC<br>VL04</div>
-    <div class="instr" style="left:23.27%;top:42.33%" data-tag="ISC-VL-05">ISC<br>VL05</div>
-    <div class="instr" style="left:27.54%;top:62.67%" data-tag="ISC-VL-06">ISC<br>VL06</div>
-    <div class="instr" style="left:24.83%;top:62.19%" data-tag="ISC-VL-07">ISC<br>VL07</div>
-    <div class="instr" style="left:23.87%;top:44.52%" data-tag="ISO-VL-04">ISO<br>VL04</div>
-    <div class="instr" style="left:23.76%;top:42.85%" data-tag="ISO-VL-05">ISO<br>VL05</div>
-    <div class="instr" style="left:28.17%;top:62.18%" data-tag="ISO-VL-06">ISO<br>VL06</div>
-    <div class="instr" style="left:25.43%;top:62.70%" data-tag="ISO-VL-07">ISO<br>VL07</div>
+    <div class="instr" style="left:23.25%;top:43.93%" data-tag="SC-VL-04">SC<br>VL04</div>
+    <div class="instr" style="left:23.27%;top:42.33%" data-tag="SC-VL-05">SC<br>VL05</div>
+    <div class="instr" style="left:27.54%;top:62.67%" data-tag="SC-VL-06">SC<br>VL06</div>
+    <div class="instr" style="left:24.83%;top:62.19%" data-tag="SC-VL-07">SC<br>VL07</div>
+    <div class="instr" style="left:23.87%;top:44.52%" data-tag="SO-VL-04">SO<br>VL04</div>
+    <div class="instr" style="left:23.76%;top:42.85%" data-tag="SO-VL-05">SO<br>VL05</div>
+    <div class="instr" style="left:28.17%;top:62.18%" data-tag="SO-VL-06">SO<br>VL06</div>
+    <div class="instr" style="left:25.43%;top:62.70%" data-tag="SO-VL-07">SO<br>VL07</div>
 
     <!-- Analizadores AG -->
     <div class="instr" style="left:26.08%;top:64.78%" data-tag="AG-2">AG<br>2</div>
@@ -369,6 +368,10 @@
 
   function applyTransform() {
     diagram.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    const inv = Math.pow(1 / scale, 0.55);
+    document.querySelectorAll('.instr').forEach(el => {
+      el.style.transform = `translate(-50%,-50%) scale(${inv})`;
+    });
   }
 
   function fitToScreen() {
@@ -537,17 +540,61 @@
     setTimeout(() => t.remove(), 1800);
   }
 
-  // ── Clic en instrumento → postMessage ───────────────────────
+  // ── Drag de instrumentos para reposicionar ──────────────────
+  let draggingInstr = null, dOffX = 0, dOffY = 0, dMoved = false;
+
+  function instrPctFromScreen(screenX, screenY) {
+    const px = ((screenX - tx) / scale / img.naturalWidth  * 100).toFixed(2);
+    const py = ((screenY - ty) / scale / img.naturalHeight * 100).toFixed(2);
+    return { px, py };
+  }
+
   document.querySelectorAll('.instr').forEach(el => {
+    el.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      draggingInstr = el;
+      dMoved = false;
+      const r = el.getBoundingClientRect();
+      dOffX = e.clientX - (r.left + r.width / 2);
+      dOffY = e.clientY - (r.top  + r.height / 2);
+      el.style.cursor = 'grabbing';
+      el.style.zIndex  = '50';
+    });
+
     el.addEventListener('click', e => {
       e.stopPropagation();
+      if (dMoved) return; // fue drag, no click
       const tag = el.dataset.tag;
-      console.log('[P&ID] instrumento:', tag);
       window.parent?.postMessage(
-        { type: 'pid-instrument-click', tag, x: e.clientX, y: e.clientY },
-        '*'
+        { type: 'pid-instrument-click', tag, x: e.clientX, y: e.clientY }, '*'
       );
     });
+  });
+
+  // integrar en mousemove existente
+  const _origMousemove = window.onmousemove; // por si hay algo previo
+  window.addEventListener('mousemove', e => {
+    if (!draggingInstr) return;
+    const cx = e.clientX - dOffX;
+    const cy = e.clientY - dOffY;
+    if (Math.abs(cx - parseFloat(draggingInstr.style.left)) > 2 ||
+        Math.abs(cy - parseFloat(draggingInstr.style.top))  > 2) dMoved = true;
+    const { px, py } = instrPctFromScreen(cx, cy);
+    draggingInstr.style.left = px + '%';
+    draggingInstr.style.top  = py + '%';
+  });
+
+  window.addEventListener('mouseup', e => {
+    if (!draggingInstr) return;
+    draggingInstr.style.cursor = '';
+    draggingInstr.style.zIndex = '20';
+    if (dMoved) {
+      const tag = draggingInstr.dataset.tag;
+      const { px, py } = instrPctFromScreen(e.clientX - dOffX, e.clientY - dOffY);
+      addLog(tag, px, py);
+      showToast(e.clientX, e.clientY, `${tag} → ${px}% ${py}%`);
+    }
+    draggingInstr = null;
   });
 
   // ── Botones zoom ────────────────────────────────────────────
