@@ -186,6 +186,44 @@
     }
     #btn-clear-log:hover { color: #94a3b8; }
 
+    /* Panel input de TAG al hacer clic en el plano */
+    #tag-input-panel {
+      position: fixed;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.97);
+      border: 1px solid #2563eb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      z-index: 500;
+      min-width: 220px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+    }
+    #tag-input-panel.visible { display: flex; }
+    #tag-input-panel label { font-size: 10px; color: #64748b; }
+    #tag-input-panel .coord-display { font-size: 11px; color: #38bdf8; font-family: monospace; }
+    #tag-input-panel input {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 13px;
+      padding: 6px 10px;
+      outline: none;
+      font-family: 'Courier New', monospace;
+    }
+    #tag-input-panel input:focus { border-color: #2563eb; }
+    #tag-input-panel .btn-row { display: flex; gap: 6px; }
+    #tag-input-panel button {
+      flex: 1; padding: 6px; border: none;
+      border-radius: 6px; font-size: 11px; cursor: pointer;
+    }
+    #btn-tag-ok { background: #1d4ed8; color: white; }
+    #btn-tag-ok:hover { background: #2563eb; }
+    #btn-tag-cancel { background: #1e293b; color: #94a3b8; }
+    #btn-tag-cancel:hover { background: #334155; }
+
     /* Controles zoom */
     #zoom-controls {
       position: fixed;
@@ -215,49 +253,62 @@
   <div id="diagram">
     <img id="pid-img" src="/pid-ic01.png" draggable="false" alt="P&ID I&C01 Efluente y Lodo" />
 
-    <!-- ═══════════════════════════════════════════════════
-         INSTRUMENTOS — posiciones pendientes de calibración
-         Haz clic en el plano para obtener left%/top% exactos
-         ═══════════════════════════════════════════════════ -->
-
     <!-- Flujo - Transmisores FIT -->
-    <div class="instr" style="left:15%;top:28%" data-tag="FIT-101">FIT<br>101</div>
-    <div class="instr" style="left:30%;top:28%" data-tag="FIT-102">FIT<br>102</div>
-    <div class="instr" style="left:20%;top:40%" data-tag="FIT-103">FIT<br>103</div>
-    <div class="instr" style="left:35%;top:40%" data-tag="FIT-104">FIT<br>104</div>
-    <div class="instr futuro" style="left:50%;top:40%" data-tag="FIT-105">FIT<br>105</div>
-    <div class="instr futuro" style="left:22%;top:55%" data-tag="FIT-106">FIT<br>106</div>
-    <div class="instr futuro" style="left:37%;top:55%" data-tag="FIT-107">FIT<br>107</div>
-    <div class="instr" style="left:60%;top:65%" data-tag="FIT-108">FIT<br>108</div>
-    <div class="instr" style="left:25%;top:70%" data-tag="FIT-109">FIT<br>109</div>
-    <div class="instr" style="left:40%;top:70%" data-tag="FIT-110">FIT<br>110</div>
-    <div class="instr" style="left:15%;top:60%" data-tag="FIT-111">FIT<br>111</div>
-    <div class="instr" style="left:30%;top:60%" data-tag="FIT-112">FIT<br>112</div>
+    <div class="instr" style="left:38.63%;top:32.72%" data-tag="FIT-101">FIT<br>101</div>
+    <div class="instr" style="left:38.61%;top:48.55%" data-tag="FIT-102">FIT<br>102</div>
+    <div class="instr" style="left:45.33%;top:39.25%" data-tag="FIT-103">FIT<br>103</div>
+    <div class="instr" style="left:45.33%;top:43.34%" data-tag="FIT-104">FIT<br>104</div>
+    <div class="instr futuro" style="left:45.33%;top:47.42%" data-tag="FIT-105">FIT<br>105</div>
+    <div class="instr futuro" style="left:30.47%;top:48.84%" data-tag="FIT-106">FIT<br>106</div>
+    <div class="instr futuro" style="left:30.49%;top:51.73%" data-tag="FIT-107">FIT<br>107</div>
+    <div class="instr" style="left:64.57%;top:44.41%" data-tag="FIT-108">FIT<br>108</div>
+    <div class="instr" style="left:25.11%;top:40.04%" data-tag="FIT-109">FIT<br>109</div>
+    <div class="instr" style="left:25.57%;top:56.15%" data-tag="FIT-110">FIT<br>110</div>
+    <div class="instr" style="left:23.12%;top:47.08%" data-tag="FIT-111">FIT<br>111</div>
+    <div class="instr" style="left:23.12%;top:63.32%" data-tag="FIT-112">FIT<br>112</div>
 
     <!-- Nivel - Switches LS -->
-    <div class="instr" style="left:12%;top:35%" data-tag="LS-101">LS<br>101</div>
-    <div class="instr" style="left:27%;top:35%" data-tag="LS-102">LS<br>102</div>
-    <div class="instr" style="left:55%;top:35%" data-tag="LS-103">LS<br>103</div>
-    <div class="instr" style="left:68%;top:35%" data-tag="LS-104">LS<br>104</div>
-    <div class="instr" style="left:18%;top:48%" data-tag="LS-105">LS<br>105</div>
+    <div class="instr" style="left:41.19%;top:35.32%" data-tag="LS-101">LS<br>101</div>
+    <div class="instr" style="left:41.10%;top:51.17%" data-tag="LS-102">LS<br>102</div>
+    <div class="instr" style="left:28.81%;top:39.10%" data-tag="LS-103">LS<br>103</div>
+    <div class="instr" style="left:28.74%;top:55.40%" data-tag="LS-104">LS<br>104</div>
+    <div class="instr" style="left:33.20%;top:24.55%" data-tag="LS-105">LS<br>105</div>
 
-    <!-- Válvulas actuadas IVE / IVL -->
-    <div class="instr" style="left:20%;top:75%" data-tag="IVE-101">IVE<br>101</div>
-    <div class="instr" style="left:35%;top:75%" data-tag="IVE-102">IVE<br>102</div>
-    <div class="instr futuro" style="left:50%;top:75%" data-tag="IVE-103">IVE<br>103</div>
-    <div class="instr" style="left:22%;top:82%" data-tag="IVL-101">IVL<br>101</div>
-    <div class="instr" style="left:37%;top:82%" data-tag="IVL-102">IVL<br>102</div>
+    <!-- Presión - Indicadores PI -->
+    <div class="instr" style="left:43.97%;top:33.05%" data-tag="PI-101">PI<br>101</div>
+    <div class="instr" style="left:43.95%;top:34.29%" data-tag="PI-102">PI<br>102</div>
+    <div class="instr" style="left:43.96%;top:49.33%" data-tag="PI-103">PI<br>103</div>
+    <div class="instr" style="left:43.98%;top:50.59%" data-tag="PI-104">PI<br>104</div>
+    <div class="instr" style="left:34.44%;top:25.93%" data-tag="PI-109">PI<br>109</div>
+    <div class="instr" style="left:34.44%;top:27.44%" data-tag="PI-110">PI<br>110</div>
+
+    <!-- Válvulas actuadas IVE -->
+    <div class="instr" style="left:51.15%;top:35.57%" data-tag="IVE-101">IVE<br>101</div>
+    <div class="instr" style="left:51.20%;top:51.81%" data-tag="IVE-102">IVE<br>102</div>
+    <div class="instr futuro" style="left:45.81%;top:46.77%" data-tag="IVE-103">IVE<br>103</div>
+
+    <!-- Válvulas neumáticas IVL -->
+    <div class="instr" style="left:50.89%;top:35.51%" data-tag="IVL-101">IVL<br>101</div>
+    <div class="instr" style="left:51.18%;top:51.89%" data-tag="IVL-102">IVL<br>102</div>
     <div class="instr futuro" style="left:52%;top:82%" data-tag="IVL-103">IVL<br>103</div>
 
     <!-- Sensores posición ISC / ISO -->
-    <div class="instr" style="left:45%;top:62%" data-tag="ISC-VL-04">ISC<br>VL04</div>
-    <div class="instr" style="left:55%;top:62%" data-tag="ISC-VL-05">ISC<br>VL05</div>
-    <div class="instr" style="left:45%;top:50%" data-tag="ISC-VL-06">ISC<br>VL06</div>
-    <div class="instr" style="left:55%;top:50%" data-tag="ISC-VL-07">ISC<br>VL07</div>
-    <div class="instr" style="left:45%;top:68%" data-tag="ISO-VL-04">ISO<br>VL04</div>
-    <div class="instr" style="left:55%;top:68%" data-tag="ISO-VL-05">ISO<br>VL05</div>
-    <div class="instr" style="left:48%;top:56%" data-tag="ISO-VL-06">ISO<br>VL06</div>
-    <div class="instr" style="left:58%;top:56%" data-tag="ISO-VL-07">ISO<br>VL07</div>
+    <div class="instr" style="left:23.25%;top:43.93%" data-tag="ISC-VL-04">ISC<br>VL04</div>
+    <div class="instr" style="left:23.27%;top:42.33%" data-tag="ISC-VL-05">ISC<br>VL05</div>
+    <div class="instr" style="left:27.54%;top:62.67%" data-tag="ISC-VL-06">ISC<br>VL06</div>
+    <div class="instr" style="left:24.83%;top:62.19%" data-tag="ISC-VL-07">ISC<br>VL07</div>
+    <div class="instr" style="left:23.87%;top:44.52%" data-tag="ISO-VL-04">ISO<br>VL04</div>
+    <div class="instr" style="left:23.76%;top:42.85%" data-tag="ISO-VL-05">ISO<br>VL05</div>
+    <div class="instr" style="left:28.17%;top:62.18%" data-tag="ISO-VL-06">ISO<br>VL06</div>
+    <div class="instr" style="left:25.43%;top:62.70%" data-tag="ISO-VL-07">ISO<br>VL07</div>
+
+    <!-- Analizadores AG -->
+    <div class="instr" style="left:26.08%;top:64.78%" data-tag="AG-2">AG<br>2</div>
+    <div class="instr" style="left:27.65%;top:64.75%" data-tag="AG-3">AG<br>3</div>
+    <div class="instr" style="left:29.37%;top:64.70%" data-tag="AG-4">AG<br>4</div>
+    <div class="instr" style="left:26.07%;top:73.67%" data-tag="AG-5">AG<br>5</div>
+    <div class="instr" style="left:27.66%;top:73.71%" data-tag="AG-6">AG<br>6</div>
+    <div class="instr" style="left:29.34%;top:73.71%" data-tag="AG-7">AG<br>7</div>
   </div>
 </div>
 
@@ -286,6 +337,18 @@
   </div>
   <div id="log-list"></div>
   <button id="btn-copy-log">📋 Copiar todo</button>
+</div>
+
+<!-- Panel flotante de captura de TAG -->
+<div id="tag-input-panel">
+  <label>COORDENADAS</label>
+  <div class="coord-display" id="tag-coord-display">x=—% y=—%</div>
+  <label style="margin-top:2px">TAG DEL INSTRUMENTO</label>
+  <input id="tag-input" type="text" placeholder="Ej: FIT-101" autocomplete="off" spellcheck="false" />
+  <div class="btn-row">
+    <button id="btn-tag-ok">✓ Guardar</button>
+    <button id="btn-tag-cancel">✕ Cancelar</button>
+  </div>
 </div>
 
 <!-- Controles zoom -->
@@ -401,21 +464,68 @@
     renderLog();
   });
 
-  // ── Clic en imagen → pedir TAG y registrar ───────────────────
+  // ── Panel flotante de captura de TAG ────────────────────────
+  let lastTag = '';
+  const tagPanel    = document.getElementById('tag-input-panel');
+  const tagInput    = document.getElementById('tag-input');
+  const tagCoord    = document.getElementById('tag-coord-display');
+  let pendingCoord  = null; // { px, py, cx, cy }
+
+  function openTagPanel(px, py, clientX, clientY) {
+    pendingCoord = { px, py, clientX, clientY };
+    tagCoord.textContent = `x=${px}%  y=${py}%`;
+    tagInput.value = lastTag;
+    // Posicionar el panel cerca del clic, evitando que salga de pantalla
+    const pw = 230, ph = 140;
+    let left = clientX + 14;
+    let top  = clientY - ph / 2;
+    if (left + pw > window.innerWidth)  left = clientX - pw - 14;
+    if (top  < 8)                       top  = 8;
+    if (top  + ph > window.innerHeight) top  = window.innerHeight - ph - 8;
+    tagPanel.style.left = left + 'px';
+    tagPanel.style.top  = top  + 'px';
+    tagPanel.classList.add('visible');
+    setTimeout(() => tagInput.focus(), 30);
+  }
+
+  function closeTagPanel() {
+    tagPanel.classList.remove('visible');
+    pendingCoord = null;
+  }
+
+  function confirmTag() {
+    const tag = tagInput.value.trim().toUpperCase();
+    if (!tag || !pendingCoord) { closeTagPanel(); return; }
+    lastTag = tag;
+    const { px, py, clientX, clientY } = pendingCoord;
+    addLog(tag, px, py);
+    showToast(clientX, clientY, `${tag}: ${px}% ${py}%`);
+    console.log('[P&ID]', tag, `→ left:${px}%;top:${py}%`);
+    closeTagPanel();
+  }
+
+  document.getElementById('btn-tag-ok')    .addEventListener('click', confirmTag);
+  document.getElementById('btn-tag-cancel').addEventListener('click', closeTagPanel);
+  tagInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  confirmTag();
+    if (e.key === 'Escape') closeTagPanel();
+  });
+
+  // Cerrar si se hace clic fuera del panel
+  document.addEventListener('mousedown', e => {
+    if (tagPanel.classList.contains('visible') && !tagPanel.contains(e.target)) {
+      closeTagPanel();
+    }
+  });
+
+  // ── Clic en imagen → abrir panel ─────────────────────────────
   img.addEventListener('click', e => {
     if (moved) return;
     const rect = img.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width  * 100).toFixed(2);
     const py = ((e.clientY - rect.top)  / rect.height * 100).toFixed(2);
-    const tag = prompt('TAG del instrumento (ej: FIT-101):', lastTag || '');
-    if (!tag) return;
-    lastTag = tag.toUpperCase().trim();
-    addLog(lastTag, px, py);
-    showToast(e.clientX, e.clientY, `${lastTag}: ${px}% ${py}%`);
-    console.log('[P&ID]', lastTag, `→ left:${px}%;top:${py}%`);
+    openTagPanel(px, py, e.clientX, e.clientY);
   });
-
-  let lastTag = '';
 
   function showToast(x, y, msg) {
     const t = document.createElement('div');
