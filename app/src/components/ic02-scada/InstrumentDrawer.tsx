@@ -27,9 +27,23 @@ function tagToEquipmentId(tag: string): string {
 // Selecciona template según tipo de señal o tag
 function templateForBadge(badge: string, tag?: string): string {
   if (badge === '440VAC') return 'tpl-mec-001';
-  if (tag && /^(B|MTR|BGA|SB|SA)\d/i.test(tag)) return 'tpl-mec-001';
-  if (tag && /^(CCM|TG|TR|GED|UPS)/i.test(tag)) return 'tpl-ele-001';
-  return 'tpl-ic-001';
+  if (!tag) return 'tpl-ic-001';
+  const t = tag.toUpperCase();
+  if (/^(MTR|MOT|M-|ME-)/.test(t))           return 'tpl-mec-001'; // Motor
+  if (/^(BBA|BOM|PMP|B-)\d/.test(t))         return 'tpl-mec-002'; // Bomba
+  if (/^(SPL|SB|COM|BGA|CPR)/.test(t))       return 'tpl-mec-003'; // Compresor/Soplador
+  if (/^(VDF|VFD|VSD|ACS|PF|A-B)/.test(t))  return 'tpl-ic-003';  // Variador
+  if (/^(PLC|RTU|PAC|DCS)/.test(t))          return 'tpl-ic-002';  // PLC
+  if (/^(CCM|TBL|MCC|QE|QD|TD)/.test(t))    return 'tpl-ele-001'; // Tablero/CCM
+  if (/^(CAB|CXX|KV|WR|CBL)/.test(t))       return 'tpl-ele-002'; // Cable
+  if (/^(TR|TRF|TX|XFMR)/.test(t))          return 'tpl-ele-003'; // Transformador
+  if (/^(GEN|GED|UPS|GAE)/.test(t))         return 'tpl-ele-004'; // Generador
+  if (/^(CEL|MT|CUT|INT|BRK)/.test(t))      return 'tpl-ele-005'; // Celda MT
+  if (/^(LIN|TUB|PIP|DUC)/.test(t))         return 'tpl-mec-004'; // Tubería
+  if (/^(CAL|CALDERA|TEA|QUE)/.test(t))     return 'tpl-mec-005'; // Caldera/TEA
+  if (/^(LAG|EST|CIV|POZ)/.test(t))         return 'tpl-efl-001'; // Laguna/Civil
+  if (/^(ZSC|ZSO|ZS|LS|YV|XV)/.test(t))    return 'tpl-ic-004';  // Detector válvula
+  return 'tpl-ic-001'; // default: instrumento I&C
 }
 
 export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp, onClose }: Props) {
@@ -53,14 +67,10 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
     : 'PLC 1756-L73 · Control Principal';
 
   function handleAction(type: 'inspeccion' | 'precom') {
-    const eqId     = equipmentIdProp ?? tagToEquipmentId(tag);
-    const returnTo = encodeURIComponent(pathname);
-    if (type === 'inspeccion') {
-      const templateId = templateForBadge(signalBadge, tag);
-      router.push(`/equipment/${eqId}/inspection/${templateId}?returnTo=${returnTo}`);
-    } else {
-      router.push(`/projects/${projectId}/tests?tag=${encodeURIComponent(tag)}`);
-    }
+    const eqId       = equipmentIdProp ?? tagToEquipmentId(tag);
+    const returnTo   = encodeURIComponent(pathname);
+    const templateId = templateForBadge(signalBadge, tag);
+    router.push(`/equipment/${eqId}/inspection/${templateId}?returnTo=${returnTo}`);
     onClose();
   }
 
@@ -255,18 +265,15 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
             <span style={{ marginLeft: 'auto', fontSize: '14px', color: '#38BDF8', opacity: 0.6 }}>›</span>
           </button>
 
-          {/* Botón Precomisionamiento */}
+          {/* Botón Historial */}
           <button
-            onClick={() => handleAction('precom')}
-            disabled={!!isFuture}
+            onClick={() => router.push(`/projects/${projectId}/tests`) || onClose()}
             style={{
               width: '100%', padding: '13px 16px',
-              borderRadius: '8px', border: 'none', cursor: isFuture ? 'not-allowed' : 'pointer',
-              background: isFuture
-                ? 'rgba(34,197,94,0.04)'
-                : 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.08) 100%)',
+              borderRadius: '8px', border: 'none', cursor: 'pointer',
+              background: 'rgba(34,197,94,0.06)',
               borderWidth: '1px', borderStyle: 'solid',
-              borderColor: isFuture ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.28)',
+              borderColor: 'rgba(34,197,94,0.18)',
               display: 'flex', alignItems: 'center', gap: '12px',
               opacity: isFuture ? 0.4 : 1,
               transition: 'all 150ms ease',
@@ -274,10 +281,10 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
           >
             <span style={{ fontSize: '20px' }}>📋</span>
             <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#22C55E' }}>Abrir Precomisionamiento</div>
-              <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '1px' }}>Lista de verificación y ensayo</div>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#86EFAC' }}>Ver Protocolos del Proyecto</div>
+              <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '1px' }}>Historial de pruebas y ensayos</div>
             </div>
-            <span style={{ marginLeft: 'auto', fontSize: '14px', color: '#22C55E', opacity: 0.6 }}>›</span>
+            <span style={{ marginLeft: 'auto', fontSize: '14px', color: '#86EFAC', opacity: 0.6 }}>›</span>
           </button>
         </div>
       </div>
