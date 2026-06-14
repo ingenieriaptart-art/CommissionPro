@@ -240,51 +240,29 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
             ACCIONES
           </div>
 
-          {/* Botón Inspección */}
+          {/* Botón principal — Iniciar Precomisionamiento */}
           <button
             onClick={() => handleAction('inspeccion')}
             disabled={!!isFuture}
             style={{
-              width: '100%', padding: '13px 16px',
+              width: '100%', padding: '14px 16px',
               borderRadius: '8px', border: 'none', cursor: isFuture ? 'not-allowed' : 'pointer',
               background: isFuture
                 ? 'rgba(56,189,248,0.04)'
-                : 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(56,189,248,0.08) 100%)',
+                : 'linear-gradient(135deg, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0.10) 100%)',
               borderWidth: '1px', borderStyle: 'solid',
-              borderColor: isFuture ? 'rgba(56,189,248,0.12)' : 'rgba(56,189,248,0.28)',
+              borderColor: isFuture ? 'rgba(56,189,248,0.12)' : 'rgba(56,189,248,0.40)',
               display: 'flex', alignItems: 'center', gap: '12px',
               opacity: isFuture ? 0.4 : 1,
               transition: 'all 150ms ease',
             }}
           >
-            <span style={{ fontSize: '20px' }}>🔍</span>
+            <span style={{ fontSize: '22px' }}>📋</span>
             <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#38BDF8' }}>Abrir Inspección</div>
-              <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '1px' }}>Hoja de verificación técnica</div>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#38BDF8' }}>Iniciar Precomisionamiento</div>
+              <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '2px' }}>Formulario de verificación técnica</div>
             </div>
-            <span style={{ marginLeft: 'auto', fontSize: '14px', color: '#38BDF8', opacity: 0.6 }}>›</span>
-          </button>
-
-          {/* Botón Historial */}
-          <button
-            onClick={() => router.push(`/projects/${projectId}/tests`) || onClose()}
-            style={{
-              width: '100%', padding: '13px 16px',
-              borderRadius: '8px', border: 'none', cursor: 'pointer',
-              background: 'rgba(34,197,94,0.06)',
-              borderWidth: '1px', borderStyle: 'solid',
-              borderColor: 'rgba(34,197,94,0.18)',
-              display: 'flex', alignItems: 'center', gap: '12px',
-              opacity: isFuture ? 0.4 : 1,
-              transition: 'all 150ms ease',
-            }}
-          >
-            <span style={{ fontSize: '20px' }}>📋</span>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: '#86EFAC' }}>Ver Protocolos del Proyecto</div>
-              <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '1px' }}>Historial de pruebas y ensayos</div>
-            </div>
-            <span style={{ marginLeft: 'auto', fontSize: '14px', color: '#86EFAC', opacity: 0.6 }}>›</span>
+            <span style={{ marginLeft: 'auto', fontSize: '16px', color: '#38BDF8', opacity: 0.7 }}>›</span>
           </button>
         </div>
       </div>
