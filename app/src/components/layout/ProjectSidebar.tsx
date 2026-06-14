@@ -6,7 +6,7 @@ import { useUIStore } from "@/stores/ui.store";
 import { useProject } from "@/hooks/useProject";
 import {
   LayoutDashboard, Wrench, CheckSquare, AlertTriangle,
-  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity,
+  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity, Home,
 } from "lucide-react";
 
 const navItems = [
@@ -69,11 +69,22 @@ export function ProjectSidebar() {
         )}
       </div>
 
-      {/* Back to projects */}
-      <div className="px-2 pt-3 pb-1">
+      {/* Back navigation */}
+      <div className="px-2 pt-3 pb-1 space-y-0.5">
+        <Link
+          href="/dashboard"
+          title={!sidebarOpen ? "Ir al Dashboard" : undefined}
+          className={cn(
+            "flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-400 hover:bg-slate-800 hover:text-white transition-colors",
+            !sidebarOpen && "justify-center px-0"
+          )}
+        >
+          <Home size={14} className="flex-shrink-0" />
+          {sidebarOpen && <span>Dashboard</span>}
+        </Link>
         <Link
           href="/projects"
-          title={!sidebarOpen ? "Volver a proyectos" : undefined}
+          title={!sidebarOpen ? "Todos los proyectos" : undefined}
           className={cn(
             "flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-400 hover:bg-slate-800 hover:text-white transition-colors",
             !sidebarOpen && "justify-center px-0"
