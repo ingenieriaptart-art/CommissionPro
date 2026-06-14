@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { X, ExternalLink, Play, Loader2 } from "lucide-react";
+import { X, ExternalLink, Play, Loader2, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { equipmentStatusColor } from "@/components/plant-map/visual/EquipmentOverlay";
 import { useEquipmentInspectionTemplates } from "@/hooks/useInspectionData";
@@ -184,12 +184,18 @@ export function FloatingEquipmentPanel({
       </div>
 
       {/* Footer */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-3 space-y-1.5">
         <button
           onClick={() => { onClose(); router.push(`/projects/${projectId}/equipment`); }}
           className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-400 hover:text-white text-[10px] rounded-lg border border-slate-600 transition-colors"
         >
           <ExternalLink size={11} /> Ver en Equipos
+        </button>
+        <button
+          onClick={() => { onClose(); router.push(`/projects/${projectId}/ic02-rtu`); }}
+          className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-900/30 hover:bg-emerald-800/40 text-emerald-400 hover:text-emerald-300 text-[10px] rounded-lg border border-emerald-800/50 hover:border-emerald-600 transition-colors"
+        >
+          <Activity size={11} /> Instrumentos IC02
         </button>
       </div>
     </div>
