@@ -9,8 +9,9 @@ import {
 import type { Equipment, FieldType } from "@/types";
 import type { MockInspectionTemplate, MockInspectionSection, MockInspectionField } from "@/types/inspection";
 
-// IDs mock empiezan con "eq-" / "tpl-"; los reales son UUIDs de 36 chars
-const isMockId = (id: string) => id.startsWith("eq-") || id.startsWith("tpl-");
+// IDs mock empiezan con "eq-" / "tpl-" / "ic02-"; los reales son UUIDs de 36 chars
+const isMockId = (id: string) =>
+  id.startsWith("eq-") || id.startsWith("tpl-") || id.startsWith("ic02-");
 
 // ── Shapes intermedias ────────────────────────────────────────────────────────
 

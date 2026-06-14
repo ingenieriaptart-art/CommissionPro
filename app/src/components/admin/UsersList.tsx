@@ -39,8 +39,8 @@ export function UsersList({ users, roles, selectedId, onSelect, onNew }: Props) 
   });
 
   return (
-    <div className="w-[280px] flex-shrink-0 flex flex-col bg-slate-900 border-r border-slate-800 h-full">
-      <div className="p-3 border-b border-slate-800 space-y-2">
+    <div className="w-[280px] flex-shrink-0 flex flex-col bg-slate-700 border-r border-slate-600 h-full">
+      <div className="p-3 border-b border-slate-600 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-slate-100">
             Usuarios <span className="text-slate-500 font-normal">({users.length})</span>
@@ -55,7 +55,7 @@ export function UsersList({ users, roles, selectedId, onSelect, onNew }: Props) 
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
           <input value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nombre o email…"
-            className="w-full bg-slate-950 border border-slate-700 rounded-md pl-7 pr-2 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500" />
+            className="w-full bg-slate-800 border border-slate-500 rounded-md pl-7 pr-2 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-400" />
         </div>
 
         <div className="flex gap-1 flex-wrap">
@@ -63,8 +63,8 @@ export function UsersList({ users, roles, selectedId, onSelect, onNew }: Props) 
             <button key={key} onClick={() => setRoleFilter(key)}
               className={cn("text-[10px] px-2 py-0.5 rounded-full transition-colors",
                 roleFilter === key
-                  ? "bg-blue-800 text-blue-200"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700")}>
+                  ? "bg-blue-700 text-blue-100"
+                  : "bg-slate-600 text-slate-200 hover:bg-slate-500")}>
               {key === "todos" ? "Todos" : ROLE_LABELS[key] ?? key}
             </button>
           ))}
@@ -73,19 +73,19 @@ export function UsersList({ users, roles, selectedId, onSelect, onNew }: Props) 
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {filtered.length === 0 ? (
-          <p className="text-xs text-slate-600 text-center py-8">Sin resultados</p>
+          <p className="text-xs text-slate-400 text-center py-8">Sin resultados</p>
         ) : filtered.map((u) => {
           const roleKey = (u.role as Role | undefined)?.key ?? "";
           return (
             <button key={u.id} onClick={() => onSelect(u)}
               className={cn("w-full text-left rounded-lg px-3 py-2 border transition-colors",
                 selectedId === u.id
-                  ? "bg-blue-950 border-blue-700"
-                  : "bg-slate-950 border-slate-800 hover:border-slate-700")}>
+                  ? "bg-blue-800 border-blue-500"
+                  : "bg-slate-800 border-slate-600 hover:border-slate-400")}>
               <div className="flex items-start justify-between gap-1">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-100 truncate">{u.full_name}</p>
-                  <p className="text-[10px] text-slate-500 truncate">{u.email}</p>
+                  <p className="text-[10px] text-slate-300 truncate">{u.email}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                   <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full",

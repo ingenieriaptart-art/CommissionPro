@@ -106,6 +106,62 @@ export const equipmentGroup: EquipmentGroupData = {
 // ════════════════════════════════════════════════════════════════════════════
 
 export const plcAnalogGroups: AnalogGroupData[] = [
+  // ── 100-series — Sistema Lodos / Crudo ──────────────────────────────────
+  {
+    id: 'fit-lodos',
+    title: 'FLUJO LODOS / CRUDO',
+    subtitle: 'FIT-101..112 · AI HART 4-20mA · Caudalímetros',
+    icon: '⟡',
+    accentColor: '#A78BFA',
+    instruments: [
+      { id: 'fit101', tag: 'FIT-101', description: 'Flujo crudo existente → Splitting Box #1',  signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 300, area: 'Splitting Box' },
+      { id: 'fit102', tag: 'FIT-102', description: 'Flujo crudo existente → Splitting Box #2',  signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 300, area: 'Splitting Box' },
+      { id: 'fit103', tag: 'FIT-103', description: 'Flujo Splitting Box → Biodigestor #1',      signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 200, area: 'Biodigestor 1' },
+      { id: 'fit104', tag: 'FIT-104', description: 'Flujo Splitting Box → Biodigestor #2',      signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 200, area: 'Biodigestor 2' },
+      { id: 'fit105', tag: 'FIT-105', description: 'Flujo Splitting Box → Biodigestor #3',      signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 200, isFuture: true, area: 'Biodigestor 3' },
+      { id: 'fit106', tag: 'FIT-106', description: 'Flujo efluente tratado → Sist. Aeróbico #1', signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 200, area: 'Aeróbico 1' },
+      { id: 'fit107', tag: 'FIT-107', description: 'Flujo efluente tratado → Sist. Aeróbico #2', signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 200, area: 'Aeróbico 2' },
+      { id: 'fit108', tag: 'FIT-108', description: 'Flujo lodos de exceso → Secado',             signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 100, area: 'Secado' },
+      { id: 'fit109', tag: 'FIT-109', description: 'Flujo recirculación lodos #1',               signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 200, area: 'Recirculación' },
+      { id: 'fit110', tag: 'FIT-110', description: 'Flujo recirculación lodos #2',               signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 200, area: 'Recirculación' },
+      { id: 'fit111', tag: 'FIT-111', description: 'Flujo lodo aeróbico → Splitting Box #1',     signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 150, area: 'Splitting Box' },
+      { id: 'fit112', tag: 'FIT-112', description: 'Flujo lodo aeróbico → Splitting Box #2',     signalType: 'HART', unit: 'm³/h', value: 0, min: 0, max: 150, area: 'Splitting Box' },
+    ],
+  },
+  {
+    id: 'ls',
+    title: 'NIVEL TANQUES LODOS',
+    subtitle: 'LS-101..107 · DI 24VDC · Doble contacto',
+    icon: '◐',
+    accentColor: '#06B6D4',
+    instruments: [
+      { id: 'ls101', tag: 'LS-101', description: 'Nivel 2 contactos Splitting Box #1',            signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Splitting Box' },
+      { id: 'ls102', tag: 'LS-102', description: 'Nivel 2 contactos Splitting Box #2',            signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Splitting Box' },
+      { id: 'ls103', tag: 'LS-103', description: 'Nivel 2 contactos Tanque Recirculación #1',     signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Recirculación' },
+      { id: 'ls104', tag: 'LS-104', description: 'Nivel 2 contactos Tanque Recirculación #2',     signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Recirculación' },
+      { id: 'ls105', tag: 'LS-105', description: 'Nivel 2 contactos Tanque Nutrientes',           signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Nutrientes' },
+      { id: 'ls106', tag: 'LS-106', description: 'Nivel 2 contactos Tanque Purga Lodos (bombas)', signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Purga Lodos' },
+      { id: 'ls107', tag: 'LS-107', description: 'Nivel 2 contactos Tanque Purga Lodos (válvulas)', signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Purga Lodos' },
+    ],
+  },
+  {
+    id: 'vl-sensors',
+    title: 'SENSORES POSICIÓN VL',
+    subtitle: 'SC/SO-VL-04..07 · DI 24VDC · Válvulas manuales lodos',
+    icon: '◑',
+    accentColor: '#64748B',
+    instruments: [
+      { id: 'sc-vl04', tag: 'SC-VL-04', description: 'Pos. cerrada VL-04 — tubería recirculación pozo 1', signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Recirculación' },
+      { id: 'so-vl04', tag: 'SO-VL-04', description: 'Pos. abierta VL-04 — tubería recirculación pozo 1', signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Recirculación' },
+      { id: 'sc-vl05', tag: 'SC-VL-05', description: 'Pos. cerrada VL-05 — tubería lodos de exceso',      signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Lodos Exceso' },
+      { id: 'so-vl05', tag: 'SO-VL-05', description: 'Pos. abierta VL-05 — tubería lodos de exceso',      signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Lodos Exceso' },
+      { id: 'sc-vl06', tag: 'SC-VL-06', description: 'Pos. cerrada VL-06 — tubería recirculación pozo 2', signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Recirculación' },
+      { id: 'so-vl06', tag: 'SO-VL-06', description: 'Pos. abierta VL-06 — tubería recirculación pozo 2', signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Recirculación' },
+      { id: 'sc-vl07', tag: 'SC-VL-07', description: 'Pos. cerrada VL-07 — tubería lodos de exceso',      signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Lodos Exceso' },
+      { id: 'so-vl07', tag: 'SO-VL-07', description: 'Pos. abierta VL-07 — tubería lodos de exceso',      signalType: 'DI', unit: 'ON/OFF', value: 0, min: 0, max: 1, area: 'Lodos Exceso' },
+    ],
+  },
+  // ── 200-series — Sistema Biogás / Aire (existente) ──────────────────────
   {
     id: 'fit',
     title: 'FLUJO BIOGÁS / AIRE',
@@ -168,10 +224,23 @@ export const plcAnalogGroups: AnalogGroupData[] = [
 export const plcActuatedGroup: ActuatedGroupData = {
   id: 'actuadas',
   title: 'VÁLVULAS ACTUADAS',
-  subtitle: 'VA-1..3 · VB-45/46 · DI · AO · AI · 24 VDC',
+  subtitle: 'VE/VL/VB1..3 · VA-1..3 · VB-45/46 · DI · AO · AI · 24 VDC',
   icon: '⊛',
   accentColor: '#A855F7',
   instruments: [
+    // ── Lodos: válvulas proporcionales Splitting Box → Biodigestores ─────
+    { id: 've101', tag: 'VE-101', description: 'Válvula proporcional Splitting Box → Biodigestor 1', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, area: 'Biodigestor 1' },
+    { id: 've102', tag: 'VE-102', description: 'Válvula proporcional Splitting Box → Biodigestor 2', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, area: 'Biodigestor 2' },
+    { id: 've103', tag: 'VE-103', description: 'Válvula proporcional Splitting Box → Biodigestor 3', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, isFuture: true, area: 'Biodigestor 3' },
+    // ── Lodos: válvulas ON/OFF Biodigestores → Lodos de exceso ──────────
+    { id: 'vl101', tag: 'VL-101', description: 'Válvula ON/OFF Biodigestor 1 → Lodos de exceso', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, area: 'Lodos Exceso' },
+    { id: 'vl102', tag: 'VL-102', description: 'Válvula ON/OFF Biodigestor 2 → Lodos de exceso', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, area: 'Lodos Exceso' },
+    { id: 'vl103', tag: 'VL-103', description: 'Válvula ON/OFF Biodigestor 3 → Lodos de exceso', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, isFuture: true, area: 'Lodos Exceso' },
+    // ── Lodos: válvulas ON/OFF alivio Biodigestores ──────────────────────
+    { id: 'vb1', tag: 'VB1', description: 'Válvula ON/OFF alivio Biodigestor 1', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, area: 'Biodigestor 1' },
+    { id: 'vb2', tag: 'VB2', description: 'Válvula ON/OFF alivio Biodigestor 2', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, area: 'Biodigestor 2' },
+    { id: 'vb3', tag: 'VB3', description: 'Válvula ON/OFF alivio Biodigestor 3', openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0, isFuture: true, area: 'Biodigestor 3' },
+    // ── Biogás: válvulas actuadas aire RAFAC ─────────────────────────────
     { id: 'va1',  tag: 'VA-1',  description: 'Inyección aire RAFAC 1',  openSW: 'active',   closeSW: 'inactive', failSW: 'inactive', position: 65,  area: 'RAFAC 1' },
     { id: 'va2',  tag: 'VA-2',  description: 'Inyección aire RAFAC 2',  openSW: 'active',   closeSW: 'inactive', failSW: 'inactive', position: 70,  area: 'RAFAC 2' },
     { id: 'va3',  tag: 'VA-3',  description: 'Inyección aire RAFAC 3',  openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0,   isFuture: true, area: 'RAFAC 3' },
@@ -179,6 +248,66 @@ export const plcActuatedGroup: ActuatedGroupData = {
     { id: 'vb46', tag: 'VB-46', description: 'Válvula biogás → otros',  openSW: 'inactive', closeSW: 'inactive', failSW: 'inactive', position: 0,   isFuture: true, area: 'Otros' },
   ],
 };
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PLC 1756-L73 — Equipos 440VAC (VFD / SS via COM)
+// ════════════════════════════════════════════════════════════════════════════
+
+export const plcEquipmentGroups: EquipmentGroupData[] = [
+  {
+    id: 'bombas-crudo',
+    title: 'BOMBAS ALIMENTACIÓN CRUDO',
+    subtitle: 'B1..B4 · 440 VAC · VFD · Comm EtherNet/IP',
+    icon: '◉',
+    accentColor: '#6366F1',
+    instruments: [
+      { id: 'b1', tag: 'B1', description: 'Bomba alimentación crudo #1', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'b2', tag: 'B2', description: 'Bomba alimentación crudo #2', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'b3', tag: 'B3', description: 'Bomba alimentación crudo #3', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'b4', tag: 'B4', description: 'Bomba alimentación crudo #4', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+    ],
+  },
+  {
+    id: 'sopladores-biogas-equipo',
+    title: 'SOPLADORES BIOGÁS',
+    subtitle: 'SB1..SB6 · 440 VAC · VFD · Comm EtherNet/IP',
+    icon: '◈',
+    accentColor: '#22D3EE',
+    instruments: [
+      { id: 'sb1', tag: 'SB1', description: 'Soplador de biogás #1', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'sb2', tag: 'SB2', description: 'Soplador de biogás #2', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'sb3', tag: 'SB3', description: 'Soplador de biogás #3', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'sb4', tag: 'SB4', description: 'Soplador de biogás #4', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'sb5', tag: 'SB5', description: 'Soplador de biogás #5', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'sb6', tag: 'SB6', description: 'Soplador de biogás #6', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+    ],
+  },
+  {
+    id: 'sopladores-aire',
+    title: 'SOPLADORES AIRE',
+    subtitle: 'SA1..SA3 · 440 VAC · VFD · Comm EtherNet/IP',
+    icon: '◎',
+    accentColor: '#F97316',
+    instruments: [
+      { id: 'sa1', tag: 'SA1', description: 'Soplador de aire #1', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'sa2', tag: 'SA2', description: 'Soplador de aire #2', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'sa3', tag: 'SA3', description: 'Soplador de aire #3', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+    ],
+  },
+  {
+    id: 'bombas-lavado',
+    title: 'BOMBAS TORRE LAVADO',
+    subtitle: 'B11..B14 · 440 VAC · SS · Filtración biogás',
+    icon: '◉',
+    accentColor: '#14B8A6',
+    instruments: [
+      { id: 'b11', tag: 'B11', description: 'Bomba 1 torre lavado #1 — filtración biogás', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'b12', tag: 'B12', description: 'Bomba 2 torre lavado #1 — filtración biogás', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'b13', tag: 'B13', description: 'Bomba 3 torre lavado #2 — filtración biogás', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+      { id: 'b14', tag: 'B14', description: 'Bomba 4 torre lavado #2 — filtración biogás', voltage: '440VAC', runStatus: 'stopped', diCount: 0, doCount: 0 },
+    ],
+  },
+];
 
 // ════════════════════════════════════════════════════════════════════════════
 //  Sidebar + Process Flow
@@ -202,6 +331,7 @@ export const sidebarItems: SidebarItem[] = [
 ];
 
 export const processSteps = [
+  { id: 'lodos',         label: 'LODOS / CRUDO', sub: 'FIT-101..112 · LS · VE/VL', icon: '⬢' },
   { id: 'biodigestores', label: 'BIODIGESTORES', sub: 'BD1 · BD2 · BD3',     icon: '⬡' },
   { id: 'manifold',      label: 'MANIFOLD',      sub: 'Distribución biogás',  icon: '◈' },
   { id: 'sopladores',   label: 'SOPLADORES',    sub: 'SB1..SB6',              icon: '◉' },

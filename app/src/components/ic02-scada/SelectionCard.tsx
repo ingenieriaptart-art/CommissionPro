@@ -39,11 +39,11 @@ export function SelectionCard({ data, onClick, highlight }: Props) {
       className="ic02-card"
       style={{
         background: isFuture
-          ? 'rgba(14,26,43,0.5)'
-          : 'linear-gradient(135deg, #162840 0%, #0E1E32 100%)',
+          ? 'rgba(36,54,80,0.5)'
+          : 'linear-gradient(135deg, #3D6094 0%, #2C4F82 100%)',
         border: highlight
           ? '1.5px solid #22C55E'
-          : `1px solid ${isFuture ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.09)'}`,
+          : `1px solid ${isFuture ? 'rgba(70,118,170,0.2)' : '#4676AA'}`,
         borderLeft: `3px solid ${isFuture ? '#38BDF840' : accentColor}`,
         borderStyle: isFuture ? 'dashed' : 'solid',
         borderLeftStyle: 'solid',
@@ -97,7 +97,7 @@ export function SelectionCard({ data, onClick, highlight }: Props) {
 
       {/* Description */}
       <div style={{
-        fontSize: '9px', color: '#64748B', lineHeight: 1.35,
+        fontSize: '9px', color: '#93B5D6', lineHeight: 1.35,
         marginTop: '5px',
         overflow: 'hidden',
         display: '-webkit-box',
@@ -105,7 +105,7 @@ export function SelectionCard({ data, onClick, highlight }: Props) {
         WebkitBoxOrient: 'vertical' as const,
       }}>
         {subTags && (
-          <span style={{ color: '#475569', marginRight: '3px', fontWeight: '600' }}>
+          <span style={{ color: '#4676AA', marginRight: '3px', fontWeight: '600' }}>
             {subTags} ·
           </span>
         )}

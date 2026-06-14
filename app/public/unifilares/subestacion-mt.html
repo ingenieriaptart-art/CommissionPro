@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f0e8;font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;}
+.sheet{flex:1;background:#fff;margin:12px;border:2px solid #1a1a1a;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+/* Title block */
+.title-block{border-top:2px solid #1a1a1a;display:grid;grid-template-columns:1fr auto;min-height:80px;}
+.tb-left{border-right:2px solid #1a1a1a;padding:8px 12px;}
+.tb-company{font-size:11px;font-weight:bold;color:#333;letter-spacing:1px;margin-bottom:4px;}
+.tb-project{font-size:10px;color:#555;margin-bottom:2px;}
+.tb-right{display:grid;grid-template-rows:repeat(3,1fr);min-width:260px;}
+.tb-row{border-bottom:1px solid #1a1a1a;padding:4px 10px;display:flex;gap:12px;align-items:center;}
+.tb-row:last-child{border-bottom:none;}
+.tb-key{font-size:8px;color:#888;text-transform:uppercase;letter-spacing:0.5px;width:50px;flex-shrink:0;}
+.tb-val{font-size:10px;font-weight:bold;color:#1a1a1a;}
+/* Drawing area */
+.draw-area{flex:1;padding:20px;display:flex;flex-direction:column;gap:10px;overflow:auto;}
+.draw-title{text-align:center;font-size:13px;font-weight:bold;letter-spacing:2px;color:#1a1a1a;border-bottom:1px solid #ccc;padding-bottom:8px;}
+.draw-subtitle{text-align:center;font-size:10px;color:#555;margin-top:-6px;}
+/* Diagrama simbólico */
+.diagram{display:flex;flex-direction:column;align-items:center;gap:0;flex:1;justify-content:center;padding:10px 0;}
+.bus-line{width:70%;height:4px;background:#1a1a1a;position:relative;}
+.bus-label{font-size:9px;font-weight:bold;color:#7c3aed;position:absolute;left:-90px;top:-5px;white-space:nowrap;}
+.bus-row{display:flex;gap:30px;justify-content:center;padding:0 20px;}
+.bus-feeder{display:flex;flex-direction:column;align-items:center;gap:0;}
+.f-line{width:2px;height:24px;background:#1a1a1a;}
+.f-box{border:1.5px solid #1a1a1a;border-radius:2px;padding:4px 8px;text-align:center;background:#fff;}
+.f-tag{font-size:9px;font-weight:bold;color:#1e293b;}
+.f-sub{font-size:7px;color:#64748b;}
+.f-line-down{width:2px;height:20px;background:#1a1a1a;}
+.arrow-down{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #1a1a1a;}
+.equip-box{border:2px solid #1a1a1a;padding:5px 10px;text-align:center;background:#f8fafc;margin-top:4px;border-radius:2px;}
+.equip-tag{font-size:10px;font-weight:bold;color:#1e293b;}
+.equip-sub{font-size:8px;color:#475569;}
+.placeholder-badge{background:#fef3c7;border:1.5px dashed #d97706;border-radius:6px;padding:10px 20px;text-align:center;margin:10px auto;max-width:400px;}
+.ph-title{font-size:11px;font-weight:bold;color:#92400e;margin-bottom:4px;}
+.ph-sub{font-size:9px;color:#b45309;}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="draw-area">
+    <div class="draw-title">DIAGRAMA UNIFILAR — SUBESTACIÓN ELÉCTRICA MT/BT</div>
+    <div class="draw-subtitle">Planta de Gas LDC — Bebedouro, Brasil · LDC-001</div>
+
+    <div class="placeholder-badge">
+      <div class="ph-title">⚠ PLANO EN PREPARACIÓN</div>
+      <div class="ph-sub">Reemplazar este archivo con el PDF oficial del plano unifilar MT</div>
+    </div>
+
+    <div class="diagram">
+      <!-- Bus MT -->
+      <div style="font-size:9px;font-weight:bold;color:#7c3aed;margin-bottom:4px;letter-spacing:1px;">BUS MT — 13.8 kV</div>
+      <div class="bus-line" style="background:#7c3aed;height:5px;width:60%;"></div>
+      <div class="bus-row" style="width:60%;justify-content:space-around;margin-top:0;">
+        <div class="bus-feeder">
+          <div class="f-line" style="background:#7c3aed;"></div>
+          <div class="f-box" style="border-color:#7c3aed;background:#faf5ff;">
+            <div class="f-tag" style="color:#7c3aed;">CELDA-REMONTE</div>
+            <div class="f-sub">Acometida MT</div>
+          </div>
+        </div>
+        <div class="bus-feeder">
+          <div class="f-line" style="background:#7c3aed;"></div>
+          <div class="f-box" style="border-color:#7c3aed;background:#faf5ff;">
+            <div class="f-tag" style="color:#7c3aed;">CELDA-MEDIDA</div>
+            <div class="f-sub">kWh · kVArh</div>
+          </div>
+        </div>
+        <div class="bus-feeder">
+          <div class="f-line" style="background:#7c3aed;"></div>
+          <div class="f-box" style="border-color:#7c3aed;background:#faf5ff;">
+            <div class="f-tag" style="color:#7c3aed;">CELDA-PROTEC</div>
+            <div class="f-sub">ANSI 50/51</div>
+          </div>
+        </div>
+        <div class="bus-feeder">
+          <div class="f-line" style="background:#7c3aed;"></div>
+          <div class="f-box" style="border-color:#7c3aed;background:#faf5ff;">
+            <div class="f-tag" style="color:#7c3aed;">CELDA-TRAFO</div>
+            <div class="f-sub">TR-1 2000KVA</div>
+          </div>
+          <div class="f-line"></div>
+          <div class="arrow-down"></div>
+          <div style="font-size:9px;font-weight:bold;color:#1d4ed8;margin:4px 0;">BUS BT — 440V</div>
+          <div class="bus-line" style="width:200px;"></div>
+          <div style="display:flex;gap:16px;justify-content:center;margin-top:0;">
+            <div class="bus-feeder"><div class="f-line"></div><div class="equip-box"><div class="equip-tag">CCM-1</div><div class="equip-sub">1200A</div></div></div>
+            <div class="bus-feeder"><div class="f-line"></div><div class="equip-box"><div class="equip-tag">CCM-2</div><div class="equip-sub">1200A</div></div></div>
+            <div class="bus-feeder"><div class="f-line"></div><div class="equip-box"><div class="equip-tag">CCM-3</div><div class="equip-sub">1200A</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="title-block">
+    <div class="tb-left">
+      <div class="tb-company">BIOTEC ENGENHARIA · PLANTA DE GAS LDC</div>
+      <div class="tb-project">Diagrama Unifilar — Subestación Eléctrica 13.8 kV / 440V</div>
+      <div class="tb-project" style="color:#dc2626;font-size:9px;margin-top:4px;">★ ARCHIVO PLACEHOLDER — Reemplazar con plano oficial PDF</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-row"><span class="tb-key">Plano:</span><span class="tb-val">E-SUB-MT-001</span></div>
+      <div class="tb-row"><span class="tb-key">Escala:</span><span class="tb-val">SIN ESCALA</span></div>
+      <div class="tb-row"><span class="tb-key">Rev:</span><span class="tb-val">0 — PLACEHOLDER</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

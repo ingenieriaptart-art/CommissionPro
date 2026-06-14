@@ -25,7 +25,7 @@ export function ActuatedCard({ instrument, onClick }: Props) {
       onClick={() => onClick?.(instrument)}
       className="ic02-card"
       style={{
-        background: 'linear-gradient(145deg, #16213A 0%, #0E1A2B 100%)',
+        background: 'linear-gradient(145deg, #3D6094 0%, #2C4F82 100%)',
         border: `1px solid ${borderColor}35`,
         borderTop: `2px solid ${borderColor}`,
         borderStyle: isFuture ? 'dashed' : 'solid',
@@ -64,9 +64,9 @@ export function ActuatedCard({ instrument, onClick }: Props) {
 
       {/* Position arc indicator */}
       <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '9px', color: '#374151', flexShrink: 0 }}>0%</span>
+        <span style={{ fontSize: '9px', color: '#4676AA', flexShrink: 0 }}>0%</span>
         <div style={{
-          flex: 1, height: '6px', background: '#1F2937', borderRadius: '3px', overflow: 'hidden',
+          flex: 1, height: '6px', background: '#243650', borderRadius: '3px', overflow: 'hidden',
         }}>
           <div style={{
             width: `${isFuture ? 0 : position}%`, height: '100%', borderRadius: '3px',
@@ -100,11 +100,11 @@ export function ActuatedCard({ instrument, onClick }: Props) {
               style={{
                 display: 'inline-block',
                 width: '8px', height: '8px', borderRadius: '50%',
-                background: sw.status === 'active' && !isFuture ? sw.color : '#1F2937',
+                background: sw.status === 'active' && !isFuture ? sw.color : '#243650',
                 boxShadow: sw.status === 'active' && !isFuture ? `0 0 8px ${sw.color}` : 'none',
               }}
             />
-            <span style={{ fontSize: '8px', color: sw.status === 'active' && !isFuture ? sw.color : '#374151', fontWeight: '700' }}>
+            <span style={{ fontSize: '8px', color: sw.status === 'active' && !isFuture ? sw.color : '#4676AA', fontWeight: '700' }}>
               {sw.label}
             </span>
           </div>
@@ -113,7 +113,7 @@ export function ActuatedCard({ instrument, onClick }: Props) {
 
       {/* Description */}
       <div style={{
-        fontSize: '9px', color: '#374151', textAlign: 'center',
+        fontSize: '9px', color: '#93B5D6', textAlign: 'center',
         lineHeight: 1.4, maxWidth: '130px',
       }}>{description}</div>
     </div>

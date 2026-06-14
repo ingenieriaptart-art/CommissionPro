@@ -410,7 +410,37 @@ export const MOCK_EQUIPMENT_TEMPLATES: EquipmentTemplateAssignment[] = [
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 export function getEquipmentById(id: string): Equipment | undefined {
-  return MOCK_EQUIPMENTS.find(e => e.id === id);
+  return MOCK_EQUIPMENTS.find(e => e.id === id) ?? getIC02Equipment(id);
+}
+
+// Convierte ic02-fit-101 → FIT-101, ic02-sc-vb-4 → SC-VB-4, etc.
+function ic02TagFromId(id: string): string {
+  return id
+    .slice(5)                        // quitar "ic02-"
+    .split('-')
+    .map(p => p.toUpperCase())
+    .join('-');
+}
+
+export function getIC02Equipment(equipmentId: string): Equipment | undefined {
+  if (!equipmentId.startsWith('ic02-')) return undefined;
+  const tag = ic02TagFromId(equipmentId);
+  const NOW = new Date().toISOString();
+  return {
+    id:          equipmentId,
+    project_id:  PROJECT_ID,
+    subsystem_id: 'ic02-subsystem',
+    tag,
+    name:         `Instrumento ${tag} — IC02`,
+    criticality:  'alta',
+    status:       'pendiente',
+    io_type:      'Instrumento I&C',
+    service:      'Sistema IC02 — Aire y Biogás LDC Bebedouro',
+    created_at:   NOW,
+    updated_at:   NOW,
+    version:      1,
+    sync_status:  'synced',
+  };
 }
 
 export function getTemplateById(id: string): MockInspectionTemplate | undefined {
@@ -418,6 +448,10 @@ export function getTemplateById(id: string): MockInspectionTemplate | undefined 
 }
 
 export function getTemplatesForEquipment(equipmentId: string): MockInspectionTemplate[] {
+  if (equipmentId.startsWith('ic02-')) {
+    // Todos los instrumentos IC02 usan el template I&C
+    return MOCK_TEMPLATES.filter(t => t.id === 'tpl-ic-001');
+  }
   const templateIds = MOCK_EQUIPMENT_TEMPLATES
     .filter(a => a.equipmentId === equipmentId)
     .map(a => a.templateId);

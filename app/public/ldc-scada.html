@@ -5,9 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>PLANTA DE GAS LDC — SCADA</title>
 <style>
+  :root {
+    --bg-body:     #0b54a8;
+    --bg-header-1: #386094;
+    --bg-header-2: #1d4ed8;
+    --bg-flow:     #4ca3e6;
+    --bg-sub:      #639de3;
+    --bd-sub:      #8aa3c7;
+    --bg-ccm1:     #abb5bf;
+    --bg-ccm2:     #d3aa78;
+    --bg-ccm3:     #79e69a;
+    --bg-eq:       #ebebeb;
+    --bg-legend:   #5db0f4;
+  }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    background:#dde3ea;
+    background:var(--bg-body);
     color:#1e293b;
     font-family:'Courier New', monospace;
     min-height:100vh;
@@ -16,8 +29,8 @@
 
   /* ── HEADER ── */
   .hdr {
-    background:linear-gradient(90deg,#1e3a5f,#1d4ed8,#1e3a5f);
-    border-bottom:2px solid #1d4ed8;
+    background:linear-gradient(90deg,var(--bg-header-1),var(--bg-header-2),var(--bg-header-1));
+    border-bottom:2px solid var(--bg-header-2);
     padding:10px 24px;
     display:flex; align-items:center; justify-content:space-between;
   }
@@ -43,7 +56,7 @@
 
   /* ── PROCESS FLOW ── */
   .flow-strip {
-    background:#c8d3dc; border-bottom:2px solid #94a3b8;
+    background:var(--bg-flow); border-bottom:2px solid var(--bd-sub);
     padding:10px 24px; display:flex; align-items:center; gap:0; overflow-x:auto;
   }
   .flow-label { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-right:12px; white-space:nowrap; font-weight:bold; }
@@ -65,7 +78,7 @@
   /* ── SUBESTACIÓN ── */
   .sub-strip {
     margin:12px 16px 0;
-    background:#e8edf3; border:1.5px solid #94a3b8;
+    background:var(--bg-sub); border:1.5px solid var(--bd-sub);
     border-radius:6px; padding:10px 16px;
     box-shadow:0 2px 6px rgba(0,0,0,.1);
   }
@@ -74,7 +87,7 @@
   .sub-strip-line  { flex:1; height:1px; background:#cbd5e1; }
   .sub-eq-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
   .sub-eq {
-    background:#ffffff; border:1.5px solid #cbd5e1; border-radius:5px;
+    background:var(--bg-eq); border:1.5px solid #cbd5e1; border-radius:5px;
     padding:8px 14px; min-width:145px; position:relative; cursor:pointer;
     transition:border-color .15s, box-shadow .15s; box-shadow:0 1px 3px rgba(0,0,0,.08);
     overflow:visible;
@@ -98,9 +111,9 @@
   }
   .ccm-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,.18); }
   .ccm-card:active { transform:translateY(-1px); }
-  .ccm-card.blue  { background:#f0f6ff; border:1.5px solid #93c5fd; }
-  .ccm-card.green { background:#f0fdf4; border:1.5px solid #86efac; }
-  .ccm-card.orange{ background:#fff7ed; border:1.5px solid #fdba74; }
+  .ccm-card.blue  { background:var(--bg-ccm1); border:1.5px solid #93c5fd; }
+  .ccm-card.green { background:var(--bg-ccm3); border:1.5px solid #86efac; }
+  .ccm-card.orange{ background:var(--bg-ccm2); border:1.5px solid #fdba74; }
   .ccm-card-bar { height:5px; }
   .ccm-card.blue  .ccm-card-bar { background:linear-gradient(90deg,#1d4ed8,#0ea5e9); }
   .ccm-card.green .ccm-card-bar { background:linear-gradient(90deg,#16a34a,#4ade80); }
@@ -131,7 +144,7 @@
   /* ── DETAIL NAV ── */
   .detail-nav {
     display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-    padding:10px 16px; background:#c8d3dc; border-bottom:2px solid #94a3b8;
+    padding:10px 16px; background:var(--bg-flow); border-bottom:2px solid var(--bd-sub);
   }
   .back-btn {
     background:#1e293b; color:#e2e8f0; border:none; padding:7px 14px;
@@ -162,7 +175,7 @@
   .hier-view { display:block; }
   .hier-cols { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .hier-col {
-    background:#ffffff; border-radius:7px; padding:14px;
+    background:var(--bg-eq); border-radius:7px; padding:14px;
     box-shadow:0 1px 5px rgba(0,0,0,.08);
   }
   .hier-col-header {
@@ -183,11 +196,11 @@
   .proc-view.visible { display:block; }
   .ccm-panel { border-radius:6px; padding:12px; position:relative; overflow:visible; box-shadow:0 2px 8px rgba(0,0,0,.12); }
   .ccm-panel::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:6px 6px 0 0; }
-  .ccm-panel.blue  { background:#f0f6ff; border:1.5px solid #93c5fd; }
+  .ccm-panel.blue  { background:var(--bg-ccm1); border:1.5px solid #93c5fd; }
   .ccm-panel.blue::before  { background:linear-gradient(90deg,#1d4ed8,#0ea5e9); }
-  .ccm-panel.green { background:#f0fdf4; border:1.5px solid #86efac; }
+  .ccm-panel.green { background:var(--bg-ccm3); border:1.5px solid #86efac; }
   .ccm-panel.green::before { background:linear-gradient(90deg,#16a34a,#4ade80); }
-  .ccm-panel.orange{ background:#fff7ed; border:1.5px solid #fdba74; }
+  .ccm-panel.orange{ background:var(--bg-ccm2); border:1.5px solid #fdba74; }
   .ccm-panel.orange::before{ background:linear-gradient(90deg,#c2410c,#f97316); }
   .ccm-header { margin-bottom:10px; }
   .ccm-title  { font-size:14px; font-weight:bold; letter-spacing:1.5px; margin-bottom:2px; }
@@ -211,7 +224,7 @@
 
   /* ── EQUIPMENT ITEM ── */
   .eq {
-    position:relative; width:80px; background:#ffffff;
+    position:relative; width:80px; background:var(--bg-eq);
     border:1px solid #cbd5e1; border-radius:5px; padding:8px 6px 6px;
     cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s;
     box-shadow:0 1px 3px rgba(0,0,0,.08);
@@ -255,7 +268,7 @@
   /* ── LEGEND ── */
   .legend {
     display:flex; align-items:center; gap:16px; padding:6px 24px; font-size:11px;
-    background:#c8d3dc; border-top:1px solid #94a3b8; flex-wrap:wrap;
+    background:var(--bg-legend); border-top:1px solid var(--bd-sub); flex-wrap:wrap;
   }
   .legend-title { color:#475569; text-transform:uppercase; letter-spacing:1px; margin-right:4px; font-weight:bold; }
   .leg-item { display:flex; align-items:center; gap:5px; color:#475569; }
@@ -263,13 +276,131 @@
 
   /* ── FOOTER ── */
   .footer {
-    padding:5px 24px; background:#c8d3dc; border-top:1px solid #94a3b8;
+    padding:5px 24px; background:var(--bg-legend); border-top:1px solid var(--bd-sub);
     display:flex; justify-content:space-between; font-size:10px; color:#64748b;
   }
 
   ::-webkit-scrollbar { width:6px; height:6px; }
-  ::-webkit-scrollbar-track { background:#dde3ea; }
+  ::-webkit-scrollbar-track { background:var(--bg-body); }
   ::-webkit-scrollbar-thumb { background:#94a3b8; border-radius:3px; }
+
+  /* ── BOTONES UNIFILAR ── */
+  .ccm-unif-btn {
+    display:flex; align-items:center; justify-content:center; gap:5px;
+    width:100%; padding:7px; margin-top:6px;
+    border-radius:5px; font-size:11px; font-weight:bold; letter-spacing:0.5px;
+    cursor:pointer; border:1.5px solid rgba(0,0,0,0.15);
+    font-family:'Courier New',monospace;
+    background:rgba(255,255,255,0.55); color:#1e293b;
+    transition:background .15s, transform .1s;
+  }
+  .ccm-unif-btn:hover { background:rgba(255,255,255,0.85); transform:translateY(-1px); }
+  .ccm-unif-btn:active { transform:translateY(0); }
+  .mt-unif-btn {
+    background:rgba(124,58,237,0.12); border:1px solid rgba(124,58,237,0.35);
+    color:#5b21b6; border-radius:4px; padding:4px 12px;
+    font-size:11px; font-weight:bold; cursor:pointer;
+    font-family:'Courier New',monospace; transition:background .15s;
+  }
+  .mt-unif-btn:hover { background:rgba(124,58,237,0.22); }
+  .cfg-gear-btn {
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25);
+    color:rgba(255,255,255,0.65); border-radius:4px; padding:4px 10px;
+    font-size:12px; cursor:pointer; font-family:'Courier New',monospace;
+    transition:background .15s;
+  }
+  .cfg-gear-btn:hover { background:rgba(255,255,255,0.2); color:white; }
+
+  /* ── MODAL UNIFILAR ── */
+  .unif-overlay {
+    display:none; position:fixed; inset:0; z-index:1000;
+    background:rgba(0,0,0,0.88); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center;
+  }
+  .unif-overlay.open { display:flex; }
+  .unif-modal {
+    background:#0f172a; border:1.5px solid #334155;
+    border-radius:10px; width:90vw; height:90vh;
+    display:flex; flex-direction:column;
+    box-shadow:0 25px 80px rgba(0,0,0,.75);
+  }
+  .unif-modal-hdr {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 18px; border-bottom:1px solid #334155;
+    background:#1e293b; border-radius:10px 10px 0 0; flex-shrink:0;
+  }
+  .unif-modal-title { font-size:13px; font-weight:bold; color:#e2e8f0; letter-spacing:1px; flex:1; }
+  .unif-action-btn {
+    background:#334155; color:#94a3b8; border:none; border-radius:5px;
+    padding:5px 12px; font-size:11px; font-weight:bold; cursor:pointer;
+    transition:background .15s; font-family:'Courier New',monospace;
+  }
+  .unif-action-btn:hover { background:#475569; color:#e2e8f0; }
+  .unif-close-btn {
+    background:none; border:none; color:#475569; cursor:pointer;
+    font-size:22px; line-height:1; padding:0 2px; transition:color .15s;
+  }
+  .unif-close-btn:hover { color:#e2e8f0; }
+  .unif-modal-body { flex:1; overflow:hidden; border-radius:0 0 10px 10px; }
+  .unif-modal-body iframe { width:100%; height:100%; border:none; display:block; }
+  .no-pdf-wrap {
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    height:100%; color:#475569; text-align:center;
+  }
+  .no-pdf-wrap .npi { font-size:54px; margin-bottom:16px; }
+  .no-pdf-wrap .npt { font-size:15px; color:#94a3b8; margin-bottom:8px; font-weight:bold; }
+  .no-pdf-wrap .nps { font-size:12px; color:#475569; }
+
+  /* ── MODAL CONFIG ── */
+  .cfg-overlay {
+    display:none; position:fixed; inset:0; z-index:1010;
+    background:rgba(0,0,0,0.75); backdrop-filter:blur(3px);
+    align-items:center; justify-content:center;
+  }
+  .cfg-overlay.open { display:flex; }
+  .cfg-modal {
+    background:#1e293b; border:1.5px solid #334155; border-radius:10px;
+    width:480px; max-width:95vw;
+    box-shadow:0 20px 60px rgba(0,0,0,.7);
+  }
+  .cfg-modal-hdr {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px; border-bottom:1px solid #334155;
+  }
+  .cfg-modal-title { font-size:13px; font-weight:bold; color:#e2e8f0; letter-spacing:1px; }
+  .cfg-field { padding:6px 20px; }
+  .cfg-label { display:block; font-size:10px; font-weight:bold; color:#475569; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px; }
+  .cfg-input {
+    width:100%; background:#0f172a; border:1.5px solid #334155; color:#e2e8f0;
+    border-radius:5px; padding:7px 10px; font-size:11px;
+    font-family:'Courier New',monospace; outline:none; transition:border-color .15s;
+  }
+  .cfg-input:focus { border-color:#3b82f6; }
+  .cfg-input::placeholder { color:#334155; }
+  .cfg-hint { font-size:9px; color:#334155; margin-top:3px; }
+  .cfg-divider { height:1px; background:#334155; margin:8px 0; }
+  .cfg-modal-footer {
+    display:flex; justify-content:flex-end; gap:8px;
+    padding:12px 20px; border-top:1px solid #334155;
+  }
+  .cfg-cancel-btn {
+    background:#334155; color:#94a3b8; border:none; border-radius:5px;
+    padding:7px 16px; font-size:12px; font-weight:bold; cursor:pointer;
+    font-family:'Courier New',monospace; transition:background .15s;
+  }
+  .cfg-cancel-btn:hover { background:#475569; }
+  .cfg-save-btn {
+    background:#1d4ed8; color:#fff; border:none; border-radius:5px;
+    padding:7px 20px; font-size:12px; font-weight:bold; cursor:pointer;
+    font-family:'Courier New',monospace; transition:background .15s;
+  }
+  .cfg-save-btn:hover { background:#2563eb; }
+  .cfg-toast {
+    display:none; position:fixed; bottom:24px; right:24px; z-index:2000;
+    background:#14532d; border:1px solid #16a34a; color:#bbf7d0;
+    border-radius:6px; padding:10px 18px; font-size:12px; font-weight:bold;
+    align-items:center; gap:8px;
+  }
 </style>
 </head>
 <body>
@@ -297,6 +428,7 @@
       <div class="val">440/220 V · 60 Hz</div>
     </div>
     <div class="status-badge">● PRE-COMISIONAMIENTO</div>
+    <button class="cfg-gear-btn" onclick="openConfig()">⚙ Unifilares</button>
   </div>
 </div>
 
@@ -331,6 +463,7 @@
       <span class="sub-strip-title">⚡ Subestación Eléctrica</span>
       <div class="sub-strip-line"></div>
       <span style="font-size:11px;color:#64748b;font-weight:bold">13.8 kV entrada → 440/220V distribución</span>
+      <button class="mt-unif-btn" onclick="openUnifilar('mt',event)">📋 Plano Unifilar MT</button>
     </div>
 
     <div class="sub-row-label" style="font-size:10px;font-weight:bold;color:#7c3aed;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding:3px 6px;background:#ede9fe;border-radius:3px;display:inline-block;">
@@ -430,6 +563,7 @@
           <span class="ccm-badge e">2 Emergencia</span>
         </div>
         <div class="ccm-card-cta">VER DETALLE →</div>
+        <button class="ccm-unif-btn" onclick="openUnifilar('ccm1',event)">📋 Ver Plano Unifilar</button>
       </div>
     </div>
 
@@ -448,6 +582,7 @@
           <span class="ccm-badge e">11 Emergencia</span>
         </div>
         <div class="ccm-card-cta">VER DETALLE →</div>
+        <button class="ccm-unif-btn" onclick="openUnifilar('ccm3',event)">📋 Ver Plano Unifilar</button>
       </div>
     </div>
 
@@ -467,6 +602,7 @@
           <span class="ccm-badge f">2 Futuro</span>
         </div>
         <div class="ccm-card-cta">VER DETALLE →</div>
+        <button class="ccm-unif-btn" onclick="openUnifilar('ccm2',event)">📋 Ver Plano Unifilar</button>
       </div>
     </div>
 
@@ -739,6 +875,66 @@
   <span id="ts"></span>
 </div>
 
+<!-- ═══ MODAL VISOR UNIFILAR ═══ -->
+<div class="unif-overlay" id="unif-overlay" onclick="if(event.target===this)closeUnifilar()">
+  <div class="unif-modal">
+    <div class="unif-modal-hdr">
+      <span class="unif-modal-title" id="unif-title">📋 Plano Unifilar</span>
+      <button class="unif-action-btn" onclick="downloadUnifilar()">⬇ Descargar</button>
+      <button class="unif-action-btn" onclick="openInTab()">↗ Abrir en pestaña</button>
+      <button class="unif-close-btn" onclick="closeUnifilar()">✕</button>
+    </div>
+    <div class="unif-modal-body" id="unif-body"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CONFIG UNIFILARES ═══ -->
+<div class="cfg-overlay" id="cfg-overlay" onclick="if(event.target===this)closeConfig()">
+  <div class="cfg-modal">
+    <div class="cfg-modal-hdr">
+      <span class="cfg-modal-title">⚙ Configurar Planos Unifilares</span>
+      <button class="unif-close-btn" onclick="closeConfig()">✕</button>
+    </div>
+    <div style="padding:10px 0 4px;">
+      <div class="cfg-field">
+        <label class="cfg-label">📄 Nombre del archivo PDF</label>
+        <input class="cfg-input" id="cfg-filename" type="text" placeholder="20.AA24-59_(LDC_UNIFILARES)_SEPT_10.pdf" />
+        <div class="cfg-hint">Coloca el PDF en <strong style="color:#3b82f6">app/public/unifilares/</strong> con este nombre exacto</div>
+      </div>
+      <div class="cfg-divider"></div>
+      <div style="padding:4px 20px 6px;font-size:9px;font-weight:bold;color:#475569;text-transform:uppercase;letter-spacing:1px;">Página de apertura por elemento</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+        <div class="cfg-field">
+          <label class="cfg-label">⚡ Subestación MT</label>
+          <input class="cfg-input" id="cfg-page-mt" type="number" min="1" placeholder="1" style="width:80px;" />
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-label">🔵 CCM-1 Alimentación</label>
+          <input class="cfg-input" id="cfg-page-ccm1" type="number" min="1" placeholder="4" style="width:80px;" />
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-label">🟠 CCM-2 Lodos</label>
+          <input class="cfg-input" id="cfg-page-ccm2" type="number" min="1" placeholder="6" style="width:80px;" />
+        </div>
+        <div class="cfg-field">
+          <label class="cfg-label">🟢 CCM-3 Biogás</label>
+          <input class="cfg-input" id="cfg-page-ccm3" type="number" min="1" placeholder="9" style="width:80px;" />
+        </div>
+      </div>
+      <div style="padding:2px 20px 8px;font-size:9px;color:#334155;">
+        Índice de páginas: P1 Unifilar General · P3 Analizador/TGD220 · P4 CCM1-N · P5 CCM1-E · P6 CCM2-N · P8 CCM2-E · P9 CCM3-N · P11 CCM3-E · P17 VDF755 · P18 VDF525 · P19 Relé
+      </div>
+    </div>
+    <div class="cfg-modal-footer">
+      <button class="cfg-cancel-btn" onclick="closeConfig()">Cancelar</button>
+      <button class="cfg-save-btn" onclick="saveConfig()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast confirmación -->
+<div class="cfg-toast" id="cfg-toast">✓ Planos guardados correctamente</div>
+
 <script>
   document.getElementById('ts').textContent = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
 
@@ -800,6 +996,97 @@
       tip.style.left = cssLeft + 'px';
       tip.style.transform = 'none';
     });
+  });
+
+  // ── UNIFILARES ────────────────────────────────────────────────────────────
+  const UNIF_NAMES = {
+    mt:   'Subestación MT — Unifilar General',
+    ccm1: 'CCM-1 Alimentación',
+    ccm2: 'CCM-2 Lodos + Nutrientes',
+    ccm3: 'CCM-3 Biogás + Filtración',
+  };
+  // Páginas por defecto según el índice del PDF entregado por el proyecto
+  const UNIF_PAGE_DEFAULTS = { mt:1, ccm1:4, ccm2:6, ccm3:9 };
+  // Placeholder HTML mientras no hay PDF real
+  const UNIF_HTML_DEFAULTS = {
+    mt:   'unifilares/subestacion-mt.html',
+    ccm1: 'unifilares/ccm1-alimentacion.html',
+    ccm2: 'unifilares/ccm2-lodos.html',
+    ccm3: 'unifilares/ccm3-biogas.html',
+  };
+
+  function getPdfPath(key) {
+    const filename = localStorage.getItem('unif_filename') || '20.AA24-59_(LDC_UNIFILARES)_SEPT_10.pdf';
+    if (!filename) return UNIF_HTML_DEFAULTS[key] || '';
+    const page = localStorage.getItem('unif_page_' + key) || UNIF_PAGE_DEFAULTS[key] || 1;
+    return 'unifilares/' + filename + '#page=' + page;
+  }
+
+  function openUnifilar(key, evt) {
+    if (evt) evt.stopPropagation();
+    const src = getPdfPath(key);
+    document.getElementById('unif-title').textContent = '📋 ' + (UNIF_NAMES[key] || key);
+    document.getElementById('unif-overlay').dataset.currentKey = key;
+    const body = document.getElementById('unif-body');
+    if (src) {
+      body.innerHTML = '<iframe src="' + src + '"></iframe>';
+    } else {
+      body.innerHTML = '<div class="no-pdf-wrap"><div class="npi">📄</div><div class="npt">Sin plano configurado</div><div class="nps">Haz clic en ⚙ Unifilares para configurar el PDF</div></div>';
+    }
+    document.getElementById('unif-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeUnifilar() {
+    document.getElementById('unif-overlay').classList.remove('open');
+    document.getElementById('unif-body').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+
+  function downloadUnifilar() {
+    const filename = localStorage.getItem('unif_filename') || '';
+    if (!filename) { alert('Configura el PDF primero con ⚙ Unifilares.'); return; }
+    window.open('unifilares/' + filename, '_blank');
+  }
+
+  function openInTab() {
+    const key = document.getElementById('unif-overlay').dataset.currentKey;
+    const src = getPdfPath(key);
+    if (src) window.open(src, '_blank');
+  }
+
+  function openConfig() {
+    document.getElementById('cfg-filename').value = localStorage.getItem('unif_filename') || '';
+    ['mt','ccm1','ccm2','ccm3'].forEach(k => {
+      const inp = document.getElementById('cfg-page-' + k);
+      if (inp) inp.value = localStorage.getItem('unif_page_' + k) || UNIF_PAGE_DEFAULTS[k] || '';
+    });
+    document.getElementById('cfg-overlay').classList.add('open');
+  }
+
+  function closeConfig() {
+    document.getElementById('cfg-overlay').classList.remove('open');
+  }
+
+  function saveConfig() {
+    const fn = document.getElementById('cfg-filename').value.trim();
+    if (fn) localStorage.setItem('unif_filename', fn);
+    else localStorage.removeItem('unif_filename');
+    ['mt','ccm1','ccm2','ccm3'].forEach(k => {
+      const inp = document.getElementById('cfg-page-' + k);
+      if (!inp) return;
+      const val = inp.value.trim();
+      if (val) localStorage.setItem('unif_page_' + k, val);
+      else localStorage.removeItem('unif_page_' + k);
+    });
+    closeConfig();
+    const toast = document.getElementById('cfg-toast');
+    toast.style.display = 'flex';
+    setTimeout(() => { toast.style.display = 'none'; }, 2500);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeUnifilar(); closeConfig(); }
   });
 
   // ── Integración CommissionPro: click equipo → postMessage al parent ──────

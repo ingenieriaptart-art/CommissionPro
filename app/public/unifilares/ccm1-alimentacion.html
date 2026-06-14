@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#f5f0e8;font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;}
+.sheet{flex:1;background:#fff;margin:12px;border:2px solid #1a1a1a;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.2);}
+.title-block{border-top:2px solid #1a1a1a;display:grid;grid-template-columns:1fr auto;min-height:80px;}
+.tb-left{border-right:2px solid #1a1a1a;padding:8px 12px;}
+.tb-company{font-size:11px;font-weight:bold;color:#333;letter-spacing:1px;margin-bottom:4px;}
+.tb-project{font-size:10px;color:#555;margin-bottom:2px;}
+.tb-right{display:grid;grid-template-rows:repeat(3,1fr);min-width:260px;}
+.tb-row{border-bottom:1px solid #1a1a1a;padding:4px 10px;display:flex;gap:12px;align-items:center;}
+.tb-row:last-child{border-bottom:none;}
+.tb-key{font-size:8px;color:#888;text-transform:uppercase;letter-spacing:0.5px;width:50px;flex-shrink:0;}
+.tb-val{font-size:10px;font-weight:bold;color:#1a1a1a;}
+.draw-area{flex:1;padding:20px;display:flex;flex-direction:column;gap:10px;overflow:auto;}
+.draw-title{text-align:center;font-size:13px;font-weight:bold;letter-spacing:2px;color:#1a1a1a;border-bottom:1px solid #ccc;padding-bottom:8px;}
+.draw-subtitle{text-align:center;font-size:10px;color:#555;margin-top:-6px;}
+.diagram{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;justify-content:center;padding:10px 0;}
+.bus-line{height:5px;background:#1d4ed8;width:70%;}
+.f-line{width:2px;height:20px;background:#1a1a1a;}
+.f-box{border:1.5px solid #1d4ed8;border-radius:2px;padding:5px 10px;text-align:center;background:#eff6ff;}
+.f-tag{font-size:9px;font-weight:bold;color:#1d4ed8;}
+.f-sub{font-size:7px;color:#64748b;}
+.bus-row{display:flex;gap:20px;justify-content:center;padding:0 20px;flex-wrap:wrap;}
+.bus-feeder{display:flex;flex-direction:column;align-items:center;gap:0;}
+.equip-box{border:2px solid #1a1a1a;padding:5px 10px;text-align:center;background:#f8fafc;margin-top:4px;border-radius:2px;min-width:80px;}
+.equip-tag{font-size:10px;font-weight:bold;color:#1e293b;}
+.equip-sub{font-size:8px;color:#475569;}
+.arrow-down{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #1a1a1a;}
+.placeholder-badge{background:#dbeafe;border:1.5px dashed #1d4ed8;border-radius:6px;padding:10px 20px;text-align:center;margin:10px auto;max-width:420px;}
+.ph-title{font-size:11px;font-weight:bold;color:#1e40af;margin-bottom:4px;}
+.ph-sub{font-size:9px;color:#3b82f6;}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="draw-area">
+    <div class="draw-title">DIAGRAMA UNIFILAR — CCM-1 ALIMENTACIÓN</div>
+    <div class="draw-subtitle">Planta de Gas LDC · CCM1N (1200A) · CCM1E (1200A) · 440/254V 60Hz · VDF PowerFlex 755</div>
+    <div class="placeholder-badge">
+      <div class="ph-title">📋 PLANO EN PREPARACIÓN</div>
+      <div class="ph-sub">Reemplazar con el PDF oficial del unifilar CCM-1</div>
+    </div>
+    <div class="diagram">
+      <div style="font-size:9px;font-weight:bold;color:#1d4ed8;margin-bottom:4px;letter-spacing:1px;">BUS CCM-1 — 440V / 1200A</div>
+      <div class="bus-line"></div>
+      <div class="bus-row" style="margin-top:0;">
+        <div class="bus-feeder"><div class="f-line"></div><div class="f-box"><div class="f-tag">B1</div><div class="f-sub">Bomba alim · 145KW</div></div><div class="f-line"></div><div class="arrow-down"></div><div class="equip-box"><div class="equip-tag">B1</div><div class="equip-sub">145 KW · 440V</div></div></div>
+        <div class="bus-feeder"><div class="f-line"></div><div class="f-box"><div class="f-tag">B2</div><div class="f-sub">Bomba alim · 145KW</div></div><div class="f-line"></div><div class="arrow-down"></div><div class="equip-box"><div class="equip-tag">B2</div><div class="equip-sub">145 KW · 440V</div></div></div>
+        <div class="bus-feeder"><div class="f-line"></div><div class="f-box"><div class="f-tag">B3</div><div class="f-sub">Bomba alim · 145KW</div></div><div class="f-line"></div><div class="arrow-down"></div><div class="equip-box"><div class="equip-tag">B3</div><div class="equip-sub">145 KW · 440V</div></div></div>
+        <div class="bus-feeder"><div class="f-line"></div><div class="f-box"><div class="f-tag">B4</div><div class="f-sub">Bomba alim · 145KW</div></div><div class="f-line"></div><div class="arrow-down"></div><div class="equip-box"><div class="equip-tag">B4</div><div class="equip-sub">145 KW · 440V</div></div></div>
+      </div>
+      <div style="margin-top:12px;font-size:9px;color:#94a3b8;text-align:center;">Total CCM-1: 4 equipos · 580 KW instalados</div>
+    </div>
+  </div>
+  <div class="title-block">
+    <div class="tb-left">
+      <div class="tb-company">BIOTEC ENGENHARIA · PLANTA DE GAS LDC</div>
+      <div class="tb-project">Diagrama Unifilar — CCM-1 Alimentación · VDF PowerFlex 755 · 440V</div>
+      <div class="tb-project" style="color:#dc2626;font-size:9px;margin-top:4px;">★ ARCHIVO PLACEHOLDER — Reemplazar con plano oficial PDF</div>
+    </div>
+    <div class="tb-right">
+      <div class="tb-row"><span class="tb-key">Plano:</span><span class="tb-val">E-CCM1-001</span></div>
+      <div class="tb-row"><span class="tb-key">Escala:</span><span class="tb-val">SIN ESCALA</span></div>
+      <div class="tb-row"><span class="tb-key">Rev:</span><span class="tb-val">0 — PLACEHOLDER</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

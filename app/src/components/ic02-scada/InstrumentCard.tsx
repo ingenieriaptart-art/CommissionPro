@@ -6,7 +6,7 @@ const C = {
   open:   '#22C55E',
   closed: '#EF4444',
   future: '#38BDF8',
-  none:   '#1F2937',
+  none:   '#243650',
 };
 
 interface Props {
@@ -37,7 +37,7 @@ export function InstrumentCard({ instrument, onClick }: Props) {
       onClick={() => onClick?.(instrument)}
       className="ic02-card"
       style={{
-        background: 'linear-gradient(145deg, #122235 0%, #0E1A2B 100%)',
+        background: 'linear-gradient(145deg, #3D6094 0%, #2C4F82 100%)',
         border: `1px solid ${borderColor}`,
         borderTop: `2px solid ${topBorder}`,
         borderRadius: '12px',
@@ -104,7 +104,7 @@ export function InstrumentCard({ instrument, onClick }: Props) {
         />
         <span style={{
           fontSize: '11px', fontWeight: scStatus === 'active' ? '700' : '400',
-          color: scStatus === 'active' ? C.closed : '#374151',
+          color: scStatus === 'active' ? C.closed : '#4676AA',
           letterSpacing: '0.3px', whiteSpace: 'nowrap',
         }}>
           {scTag} · CERRADO
@@ -124,7 +124,7 @@ export function InstrumentCard({ instrument, onClick }: Props) {
         />
         <span style={{
           fontSize: '11px', fontWeight: soStatus === 'active' ? '700' : '400',
-          color: soStatus === 'active' ? C.open : '#374151',
+          color: soStatus === 'active' ? C.open : '#4676AA',
           letterSpacing: '0.3px', whiteSpace: 'nowrap',
         }}>
           {soTag} · ABIERTO
@@ -133,7 +133,7 @@ export function InstrumentCard({ instrument, onClick }: Props) {
 
       {/* Description */}
       <div style={{
-        fontSize: '10px', color: '#374151',
+        fontSize: '10px', color: '#93B5D6',
         textAlign: 'center', lineHeight: 1.4,
         maxWidth: '128px', marginTop: '2px',
       }}>

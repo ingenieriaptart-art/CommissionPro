@@ -4,9 +4,10 @@ import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ScadaHeader } from './ScadaHeader';
 import { SelectionCard, type SelectionCardData } from './SelectionCard';
+import { InstrumentDrawer } from './InstrumentDrawer';
 import {
   rtuVBGroups, equipmentGroup,
-  plcAnalogGroups, plcActuatedGroup,
+  plcAnalogGroups, plcActuatedGroup, plcEquipmentGroups,
   processSteps,
 } from './data';
 
@@ -20,25 +21,26 @@ const STYLES = `
     border-color: rgba(34,197,94,0.45) !important;
   }
   ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: #040C18; }
-  ::-webkit-scrollbar-thumb { background: #1E3A5F; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: #1B4579; }
+  ::-webkit-scrollbar-thumb { background: #4676AA; border-radius: 3px; }
   .ic02-search {
-    width: 100%; background: rgba(20,36,56,0.6);
-    border: 1px solid rgba(255,255,255,0.08); border-radius: 6px;
-    padding: 7px 12px 7px 36px; font-size: 12px; color: #C8D5E2;
+    width: 100%; background: rgba(22,47,80,0.7);
+    border: 1px solid rgba(70,118,170,0.25); border-radius: 6px;
+    padding: 7px 12px 7px 36px; font-size: 12px; color: #CBD5E1;
     outline: none; font-family: inherit;
     transition: border-color 180ms, background 180ms;
   }
   .ic02-search:focus {
-    border-color: rgba(56,189,248,0.4);
-    background: rgba(22,40,64,0.9);
+    border-color: rgba(70,118,170,0.6);
+    background: rgba(22,47,80,0.95);
   }
-  .ic02-search::placeholder { color: #374151; }
+  .ic02-search::placeholder { color: #4676AA; }
 `;
 
 type Controller = 'rtu' | 'plc';
 
 // ─── Build flat card list from RTU VB groups ─────────────────────────────────
+// Cada SC y SO es su propio instrumento (DI individual), la válvula es contexto
 function buildRTUCards(): (SelectionCardData & { groupId: string; processId: string })[] {
   const rows: (SelectionCardData & { groupId: string; processId: string })[] = [];
 
@@ -51,15 +53,30 @@ function buildRTUCards(): (SelectionCardData & { groupId: string; processId: str
 
   for (const group of rtuVBGroups) {
     for (const instr of group.instruments) {
+      const proc = groupProcess[group.id] ?? group.id;
+      // SC — sensor posición cerrada
       rows.push({
-        id: instr.id, tag: instr.tag,
-        description: instr.description,
-        signalBadge: 'DI', signalColor: '#F59E0B',
+        id: `${instr.id}-sc`,
+        tag: instr.scTag,
+        description: `Pos. cerrada · ${instr.description}`,
+        signalBadge: 'DI', signalColor: '#EF4444',
         accentColor: group.accentColor,
-        subTags: `${instr.scTag} · ${instr.soTag}`,
+        subTags: `Válvula: ${instr.tag}`,
         isFuture: instr.isFuture,
         groupId: group.id,
-        processId: groupProcess[group.id] ?? group.id,
+        processId: proc,
+      });
+      // SO — sensor posición abierta
+      rows.push({
+        id: `${instr.id}-so`,
+        tag: instr.soTag,
+        description: `Pos. abierta · ${instr.description}`,
+        signalBadge: 'DI', signalColor: '#22C55E',
+        accentColor: group.accentColor,
+        subTags: `Válvula: ${instr.tag}`,
+        isFuture: instr.isFuture,
+        groupId: group.id,
+        processId: proc,
       });
     }
   }
@@ -85,10 +102,16 @@ function buildPLCCards(): (SelectionCardData & { groupId: string; processId: str
   const signalCfg: Record<string, { badge: string; color: string }> = {
     HART: { badge: 'HART', color: '#22C55E' },
     AI:   { badge: 'AI',   color: '#38BDF8' },
+    DI:   { badge: 'DI',   color: '#F59E0B' },
   };
 
   const groupProcess: Record<string, string> = {
-    fit: 'biodigestores', pit: 'h2s', tit: 'h2s',
+    'fit-lodos':  'lodos',
+    ls:           'lodos',
+    'vl-sensors': 'lodos',
+    fit:          'biodigestores',
+    pit:          'h2s',
+    tit:          'h2s',
   };
 
   for (const group of plcAnalogGroups) {
@@ -107,6 +130,10 @@ function buildPLCCards(): (SelectionCardData & { groupId: string; processId: str
   }
 
   for (const instr of plcActuatedGroup.instruments) {
+    let actProc = 'manifold';
+    if (instr.tag.startsWith('VE') || instr.tag.startsWith('VL')) actProc = 'lodos';
+    else if (/^VB\d+$/.test(instr.tag)) actProc = 'lodos';      // VB1/VB2/VB3 alivio
+    else if (instr.tag.startsWith('VA')) actProc = 'biodigestores';
     rows.push({
       id: instr.id, tag: instr.tag,
       description: instr.description,
@@ -114,8 +141,24 @@ function buildPLCCards(): (SelectionCardData & { groupId: string; processId: str
       accentColor: '#A855F7',
       isFuture: instr.isFuture,
       groupId: 'actuadas',
-      processId: instr.tag.startsWith('VA') ? 'biodigestores' : 'manifold',
+      processId: actProc,
     });
+  }
+
+  for (const group of plcEquipmentGroups) {
+    for (const eq of group.instruments) {
+      const eqProc = group.id === 'sopladores-biogas-equipo' ? 'sopladores'
+                   : group.id === 'bombas-lavado'            ? 'sc12'
+                   : 'lodos';
+      rows.push({
+        id: eq.id, tag: eq.tag,
+        description: eq.description,
+        signalBadge: '440VAC', signalColor: '#EC4899',
+        accentColor: group.accentColor,
+        groupId: group.id,
+        processId: eqProc,
+      });
+    }
   }
 
   return rows;
@@ -128,10 +171,11 @@ const ALL_PLC = buildPLCCards();
 export function IC02RTUView() {
   const params   = useParams<{ projectId: string }>();
   const router   = useRouter();
-  const [ctrl,   setCtrl]   = useState<Controller>('rtu');
-  const [proc,   setProc]   = useState<string | null>(null);
-  const [group,  setGroup]  = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [ctrl,         setCtrl]         = useState<Controller>('plc');
+  const [proc,         setProc]         = useState<string | null>(null);
+  const [group,        setGroup]        = useState<string | null>(null);
+  const [search,       setSearch]       = useState('');
+  const [selectedCard, setSelectedCard] = useState<(SelectionCardData & { groupId: string; processId: string }) | null>(null);
 
   const cards = ctrl === 'rtu' ? ALL_RTU : ALL_PLC;
 
@@ -167,7 +211,7 @@ export function IC02RTUView() {
   }, [cards, proc, group, search]);
 
   function handleSelect(card: SelectionCardData) {
-    router.push(`/projects/${params?.projectId}/ic02-rtu/${card.tag}`);
+    setSelectedCard(card as SelectionCardData & { groupId: string; processId: string });
   }
 
   function handleProcessClick(id: string) {
@@ -180,15 +224,22 @@ export function IC02RTUView() {
   }
 
   const groupLabels: Record<string, string> = {
-    biodigestores: 'Biodigestores',
-    sopladores:    'Sopladores',
-    'h2s-l1':     'H2S L1',
-    'h2s-l2':     'H2S L2',
-    sc12:         'SC1·SC2',
-    fit:          'FIT Flujo',
-    pit:          'PIT Presión',
-    tit:          'TIT Temperatura',
-    actuadas:     'Válvulas Actuadas',
+    'fit-lodos':              'FIT · Flujo Lodos',
+    ls:                       'LS · Nivel',
+    'vl-sensors':             'Sensores VL',
+    fit:                      'FIT · Flujo Biogás',
+    pit:                      'PIT · Presión',
+    tit:                      'TIT · Temperatura',
+    actuadas:                 'Válvulas Actuadas',
+    'bombas-crudo':           'Bombas B1..B4',
+    'sopladores-biogas-equipo':'Sopladores SB1..SB6',
+    'sopladores-aire':        'Sopladores SA1..SA3',
+    'bombas-lavado':          'Bombas B11..B14',
+    biodigestores:            'Sensores BD1·BD2·BD3',
+    sopladores:               'Sensores SB1..SB6',
+    'h2s-l1':                 'Sensores H2S L1',
+    'h2s-l2':                 'Sensores H2S L2',
+    sc12:                     'SC1·SC2',
   };
 
   const totalInCtrl = cards.length;
@@ -196,30 +247,30 @@ export function IC02RTUView() {
   const totalActive = totalInCtrl - totalFuture;
 
   // ── shared strip background ─────────────────────────────────────────────
-  const STRIP_BG = '#071A2C';
+  const STRIP_BG = '#162F50';
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       // Deeper background so cards at #162840 clearly pop
-      background: 'linear-gradient(155deg,#040C18 0%,#071524 60%,#040C18 100%)',
+      background: 'linear-gradient(155deg, #1E3A61 0%, #27374F 60%, #1E3A61 100%)',
       display: 'flex', flexDirection: 'column',
       fontFamily: '"Inter","Segoe UI",system-ui,sans-serif',
       color: '#FFFFFF', overflow: 'hidden',
     }}>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
 
-      <ScadaHeader />
+      <ScadaHeader projectId={params?.projectId} />
 
       {/* ── Controller tabs + search ── */}
       <div style={{
-        background: STRIP_BG, borderBottom: '1px solid rgba(255,255,255,0.06)',
+        background: STRIP_BG, borderBottom: '1px solid rgba(70,118,170,0.25)',
         padding: '10px 24px', display: 'flex', gap: '8px',
         alignItems: 'center', flexShrink: 0,
       }}>
         {([
-          { id: 'rtu', label: 'RTU 5094 · Cuarto Eléctrico',     sub: 'Sensores posición DI · SC1/SC2', color: '#38BDF8', count: ALL_RTU.length },
-          { id: 'plc', label: 'PLC 1756-L73 · Control Principal', sub: 'HART · AI · AO · DI',           color: '#22C55E', count: ALL_PLC.length },
+          { id: 'plc', label: 'PLC 1756-L73 · Control Principal', sub: 'FIT · PIT · TIT · LS · VE/VL/VA/VB · Bombas · Sopladores', color: '#22C55E', count: ALL_PLC.length },
+          { id: 'rtu', label: 'RTU 5094 · Cuarto Eléctrico',     sub: 'SC/SO posición válvulas VB · 84 DI · SC1/SC2', color: '#38BDF8', count: ALL_RTU.length },
         ] as const).map(tab => (
           <button
             key={tab.id}
@@ -237,14 +288,14 @@ export function IC02RTUView() {
               background: ctrl === tab.id ? tab.color : '#374151',
             }} />
             <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: ctrl === tab.id ? '#FFFFFF' : '#6B7280', letterSpacing: '0.5px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: ctrl === tab.id ? '#E2EEF9' : '#93B5D6', letterSpacing: '0.5px' }}>
                 {tab.label}
               </div>
-              <div style={{ fontSize: '10px', color: '#374151' }}>{tab.sub}</div>
+              <div style={{ fontSize: '10px', color: '#4676AA' }}>{tab.sub}</div>
             </div>
             <span style={{
-              marginLeft: '8px', background: ctrl === tab.id ? `${tab.color}18` : '#132030',
-              border: `1px solid ${ctrl === tab.id ? tab.color + '35' : 'rgba(255,255,255,0.06)'}`,
+              marginLeft: '8px', background: ctrl === tab.id ? `${tab.color}18` : 'rgba(70,118,170,0.12)',
+              border: `1px solid ${ctrl === tab.id ? tab.color + '35' : 'rgba(70,118,170,0.25)'}`,
               borderRadius: '10px', padding: '1px 8px',
               fontSize: '11px', fontWeight: '700',
               color: ctrl === tab.id ? tab.color : '#4B5563',
@@ -293,19 +344,19 @@ export function IC02RTUView() {
 
       {/* ── Process flow filter chips ── */}
       <div style={{
-        background: STRIP_BG, borderBottom: '1px solid rgba(255,255,255,0.04)',
+        background: STRIP_BG, borderBottom: '1px solid rgba(70,118,170,0.2)',
         padding: '7px 24px', display: 'flex', alignItems: 'center',
         gap: '6px', flexShrink: 0, overflowX: 'auto',
       }}>
-        <span style={{ fontSize: '9px', color: '#4B5563', fontWeight: '700', letterSpacing: '1.5px', flexShrink: 0, marginRight: '4px' }}>
+        <span style={{ fontSize: '9px', color: '#93B5D6', fontWeight: '700', letterSpacing: '1.5px', flexShrink: 0, marginRight: '4px' }}>
           PROCESO:
         </span>
         <button
           onClick={() => { setProc(null); setGroup(null); }}
           style={{
             padding: '4px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer',
-            background: !proc ? 'rgba(34,197,94,0.14)' : 'rgba(255,255,255,0.04)',
-            color: !proc ? '#22C55E' : '#4B5563',
+            background: !proc ? 'rgba(34,197,94,0.14)' : 'rgba(70,118,170,0.1)',
+            color: !proc ? '#22C55E' : '#93B5D6',
             fontSize: '11px', fontWeight: '600', flexShrink: 0,
             outline: 'none', transition: 'all 150ms',
           }}
@@ -316,15 +367,15 @@ export function IC02RTUView() {
           const count = cards.filter(c => c.processId === step.id).length;
           return (
             <div key={step.id} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              {i > 0 && <span style={{ color: '#1F2937', fontSize: '12px', margin: '0 2px' }}>›</span>}
+              {i > 0 && <span style={{ color: '#4676AA', fontSize: '12px', margin: '0 2px' }}>›</span>}
               <button
                 onClick={() => handleProcessClick(step.id)}
                 style={{
                   padding: '4px 12px', borderRadius: '20px', border: '1px solid',
-                  borderColor: isActive ? 'rgba(56,189,248,0.4)' : 'rgba(255,255,255,0.07)',
+                  borderColor: isActive ? 'rgba(56,189,248,0.5)' : 'rgba(70,118,170,0.25)',
                   cursor: 'pointer',
-                  background: isActive ? 'rgba(56,189,248,0.12)' : 'rgba(255,255,255,0.02)',
-                  color: isActive ? '#38BDF8' : '#4B5563',
+                  background: isActive ? 'rgba(56,189,248,0.12)' : 'rgba(70,118,170,0.08)',
+                  color: isActive ? '#38BDF8' : '#93B5D6',
                   fontSize: '11px', fontWeight: '600',
                   outline: 'none', transition: 'all 150ms',
                   display: 'flex', alignItems: 'center', gap: '5px',
@@ -333,9 +384,9 @@ export function IC02RTUView() {
                 <span style={{ fontSize: '12px' }}>{step.icon}</span>
                 {step.label}
                 <span style={{
-                  background: isActive ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.05)',
+                  background: isActive ? 'rgba(56,189,248,0.15)' : 'rgba(70,118,170,0.12)',
                   borderRadius: '8px', padding: '0 5px', fontSize: '10px', fontWeight: '700',
-                  color: isActive ? '#38BDF8' : '#374151',
+                  color: isActive ? '#38BDF8' : '#4676AA',
                 }}>{count}</span>
               </button>
             </div>
@@ -346,11 +397,11 @@ export function IC02RTUView() {
       {/* ── Group sub-chips ── */}
       {groupChips.length > 1 && (
         <div style={{
-          background: STRIP_BG, borderBottom: '1px solid rgba(255,255,255,0.03)',
+          background: STRIP_BG, borderBottom: '1px solid rgba(70,118,170,0.15)',
           padding: '6px 24px', display: 'flex', gap: '5px',
           flexShrink: 0, overflowX: 'auto', alignItems: 'center',
         }}>
-          <span style={{ fontSize: '9px', color: '#4B5563', fontWeight: '700', letterSpacing: '1.5px', flexShrink: 0, marginRight: '4px' }}>
+          <span style={{ fontSize: '9px', color: '#93B5D6', fontWeight: '700', letterSpacing: '1.5px', flexShrink: 0, marginRight: '4px' }}>
             ÁREA:
           </span>
           {groupChips.map(chip => {
@@ -361,10 +412,10 @@ export function IC02RTUView() {
                 onClick={() => handleGroupClick(chip.id)}
                 style={{
                   padding: '3px 10px', borderRadius: '4px', border: '1px solid',
-                  borderColor: isActive ? `${chip.accentColor}50` : 'rgba(255,255,255,0.07)',
+                  borderColor: isActive ? `${chip.accentColor}50` : 'rgba(70,118,170,0.25)',
                   cursor: 'pointer',
-                  background: isActive ? `${chip.accentColor}12` : 'rgba(255,255,255,0.02)',
-                  color: isActive ? chip.accentColor : '#4B5563',
+                  background: isActive ? `${chip.accentColor}12` : 'rgba(70,118,170,0.08)',
+                  color: isActive ? chip.accentColor : '#93B5D6',
                   fontSize: '10px', fontWeight: '600',
                   outline: 'none', transition: 'all 150ms', flexShrink: 0,
                 }}
@@ -380,7 +431,7 @@ export function IC02RTUView() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
         {displayed.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#374151', paddingTop: '60px', fontSize: '13px' }}>
-            {search ? `Sin resultados para "${search}"` : 'No hay instrumentos para este filtro'}
+            <span style={{ color: '#4676AA' }}>{search ? `Sin resultados para "${search}"` : 'No hay instrumentos para este filtro'}</span>
           </div>
         ) : (
           <div style={{
@@ -402,18 +453,18 @@ export function IC02RTUView() {
 
       {/* ── Status bar ── */}
       <div style={{
-        background: STRIP_BG, borderTop: '1px solid rgba(255,255,255,0.05)',
+        background: STRIP_BG, borderTop: '1px solid rgba(70,118,170,0.25)',
         padding: '6px 24px', display: 'flex', alignItems: 'center',
         gap: '20px', flexShrink: 0,
       }}>
         <div style={{ display: 'flex', gap: '16px', fontSize: '10px' }}>
-          <span style={{ color: '#4B5563' }}>
-            Total: <span style={{ color: '#A7B0C2', fontWeight: '700' }}>{totalInCtrl}</span>
+          <span style={{ color: '#93B5D6' }}>
+            Total: <span style={{ color: '#CBD5E1', fontWeight: '700' }}>{totalInCtrl}</span>
           </span>
-          <span style={{ color: '#4B5563' }}>
+          <span style={{ color: '#93B5D6' }}>
             Activos: <span style={{ color: '#22C55E', fontWeight: '700' }}>{totalActive}</span>
           </span>
-          <span style={{ color: '#4B5563' }}>
+          <span style={{ color: '#93B5D6' }}>
             Futuros: <span style={{ color: '#38BDF8', fontWeight: '700' }}>{totalFuture}</span>
           </span>
         </div>
@@ -431,6 +482,15 @@ export function IC02RTUView() {
           ))}
         </div>
       </div>
+
+      {/* ── Instrument drawer ── */}
+      {selectedCard && (
+        <InstrumentDrawer
+          card={selectedCard}
+          projectId={params?.projectId ?? ''}
+          onClose={() => setSelectedCard(null)}
+        />
+      )}
     </div>
   );
 }

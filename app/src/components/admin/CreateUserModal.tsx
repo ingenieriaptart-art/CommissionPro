@@ -4,12 +4,12 @@ import { X } from "lucide-react";
 import { useCreateUser, useRoles } from "@/hooks/useUsers";
 import type { User } from "@/types";
 
-const inputCls = "w-full bg-slate-950 border border-slate-700 rounded-md px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500";
+const inputCls = "w-full bg-slate-800 border border-slate-500 rounded-md px-3 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-400";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[10px] text-slate-500 mb-1">{label}</label>
+      <label className="block text-[10px] text-slate-300 mb-1">{label}</label>
       {children}
     </div>
   );
@@ -54,8 +54,8 @@ export function CreateUserModal({ onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl w-full max-w-md mx-4">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+      <div className="bg-slate-700 border border-slate-500 rounded-xl shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-600">
           <h2 className="text-sm font-bold text-slate-100">Nuevo usuario</h2>
           <button onClick={onClose} aria-label="Cerrar" className="text-slate-500 hover:text-slate-300 transition-colors">
             <X size={16} />
@@ -91,7 +91,7 @@ export function CreateUserModal({ onClose, onCreated }: Props) {
 
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose}
-              className="text-xs px-4 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors">
+              className="text-xs px-4 py-2 rounded-lg bg-slate-600 text-slate-200 hover:bg-slate-500 transition-colors">
               Cancelar
             </button>
             <button type="submit" disabled={createUser.isPending}

@@ -22,7 +22,7 @@ export function EquipmentCard({ instrument, onClick }: Props) {
       onClick={() => onClick?.(instrument)}
       className="ic02-card"
       style={{
-        background: 'linear-gradient(145deg, #1A1130 0%, #0E1A2B 100%)',
+        background: 'linear-gradient(145deg, #3D6094 0%, #2C4F82 100%)',
         border: `1px solid ${cfg.color}30`,
         borderTop: `2px solid ${cfg.color}`,
         borderRadius: '12px',
@@ -72,18 +72,18 @@ export function EquipmentCard({ instrument, onClick }: Props) {
       <div style={{ display: 'flex', gap: '12px' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '16px', fontWeight: '800', color: '#F59E0B' }}>{diCount}</div>
-          <div style={{ fontSize: '9px', color: '#374151', letterSpacing: '0.5px' }}>DI</div>
+          <div style={{ fontSize: '9px', color: '#93B5D6', letterSpacing: '0.5px' }}>DI</div>
         </div>
-        <div style={{ width: '1px', background: 'rgba(255,255,255,0.06)' }} />
+        <div style={{ width: '1px', background: 'rgba(70,118,170,0.3)' }} />
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '16px', fontWeight: '800', color: '#A855F7' }}>{doCount}</div>
-          <div style={{ fontSize: '9px', color: '#374151', letterSpacing: '0.5px' }}>DO</div>
+          <div style={{ fontSize: '9px', color: '#93B5D6', letterSpacing: '0.5px' }}>DO</div>
         </div>
       </div>
 
       {/* Description */}
       <div style={{
-        fontSize: '10px', color: '#374151', textAlign: 'center',
+        fontSize: '10px', color: '#93B5D6', textAlign: 'center',
         lineHeight: 1.4, maxWidth: '140px',
       }}>{description}</div>
     </div>

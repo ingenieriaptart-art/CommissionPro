@@ -50,7 +50,7 @@ export interface AnalogInstr {
   id: string;
   tag: string;
   description: string;
-  signalType: 'HART' | 'AI';
+  signalType: 'HART' | 'AI' | 'DI';
   unit: string;
   value: number;
   min: number;

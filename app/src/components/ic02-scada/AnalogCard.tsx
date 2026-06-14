@@ -23,7 +23,7 @@ export function AnalogCard({ instrument, onClick }: Props) {
       onClick={() => onClick?.(instrument)}
       className="ic02-card"
       style={{
-        background: 'linear-gradient(145deg, #122235 0%, #0E1A2B 100%)',
+        background: 'linear-gradient(145deg, #3D6094 0%, #2C4F82 100%)',
         border: `1px solid ${isFuture ? 'rgba(56,189,248,0.25)' : `${color}25`}`,
         borderTop: `2px solid ${color}`,
         borderStyle: isFuture ? 'dashed' : 'solid',
@@ -69,12 +69,12 @@ export function AnalogCard({ instrument, onClick }: Props) {
         }}>
           {isFuture ? '—' : displayVal}
         </span>
-        <span style={{ fontSize: '12px', color: '#4B5563', fontWeight: '600' }}>{unit}</span>
+        <span style={{ fontSize: '12px', color: '#93B5D6', fontWeight: '600' }}>{unit}</span>
       </div>
 
       {/* Progress bar */}
       <div style={{
-        width: '100%', height: '4px', background: '#1F2937',
+        width: '100%', height: '4px', background: '#243650',
         borderRadius: '2px', overflow: 'hidden',
       }}>
         <div style={{
@@ -88,7 +88,7 @@ export function AnalogCard({ instrument, onClick }: Props) {
       {/* min / max labels */}
       <div style={{
         display: 'flex', justifyContent: 'space-between',
-        width: '100%', fontSize: '9px', color: '#1F2937',
+        width: '100%', fontSize: '9px', color: '#4676AA',
       }}>
         <span>{min} {unit}</span>
         <span>{max} {unit}</span>
@@ -96,7 +96,7 @@ export function AnalogCard({ instrument, onClick }: Props) {
 
       {/* Description */}
       <div style={{
-        fontSize: '9px', color: '#374151', textAlign: 'center',
+        fontSize: '9px', color: '#93B5D6', textAlign: 'center',
         lineHeight: 1.4, maxWidth: '130px', marginTop: '2px',
       }}>{description}</div>
     </div>

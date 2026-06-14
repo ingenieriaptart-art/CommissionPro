@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 const LDC_PROJECT_ID = "eba099c0-32ca-4be7-823f-4ab7f3480004";
 import { useProject } from "@/hooks/useProject";
@@ -15,31 +14,43 @@ import { PlantMapPanel } from "@/components/plant-map/panel/PlantMapPanel";
 import { FloatingEquipmentPanel } from "@/components/plant-map/panel/FloatingEquipmentPanel";
 import { AreaProgressDashboard } from "@/components/plant-map/AreaProgressDashboard";
 import { PlantMapBreadcrumb } from "@/components/plant-map/PlantMapBreadcrumb";
+import { PlantEquipmentView } from "@/components/plant-map/PlantEquipmentView";
+import { ScadaHeader } from "@/components/ic02-scada/ScadaHeader";
 import type { DrillLevel, PanelState, PlantMapAreaOverlay, Area, System, Subsystem } from "@/types";
 
 const DONE_STATUSES = new Set(["listo_arranque", "operativo"]);
 
 export default function PlantMapPage() {
-  const params    = useParams() as { projectId: string };
-  const router    = useRouter();
-  const projectId = params.projectId;
+  const params       = useParams() as { projectId: string };
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const projectId    = params.projectId;
 
   // ── Navigation state ────────────────────────────────────────
   const [drill, setDrill]           = useState<DrillLevel>({ level: 'visual' });
   const [panelState, setPanelState] = useState<PanelState>({ open: false });
   const [editMode, setEditMode]     = useState(false);
   const [pendingOverlays, setPendingOverlays] = useState<PlantMapAreaOverlay[] | null>(null);
-  const [activeTab, setActiveTab]   = useState<'unifilar' | 'diagrama'>('unifilar');
+  const [activeTab, setActiveTab]   = useState<'unifilar' | 'diagrama'>(
+    searchParams.get('tab') === 'equipos' ? 'diagrama' : 'unifilar'
+  );
   const [floatingPanel, setFloatingPanel] = useState<{ equipmentId: string; x: number; y: number; equipmentObj?: import("@/types").Equipment } | null>(null);
 
   // Reset tab, panel, and edit state on drill level change
   useEffect(() => {
-    setActiveTab('unifilar');
+    setActiveTab(drill.level === 'visual' && searchParams.get('tab') === 'equipos' ? 'diagrama' : 'unifilar');
     setPanelState({ open: false });
     setFloatingPanel(null);
     setEditMode(false);
     setPendingOverlays(null);
-  }, [drill.level]);
+  }, [drill.level]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync tab when only query param changes (same-page navigation)
+  useEffect(() => {
+    if (drill.level === 'visual') {
+      setActiveTab(searchParams.get('tab') === 'equipos' ? 'diagrama' : 'unifilar');
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Data queries ─────────────────────────────────────────────
   const { data: project }     = useProject(projectId);
@@ -168,7 +179,13 @@ export default function PlantMapPage() {
     <div className="absolute top-4 right-4 z-20">
       <button
         onClick={layout.saveLayout}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-lg transition-colors"
+        style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+          background: 'rgba(56,189,248,0.18)', border: '1px solid rgba(56,189,248,0.35)',
+          color: '#38BDF8', fontSize: '12px', fontWeight: '700', fontFamily: 'inherit',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)', transition: 'all 150ms',
+        }}
       >
         ● Guardar layout
       </button>
@@ -176,7 +193,12 @@ export default function PlantMapPage() {
   );
 
   const firstTimeBanner = layout.isFirstTime && (
-    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 bg-slate-800/90 backdrop-blur-sm border border-slate-600 rounded-lg px-4 py-2 text-xs text-slate-400">
+    <div style={{
+      position: 'absolute', bottom: '64px', left: '50%', transform: 'translateX(-50%)', zIndex: 20,
+      background: 'rgba(9,22,42,0.92)', backdropFilter: 'blur(6px)',
+      border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px',
+      padding: '8px 16px', fontSize: '11px', color: '#4B5563', whiteSpace: 'nowrap',
+    }}>
       Arrastrá los nodos para organizar el diagrama y guardá el layout
     </div>
   );
@@ -201,9 +223,10 @@ export default function PlantMapPage() {
     </>
   );
 
+
   // ── Render ───────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative" style={{ background: '#040C18', color: '#E2E8F0' }}>
       {/* Breadcrumb — solo nivel sistema (flota sobre el canvas sin chocar con tabs) */}
       {drill.level === 'system' && (
         <PlantMapBreadcrumb
@@ -217,12 +240,63 @@ export default function PlantMapPage() {
       {drill.level === 'visual' && (
         <>
           {projectId === LDC_PROJECT_ID ? (
-            /* SCADA interactivo LDC: iframe con postMessage → FloatingEquipmentPanel */
-            <iframe
-              src="/ldc-scada.html"
-              className="flex-1 w-full border-0 block"
-              title="SCADA PLANTA DE GAS LDC"
-            />
+            /* LDC: full-screen igual que IC02 */
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'linear-gradient(155deg,#040C18 0%,#071524 60%,#040C18 100%)',
+              display: 'flex', flexDirection: 'column',
+              fontFamily: '"Inter","Segoe UI",system-ui,sans-serif',
+              color: '#FFFFFF', overflow: 'hidden',
+            }}>
+              <ScadaHeader
+                projectId={projectId}
+                icon="🗺"
+                title="MAPA DE PLANTA · LDC"
+                hint={activeTab === 'unifilar' ? 'Diagrama eléctrico · Subestación · CCMs' : 'Selecciona un equipo para iniciar inspección'}
+              />
+
+              {/* Chips de vista — mismo estilo que IC02 process chips */}
+              <div style={{
+                background: '#071A2C',
+                borderBottom: '1px solid rgba(255,255,255,0.05)',
+                padding: '8px 24px',
+                display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0,
+              }}>
+                <span style={{ fontSize: '9px', color: '#374151', fontWeight: '700', letterSpacing: '1.5px', marginRight: '4px' }}>
+                  VISTA:
+                </span>
+                {([
+                  { key: 'unifilar' as const, label: '⚡ SCADA · Potencia' },
+                  { key: 'diagrama' as const, label: '🗺 Equipos' },
+                ]).map(tab => {
+                  const active = activeTab === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setActiveTab(tab.key)}
+                      style={{
+                        padding: '5px 16px', borderRadius: '20px', cursor: 'pointer',
+                        border: `1px solid ${active ? 'rgba(56,189,248,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                        background: active ? 'rgba(56,189,248,0.14)' : 'rgba(255,255,255,0.03)',
+                        color: active ? '#38BDF8' : '#4B5563',
+                        fontSize: '11px', fontWeight: '600', fontFamily: 'inherit',
+                        transition: 'all 150ms',
+                      }}
+                    >{tab.label}</button>
+                  );
+                })}
+              </div>
+
+              {activeTab === 'unifilar' ? (
+                <iframe
+                  src="/ldc-scada.html"
+                  style={{ flex: 1, width: '100%', border: 'none', display: 'block' }}
+                  title="SCADA PLANTA DE GAS LDC"
+                />
+              ) : (
+                <PlantEquipmentView projectId={projectId} embedded />
+              )}
+            </div>
           ) : (
             <>
               <PlantVisualToolbar
@@ -249,14 +323,14 @@ export default function PlantMapPage() {
                 onUploadClick={() => { /* manejado por PlantVisualToolbar */ }}
                 onOverlaysChange={setPendingOverlays}
               />
+              <AreaProgressDashboard
+                areas={areas}
+                equipment={equipment}
+                subToSystem={subToSystem}
+                sysToArea={sysToArea}
+              />
             </>
           )}
-          <AreaProgressDashboard
-            areas={areas}
-            equipment={equipment}
-            subToSystem={subToSystem}
-            sysToArea={sysToArea}
-          />
         </>
       )}
 
@@ -264,45 +338,55 @@ export default function PlantMapPage() {
       {drill.level === 'area' && (
         <>
           {/* Barra superior: breadcrumb + tabs en una sola fila */}
-          <div className="h-10 bg-slate-800 border-b border-slate-700 flex items-center px-3 gap-2 flex-shrink-0">
+          <div style={{
+            height: '40px', flexShrink: 0,
+            background: 'linear-gradient(90deg,#09162A 0%,#071220 50%,#09162A 100%)',
+            borderBottom: '1px solid rgba(56,189,248,0.12)',
+            display: 'flex', alignItems: 'center', padding: '0 16px', gap: '8px',
+          }}>
             {/* Breadcrumb inline */}
             <button
               onClick={() => handleBreadcrumbNavigate({ level: 'visual' })}
-              className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '11px', color: '#4B5563', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0,
+                padding: '2px 6px', borderRadius: '4px', transition: 'color 150ms',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#94A3B8')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#4B5563')}
             >
-              ← {project?.name ?? "Proyecto"}
+              ← {project?.name ?? 'Proyecto'}
             </button>
-            <span className="text-slate-600 text-xs">/</span>
-            <span className="text-xs text-slate-200 font-semibold truncate max-w-[140px]">
+            <span style={{ color: '#1E3A5F', fontSize: '11px' }}>/</span>
+            <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '700', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {drill.areaName}
             </span>
 
             {/* Separador */}
-            <div className="w-px h-5 bg-slate-700 mx-1 flex-shrink-0" />
+            <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.06)', margin: '0 4px', flexShrink: 0 }} />
 
             {/* Tabs */}
-            <button
-              onClick={() => setActiveTab('unifilar')}
-              className={cn(
-                "px-3 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0",
-                activeTab === 'unifilar'
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-700"
-              )}
-            >
-              ⚡ Unifilar
-            </button>
-            <button
-              onClick={() => setActiveTab('diagrama')}
-              className={cn(
-                "px-3 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0",
-                activeTab === 'diagrama'
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-700"
-              )}
-            >
-              🔷 Diagrama
-            </button>
+            {([
+              { key: 'unifilar', label: '⚡ Unifilar' },
+              { key: 'diagrama', label: '🔷 Diagrama' },
+            ] as const).map(tab => {
+              const active = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  style={{
+                    padding: '4px 14px', borderRadius: '20px',
+                    border: `1px solid ${active ? 'rgba(56,189,248,0.3)' : 'rgba(255,255,255,0.07)'}`,
+                    background: active ? 'rgba(56,189,248,0.14)' : 'rgba(255,255,255,0.03)',
+                    color: active ? '#38BDF8' : '#4B5563',
+                    fontSize: '11px', fontWeight: '600', cursor: 'pointer',
+                    fontFamily: 'inherit', transition: 'all 150ms', flexShrink: 0,
+                  }}
+                >{tab.label}</button>
+              );
+            })}
           </div>
 
           {/* Tab Unifilar */}

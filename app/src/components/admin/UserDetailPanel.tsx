@@ -6,7 +6,7 @@ import { useUpdateUser, useUserProjects, useRemoveProject, useRoles } from "@/ho
 import { AssignProjectModal } from "./AssignProjectModal";
 import type { User, UserStatus, Role } from "@/types";
 
-const inputCls = "w-full bg-slate-950 border border-slate-700 rounded-md px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500";
+const inputCls = "w-full bg-slate-800 border border-slate-500 rounded-md px-3 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-400";
 
 const ROLE_COLORS: Record<string, string> = {
   admin: "bg-blue-900 text-blue-300", director: "bg-purple-900 text-purple-300",
@@ -83,11 +83,11 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-950 p-5">
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-800">
       <div className="flex items-start justify-between mb-5">
         <div>
           <h2 className="text-base font-bold text-slate-100">{user.full_name}</h2>
-          <p className="text-xs text-slate-500">{user.email}</p>
+          <p className="text-xs text-slate-300">{user.email}</p>
         </div>
         <div className="flex gap-2">
           {user.status !== "active" && (
@@ -99,11 +99,11 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
           {user.status === "active" && (
             <>
               <button onClick={() => handleStatusChange("inactive")}
-                className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-500 transition-colors">
+                className="text-xs px-3 py-1.5 rounded-lg bg-slate-600 text-slate-200 border border-slate-500 hover:border-slate-300 transition-colors">
                 Desactivar
               </button>
               <button onClick={() => handleStatusChange("blocked")}
-                className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-red-400 border border-red-900 hover:border-red-700 transition-colors">
+                className="text-xs px-3 py-1.5 rounded-lg bg-slate-700 text-red-300 border border-red-700 hover:border-red-500 transition-colors">
                 Bloquear
               </button>
             </>
@@ -111,33 +111,34 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="bg-slate-900 border border-slate-800 rounded-xl p-4 mb-4">
-        <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Información del usuario</p>
+    <div className="flex-1 overflow-y-auto p-5">
+      <form id="user-detail-form" onSubmit={handleSave} className="bg-slate-700 border border-slate-600 rounded-xl p-4 mb-4">
+        <p className="text-[10px] text-slate-300 uppercase tracking-wider mb-3">Información del usuario</p>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-[10px] text-slate-500 mb-1">Nombre completo</label>
+            <label className="block text-[10px] text-slate-300 mb-1">Nombre completo</label>
             <input value={form.full_name} onChange={set("full_name")} required className={inputCls} />
           </div>
           <div>
-            <label className="block text-[10px] text-slate-500 mb-1">Email</label>
+            <label className="block text-[10px] text-slate-300 mb-1">Email</label>
             <input value={user.email} disabled className={cn(inputCls, "opacity-50 cursor-not-allowed")} />
           </div>
           <div>
-            <label className="block text-[10px] text-slate-500 mb-1">Cargo</label>
+            <label className="block text-[10px] text-slate-300 mb-1">Cargo</label>
             <input value={form.position} onChange={set("position")} className={inputCls} placeholder="Jefe de Proyecto" />
           </div>
           <div>
-            <label className="block text-[10px] text-slate-500 mb-1">Teléfono</label>
+            <label className="block text-[10px] text-slate-300 mb-1">Teléfono</label>
             <input value={form.phone} onChange={set("phone")} className={inputCls} placeholder="+57 300 000 0000" />
           </div>
           <div>
-            <label className="block text-[10px] text-slate-500 mb-1">Rol del sistema</label>
+            <label className="block text-[10px] text-slate-300 mb-1">Rol del sistema</label>
             <select value={form.role_id} onChange={set("role_id")} className={inputCls}>
               {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[10px] text-slate-500 mb-1">Estado</label>
+            <label className="block text-[10px] text-slate-300 mb-1">Estado</label>
             <select value={form.status} onChange={set("status")} className={inputCls}>
               <option value="active">Activo</option>
               <option value="inactive">Inactivo</option>
@@ -147,29 +148,23 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
         </div>
 
         {saveError && (
-          <p className="text-xs text-red-400 bg-red-950/30 border border-red-800 rounded-lg px-3 py-2 mb-3">{saveError}</p>
+          <p className="text-xs text-red-400 bg-red-900/40 border border-red-700 rounded-lg px-3 py-2">{saveError}</p>
         )}
-        <div className="flex justify-end">
-          <button type="submit" disabled={updateUser.isPending}
-            className="text-xs px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-60 transition-colors">
-            {updateUser.isPending ? "Guardando…" : "Guardar cambios"}
-          </button>
-        </div>
       </form>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div className="bg-slate-700 border border-slate-600 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Proyectos asignados</p>
+          <p className="text-[10px] text-slate-300 uppercase tracking-wider">Proyectos asignados</p>
           <button onClick={() => setShowAssign(true)}
-            className="text-[10px] px-2.5 py-1 rounded-md bg-slate-800 text-blue-400 border border-blue-900 hover:border-blue-700 transition-colors">
+            className="text-[10px] px-2.5 py-1 rounded-md bg-slate-600 text-blue-300 border border-blue-700 hover:border-blue-500 transition-colors">
             + Asignar proyecto
           </button>
         </div>
 
         {loadingProj ? (
-          <p className="text-xs text-slate-600 py-2">Cargando…</p>
+          <p className="text-xs text-slate-400 py-2">Cargando…</p>
         ) : members.length === 0 ? (
-          <div className="flex items-center gap-2 py-4 text-slate-600">
+          <div className="flex items-center gap-2 py-4 text-slate-400">
             <FolderOpen size={16} />
             <p className="text-xs">Sin proyectos asignados</p>
           </div>
@@ -181,7 +176,7 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
               const roleKey     = m.role?.key     ?? "";
               return (
                 <div key={m.project_id}
-                  className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg px-3 py-2">
+                  className="flex items-center justify-between bg-slate-800 border border-slate-600 rounded-lg px-3 py-2">
                   <div>
                     <p className="text-xs text-slate-200">📁 {projectName}</p>
                     <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 inline-block",
@@ -204,5 +199,30 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
         <AssignProjectModal userId={user.id} existingMembers={members} onClose={() => setShowAssign(false)} />
       )}
     </div>
+
+    {/* Barra de acciones fija */}
+    <div className="flex-shrink-0 flex items-center justify-between gap-3 px-5 py-3 bg-slate-700 border-t border-slate-600">
+      <div className="text-xs text-slate-400">
+        Última actualización: {new Date(user.updated_at ?? "").toLocaleDateString("es", { day:"2-digit", month:"short", year:"numeric" })}
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="text-xs px-4 py-2 rounded-lg bg-slate-600 text-slate-200 border border-slate-500 hover:bg-slate-500 transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          form="user-detail-form"
+          disabled={updateUser.isPending}
+          className="text-xs px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold disabled:opacity-60 transition-colors"
+        >
+          {updateUser.isPending ? "Guardando…" : "💾 Guardar cambios"}
+        </button>
+      </div>
+    </div>
+  </div>
   );
 }

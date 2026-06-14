@@ -19,14 +19,14 @@ export function ProcessFlowBar({ activeStep: controlledActive, onStepClick }: Pr
 
   return (
     <div style={{
-      background: '#0A1628',
-      borderBottom: '1px solid rgba(255,255,255,0.05)',
+      background: '#162F50',
+      borderBottom: '1px solid rgba(70,118,170,0.25)',
       display: 'flex', alignItems: 'center',
       padding: '0 20px', height: '78px', flexShrink: 0,
       overflowX: 'auto', gap: '0',
     }}>
       <div style={{
-        fontSize: '9px', color: '#374151', letterSpacing: '2px', fontWeight: '700',
+        fontSize: '9px', color: '#93B5D6', letterSpacing: '2px', fontWeight: '700',
         textTransform: 'uppercase', whiteSpace: 'nowrap', marginRight: '16px', flexShrink: 0,
       }}>
         PROCESO →
@@ -42,27 +42,27 @@ export function ProcessFlowBar({ activeStep: controlledActive, onStepClick }: Pr
                 display: 'flex', alignItems: 'center', gap: '10px',
                 padding: '10px 14px', height: '54px',
                 border: '1px solid',
-                borderColor: isActive ? 'rgba(34,197,94,0.4)' : 'rgba(255,255,255,0.06)',
+                borderColor: isActive ? 'rgba(34,197,94,0.4)' : 'rgba(70,118,170,0.25)',
                 borderRadius: '8px',
-                background: isActive ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.02)',
+                background: isActive ? 'rgba(34,197,94,0.08)' : 'rgba(70,118,170,0.08)',
                 cursor: 'pointer', transition: 'all 200ms ease',
                 outline: 'none',
                 boxShadow: isActive ? '0 0 16px rgba(34,197,94,0.12)' : 'none',
               }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(70,118,170,0.15)'; }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'rgba(70,118,170,0.08)'; }}
             >
-              <span style={{ fontSize: '18px', color: isActive ? '#22C55E' : '#374151', flexShrink: 0 }}>
+              <span style={{ fontSize: '18px', color: isActive ? '#22C55E' : '#4676AA', flexShrink: 0 }}>
                 {step.icon}
               </span>
               <div style={{ textAlign: 'left' }}>
                 <div style={{
                   fontSize: '11px', fontWeight: '700', letterSpacing: '1px',
-                  color: isActive ? '#FFFFFF' : '#6B7280', marginBottom: '2px',
+                  color: isActive ? '#E2EEF9' : '#93B5D6', marginBottom: '2px',
                 }}>
                   {step.label}
                 </div>
-                <div style={{ fontSize: '9px', color: isActive ? '#4B5563' : '#2D3748', letterSpacing: '0.3px' }}>
+                <div style={{ fontSize: '9px', color: '#4676AA', letterSpacing: '0.3px' }}>
                   {step.sub}
                 </div>
               </div>
@@ -71,12 +71,12 @@ export function ProcessFlowBar({ activeStep: controlledActive, onStepClick }: Pr
             {i < processSteps.length - 1 && (
               <div style={{
                 width: '24px', height: '1px',
-                background: 'linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))',
+                background: 'linear-gradient(90deg, rgba(70,118,170,0.3), rgba(70,118,170,0.1))',
                 flexShrink: 0, margin: '0 2px', position: 'relative',
               }}>
                 <span style={{
                   position: 'absolute', top: '-6px', right: '-2px',
-                  color: '#1F2937', fontSize: '11px',
+                  color: '#4676AA', fontSize: '11px',
                 }}>›</span>
               </div>
             )}
@@ -87,7 +87,7 @@ export function ProcessFlowBar({ activeStep: controlledActive, onStepClick }: Pr
       {/* RAFAC branch — separate */}
       <div style={{
         marginLeft: '16px', paddingLeft: '16px',
-        borderLeft: '1px solid rgba(255,255,255,0.06)', flexShrink: 0,
+        borderLeft: '1px solid rgba(70,118,170,0.25)', flexShrink: 0,
       }}>
         <button style={{
           display: 'flex', alignItems: 'center', gap: '10px',
@@ -106,7 +106,7 @@ export function ProcessFlowBar({ activeStep: controlledActive, onStepClick }: Pr
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#F59E0B', letterSpacing: '1px', marginBottom: '2px' }}>
               RAFAC 1·2·3
             </div>
-            <div style={{ fontSize: '9px', color: '#4B3800', letterSpacing: '0.3px' }}>
+            <div style={{ fontSize: '9px', color: '#4676AA', letterSpacing: '0.3px' }}>
               FIT-206..208 · VA-1..3
             </div>
           </div>

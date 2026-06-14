@@ -19,8 +19,8 @@ export function InstrumentGroup({ group, onInstrClick }: Props) {
   return (
     <div
       style={{
-        background: '#0D1F35',
-        border: '1px solid rgba(255,255,255,0.05)',
+        background: '#243650',
+        border: '1px solid rgba(70,118,170,0.25)',
         borderLeft: `3px solid ${group.accentColor}`,
         borderRadius: '14px',
         marginBottom: '20px',
@@ -33,10 +33,10 @@ export function InstrumentGroup({ group, onInstrClick }: Props) {
         style={{
           display: 'flex', alignItems: 'center', gap: '14px',
           padding: '14px 20px', cursor: 'pointer',
-          borderBottom: collapsed ? 'none' : '1px solid rgba(255,255,255,0.04)',
+          borderBottom: collapsed ? 'none' : '1px solid rgba(70,118,170,0.2)',
           transition: 'background 150ms',
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(70,118,170,0.1)')}
         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
       >
         <span style={{ fontSize: '20px', color: group.accentColor, flexShrink: 0 }}>
@@ -50,7 +50,7 @@ export function InstrumentGroup({ group, onInstrClick }: Props) {
           }}>
             {group.title}
           </div>
-          <div style={{ fontSize: '11px', color: '#4B5563' }}>{group.subtitle}</div>
+          <div style={{ fontSize: '11px', color: '#93B5D6' }}>{group.subtitle}</div>
         </div>
 
         {/* Mini stats */}
@@ -67,7 +67,7 @@ export function InstrumentGroup({ group, onInstrClick }: Props) {
           }}>
             {group.instruments.length} VB
           </div>
-          <span style={{ color: '#374151', fontSize: '14px', marginLeft: '4px' }}>
+          <span style={{ color: '#93B5D6', fontSize: '14px', marginLeft: '4px' }}>
             {collapsed ? '▶' : '▼'}
           </span>
         </div>
