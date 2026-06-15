@@ -47,6 +47,8 @@ function templateForBadge(badge: string, tag?: string): string {
   if (/^(TT|TIT|TE|TW|TI-|TIC|TRC|TSH|TSL)/.test(t))           return 'tpl-ic-007'; // Temperatura
   if (/^(LT|LIT|LE|LSH|LSL|LG|LI-|LC|LRC|LCV-)/.test(t))      return 'tpl-ic-008'; // Nivel
   if (/^(AT|AIT|AE|QT|QIT|PHT|PH-|CT|WT|DO-|CL-)/.test(t))    return 'tpl-ic-009'; // Analítica
+  if (/^(VT|VIT|VSH|VSL|VE|VAC|VXH|VXL)/.test(t))             return 'tpl-ic-010'; // Vibración
+  if (/^(ZT|ZIT|ZE|YT|YIT|YC|YIC)/.test(t))                   return 'tpl-ic-011'; // Posición / Posicionador
   if (/^(VLV|VB|VBF|VBM|VMP|VGT|VCK|VCS|VRE)/.test(t)) return 'tpl-mec-006'; // Válvula manual
   if (/^(XV|YV|VA|HV|FCV|LCV|PCV|TCV|MOV|AOV)/.test(t)) return 'tpl-mec-007'; // Válvula actuada
   if (/^(ZSC|ZSO|ZS|LS)/.test(t))          return 'tpl-ic-004';  // Detector / fin de carrera
