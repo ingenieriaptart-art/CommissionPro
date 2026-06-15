@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withPWA = require("next-pwa") as (config: object) => (nextConfig: NextConfig) => NextConfig;
 
 // Workaround: Avast intercepta SSL en desarrollo, Node.js no puede verificar
 // certificados de Supabase. Solo aplica en dev — nunca en producción (Vercel).
