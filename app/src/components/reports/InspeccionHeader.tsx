@@ -1,8 +1,8 @@
 import type { InspeccionReportData } from "@/hooks/useInspeccionReport";
 
-function getLogoUrl(company?: { logo_url?: string; metadata?: { logo_url?: string } }): string | null {
+function getLogoUrl(company?: { logo_url?: string }): string | null {
   if (!company) return null;
-  return company.logo_url ?? company.metadata?.logo_url ?? null;
+  return company.logo_url ?? null;
 }
 
 interface Props {

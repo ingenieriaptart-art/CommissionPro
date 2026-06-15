@@ -58,6 +58,7 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
 
   const evidencesByEquipment: Record<string, Evidence[]> = {};
   for (const ev of evidences) {
+    if (!ev.equipment_id) continue;
     if (!evidencesByEquipment[ev.equipment_id]) evidencesByEquipment[ev.equipment_id] = [];
     evidencesByEquipment[ev.equipment_id].push(ev);
   }
@@ -160,17 +161,17 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
                   <td style={{ ...cell, textAlign: "right" }}>{hpVal}</td>
                   <td style={{ ...cell, textAlign: "right" }}>{eq.power_installed_kw ?? ""}</td>
                   <td style={{ ...cell, textAlign: "center" }}>
-                    {fotoEquipo ? (
+                    {fotoEquipo?.storage_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={fotoEquipo.file_url} alt="foto" style={{ maxWidth: "32px", maxHeight: "24px", objectFit: "cover" }} />
+                      <img src={fotoEquipo.storage_url} alt="foto" style={{ maxWidth: "32px", maxHeight: "24px", objectFit: "cover" }} />
                     ) : (
                       <span style={{ color: "#94a3b8" }}>📷</span>
                     )}
                   </td>
                   <td style={{ ...cell, textAlign: "center" }}>
-                    {fotoPlaca ? (
+                    {fotoPlaca?.storage_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={fotoPlaca.file_url} alt="placa" style={{ maxWidth: "32px", maxHeight: "24px", objectFit: "cover" }} />
+                      <img src={fotoPlaca.storage_url} alt="placa" style={{ maxWidth: "32px", maxHeight: "24px", objectFit: "cover" }} />
                     ) : (
                       <span style={{ color: "#94a3b8" }}>📷</span>
                     )}

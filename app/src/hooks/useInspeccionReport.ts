@@ -10,10 +10,9 @@ export interface EquipmentWithArea extends Equipment {
 
 export interface Evidence {
   id: string;
-  equipment_id: string;
+  equipment_id?: string;
   stage: "antes" | "durante" | "despues" | "general";
-  file_url: string;
-  file_type: string;
+  storage_url?: string;
 }
 
 export interface FatTest {
@@ -24,8 +23,8 @@ export interface FatTest {
 }
 
 export interface InspeccionReportData {
-  project: Project & { client_company?: Company & { logo_url?: string; metadata?: { logo_url?: string } } };
-  contractorCompany?: Company & { logo_url?: string; metadata?: { logo_url?: string } };
+  project: Project & { client_company?: Company & { logo_url?: string } };
+  contractorCompany?: Company & { logo_url?: string };
   equipment: EquipmentWithArea[];
   evidences: Evidence[];
   fatTests: FatTest[];
@@ -42,7 +41,7 @@ export function useInspeccionReport(projectId: string) {
         await Promise.all([
           supabase
             .from("projects")
-            .select("*, client_company:companies(id, name, type, nit, metadata)")
+            .select("*, client_company:companies(id, name, type, nit)")
             .eq("id", projectId)
             .single(),
           supabase
@@ -62,7 +61,7 @@ export function useInspeccionReport(projectId: string) {
             .order("tag"),
           supabase
             .from("evidences")
-            .select("id, equipment_id, stage, file_url, file_type")
+            .select("id, equipment_id, stage, storage_url")
             .eq("project_id", projectId),
           supabase
             .from("tests")
@@ -78,7 +77,7 @@ export function useInspeccionReport(projectId: string) {
       if (userRes.data.user) {
         const { data: userData } = await supabase
           .from("users")
-          .select("company_id, company:companies(id, name, metadata)")
+          .select("company_id, company:companies(id, name)")
           .eq("id", userRes.data.user.id)
           .single();
         contractorCompany = userData?.company as typeof contractorCompany;
