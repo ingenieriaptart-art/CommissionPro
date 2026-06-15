@@ -49,6 +49,8 @@ function templateForBadge(badge: string, tag?: string): string {
   if (/^(AT|AIT|AE|QT|QIT|PHT|PH-|CT|WT|DO-|CL-)/.test(t))    return 'tpl-ic-009'; // Analítica
   if (/^(VT|VIT|VSH|VSL|VE|VAC|VXH|VXL)/.test(t))             return 'tpl-ic-010'; // Vibración
   if (/^(ZT|ZIT|ZE|YT|YIT|YC|YIC)/.test(t))                   return 'tpl-ic-011'; // Posición / Posicionador
+  if (/^(ST|SIT|SE|SSH|SSL|SH|SL|SIC|SRC)/.test(t))           return 'tpl-ic-012'; // Velocidad (speed)
+  if (/^(WIT|WFT|WF-|MFT|MF-|WIC|WRC)/.test(t))              return 'tpl-ic-013'; // Caudal másico
   if (/^(VLV|VB|VBF|VBM|VMP|VGT|VCK|VCS|VRE)/.test(t)) return 'tpl-mec-006'; // Válvula manual
   if (/^(XV|YV|VA|HV|FCV|LCV|PCV|TCV|MOV|AOV)/.test(t)) return 'tpl-mec-007'; // Válvula actuada
   if (/^(ZSC|ZSO|ZS|LS)/.test(t))          return 'tpl-ic-004';  // Detector / fin de carrera
