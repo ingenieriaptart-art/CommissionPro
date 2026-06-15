@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-// @ts-expect-error next-pwa no tiene tipos perfectos para TS config
 import withPWA from "next-pwa";
 
 // Workaround: Avast intercepta SSL en desarrollo, Node.js no puede verificar
