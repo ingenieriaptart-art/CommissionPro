@@ -95,7 +95,7 @@ Distribución de columnas (proporcional al Excel original):
 
 | Col(s) Excel | Header fila 8 | Subfila 9 | Notas |
 |-------------|--------------|-----------|-------|
-| A (Act. JCB) | "Act. JCB" | — | rowspan=2 |
+| ~~A (Act. JCB)~~ | ~~eliminada~~ | — | **No se incluye en el documento** |
 | B (Est.) | "Est." | — | rowspan=2 |
 | C8:C9 | "ITEM" | — | rowspan=2 |
 | D8:D9 | "TAG" | — | rowspan=2 |
@@ -115,7 +115,7 @@ Distribución de columnas (proporcional al Excel original):
 
 | Col | Campo | Cálculo |
 |-----|-------|---------|
-| A | Estado visual | `equipment.status === 'aprobado'` → "✓" |
+| ~~A~~ | ~~Act. JCB~~ | **Eliminada — no aparece en el documento** |
 | B | Estado texto | `aprobado`→"OK" / `pendiente`→"PEND" / `rechazado`→"NC" |
 | C | ITEM | índice secuencial (1, 2, 3…) |
 | D | TAG | `equipment.tag` |
@@ -162,7 +162,7 @@ Cada bloque contiene:
 
 ## 4. Campo nuevo: `power_installed_kw`
 
-**Migración Supabase:**
+**Migración Supabase — se corre como parte del plan de implementación:**
 ```sql
 ALTER TABLE equipment ADD COLUMN power_installed_kw numeric;
 ```
