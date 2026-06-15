@@ -1,6 +1,6 @@
 "use client";
 import { use, useState }   from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEquipment, useCreateEquipment } from "@/hooks/useEquipment";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
-import { Plus, Wrench, Search, ScanSearch } from "lucide-react";
+import { Plus, Wrench, Search, ScanSearch, FileOutput } from "lucide-react";
 import { TagSearchModal } from "@/components/shared/TagSearchModal";
 import type { Equipment, Criticality } from "@/types";
 
@@ -17,6 +17,7 @@ interface Props { params: Promise<{ projectId: string }> }
 export default function EquipmentPage({ params }: Props) {
   const { projectId }   = use(params);
   const searchParams    = useSearchParams();
+  const router          = useRouter();
   const { data: equipment = [], isLoading } = useEquipment(projectId);
   const createEquipment = useCreateEquipment();
 
@@ -47,6 +48,13 @@ export default function EquipmentPage({ params }: Props) {
             onClick={() => setTagSearchOpen(true)}
           >
             Buscar TAG
+          </Button>
+          <Button
+            variant="ghost"
+            icon={<FileOutput size={16} />}
+            onClick={() => router.push(`/projects/${projectId}/reports/inspeccion`)}
+          >
+            Listado Inspección
           </Button>
           <Button icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
             Nuevo equipo
