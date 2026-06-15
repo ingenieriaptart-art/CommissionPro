@@ -158,6 +158,7 @@ export interface Equipment {
   location_system?: string;
   pid_reference?: string;
   power_kw?: number;
+  power_installed_kw?: number;
   ccm_panel?: string;
   // sync
   version?: number;
