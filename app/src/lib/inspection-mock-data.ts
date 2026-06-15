@@ -354,6 +354,54 @@ const SECTION_QUEMADOR: MockInspectionSection = {
   ],
 };
 
+const SECTION_VALVULA: MockInspectionSection = {
+  id: "sec-valvula",
+  code: "VERIFICACION_VALVULA",
+  name: "Verificación Válvula",
+  is_universal: false,
+  fields: [
+    { key: "tipo_valvula",         label: "Tipo de válvula",                  type: "select",   required: true,  options: ["Bola", "Mariposa", "Compuerta", "Globo", "Cheque / Retención", "Alivio / PSV", "Control", "Otra"] },
+    { key: "diametro_nominal",     label: "Diámetro nominal (DN / pulg)",     type: "texto",    required: true },
+    { key: "presion_diseno_bar",   label: "Presión de diseño (bar)",          type: "numero",   required: true,  validations: { unit: "bar", min: 0 } },
+    { key: "temperatura_diseno",   label: "Temperatura de diseño (°C)",       type: "numero",   required: false, validations: { unit: "°C" } },
+    { key: "material_cuerpo",      label: "Material cuerpo",                  type: "select",   required: false, options: ["Acero inox 316L", "Acero inox 304", "Acero al carbono", "PVC", "CPVC", "HDPE", "Hierro fundido", "Otro"] },
+    { key: "fluido_servicio",      label: "Fluido en servicio",               type: "texto",    required: false },
+    { key: "operacion_apertura",   label: "Apertura completa OK",             type: "checkbox", required: true,  options: ["OK", "FALLA", "N/A"] },
+    { key: "operacion_cierre",     label: "Cierre completo OK",               type: "checkbox", required: true,  options: ["OK", "FALLA", "N/A"] },
+    { key: "indicador_abierta",    label: "Indicador posición ABIERTA",       type: "checkbox", required: true,  options: ["OK", "FALLA", "N/A"] },
+    { key: "indicador_cerrada",    label: "Indicador posición CERRADA",       type: "checkbox", required: true,  options: ["OK", "FALLA", "N/A"] },
+    { key: "presion_prueba_bar",   label: "Presión prueba estanqueidad (bar)",type: "numero",   required: false, validations: { unit: "bar", min: 0 } },
+    { key: "fuga_cuerpo",          label: "Fuga cuerpo / vástago",            type: "checkbox", required: true,  options: ["SIN FUGA", "CON FUGA", "N/A"] },
+    { key: "fuga_asiento",         label: "Fuga asiento (válvula cerrada)",   type: "checkbox", required: true,  options: ["SIN FUGA", "CON FUGA", "N/A"] },
+    { key: "foto_valvula",         label: "Fotografía",                       type: "imagen",   required: false },
+    { key: "obs_valvula",          label: "Observaciones",                    type: "textarea", required: false },
+    { key: "resultado_valvula",    label: "Resultado",                        type: "select",   required: true,  options: ["APROBADO", "RECHAZADO"] },
+  ],
+};
+
+const SECTION_ACTUADOR: MockInspectionSection = {
+  id: "sec-actuador",
+  code: "VERIFICACION_ACTUADOR",
+  name: "Actuador y Posicionador",
+  is_universal: false,
+  fields: [
+    { key: "tipo_actuador",        label: "Tipo de actuador",                 type: "select",   required: true,  options: ["Eléctrico", "Neumático", "Hidráulico", "Electroneumático"] },
+    { key: "tension_actuador",     label: "Tensión alimentación (V)",         type: "numero",   required: false, validations: { unit: "V", min: 0 } },
+    { key: "presion_aire_bar",     label: "Presión aire actuación (bar)",     type: "numero",   required: false, validations: { unit: "bar", min: 0 } },
+    { key: "senal_apertura_ma",    label: "Señal apertura verificada (mA)",   type: "numero",   required: false, validations: { unit: "mA", min: 0 } },
+    { key: "senal_cierre_ma",      label: "Señal cierre verificada (mA)",     type: "numero",   required: false, validations: { unit: "mA", min: 0 } },
+    { key: "tiempo_apertura_s",    label: "Tiempo apertura (s)",              type: "numero",   required: false, validations: { unit: "s", min: 0 } },
+    { key: "tiempo_cierre_s",      label: "Tiempo cierre (s)",                type: "numero",   required: false, validations: { unit: "s", min: 0 } },
+    { key: "zso_funcionando",      label: "Fin de carrera ABIERTA (ZSO)",     type: "checkbox", required: true,  options: ["OK", "FALLA", "N/A"] },
+    { key: "zsc_funcionando",      label: "Fin de carrera CERRADA (ZSC)",     type: "checkbox", required: true,  options: ["OK", "FALLA", "N/A"] },
+    { key: "control_remoto",       label: "Mando remoto desde PLC / panel",   type: "checkbox", required: true,  options: ["OK", "FALLA", "N/A"] },
+    { key: "posicion_falla",       label: "Posición en falla (fail-safe)",    type: "select",   required: true,  options: ["Abierta (FO)", "Cerrada (FC)", "Sin cambio (FL)", "N/A"] },
+    { key: "loop_check_actuador",  label: "Loop check señal 4-20 mA",        type: "checkbox", required: false, options: ["OK", "FALLA", "N/A"] },
+    { key: "obs_actuador",         label: "Observaciones",                    type: "textarea", required: false },
+    { key: "resultado_actuador",   label: "Resultado Actuador",               type: "select",   required: true,  options: ["APROBADO", "RECHAZADO"] },
+  ],
+};
+
 const SECTION_IMPERMEABILIZACION: MockInspectionSection = {
   id: "sec-impermeab",
   code: "IMPERMEABILIZACION",
@@ -595,6 +643,34 @@ export const MOCK_TEMPLATES: MockInspectionTemplate[] = [
       SECTION_INSPECCION_VISUAL,
       SECTION_REDLINE,
       SECTION_IMPERMEABILIZACION,
+      SECTION_FIRMAS,
+    ],
+  },
+  {
+    id: "tpl-mec-006",
+    code: "P_MEC_006",
+    name: "Válvula Manual",
+    discipline: "Mecánica / Proceso",
+    sections: [
+      SECTION_DATOS_GENERALES,
+      SECTION_INSPECCION_VISUAL,
+      SECTION_REDLINE,
+      SECTION_VALVULA,
+      SECTION_FIRMAS,
+    ],
+  },
+  {
+    id: "tpl-mec-007",
+    code: "P_MEC_007",
+    name: "Válvula Actuada / Motorizada",
+    discipline: "Mecánica / I&C",
+    sections: [
+      SECTION_DATOS_GENERALES,
+      SECTION_INSPECCION_VISUAL,
+      SECTION_REDLINE,
+      SECTION_VALVULA,
+      SECTION_ACTUADOR,
+      SECTION_LOOP_CHECK,
       SECTION_FIRMAS,
     ],
   },
@@ -918,7 +994,7 @@ export const MOCK_EQUIPMENTS: Equipment[] = [
 export const MOCK_EQUIPMENT_TEMPLATES: EquipmentTemplateAssignment[] = [
   { equipmentId: "eq-bba-001", templateId: "tpl-mec-002" }, // Bomba → P_MEC_002
   { equipmentId: "eq-mtr-002", templateId: "tpl-mec-001" }, // Motor → P_MEC_001
-  { equipmentId: "eq-vlv-003", templateId: "tpl-mec-002" }, // Válvula → P_MEC_002
+  { equipmentId: "eq-vlv-003", templateId: "tpl-mec-006" }, // Válvula → P_MEC_006
   { equipmentId: "eq-ft-101",  templateId: "tpl-ic-001"  }, // FT → P_IC_001
   { equipmentId: "eq-pt-201",  templateId: "tpl-ic-001"  }, // PT → P_IC_001
   { equipmentId: "eq-plc-001", templateId: "tpl-ele-001" }, // PLC → P_ELE_001
