@@ -291,7 +291,7 @@ export default function PlantMapPage() {
                 <iframe
                   src="/ldc-scada.html"
                   style={{ flex: 1, width: '100%', border: 'none', display: 'block' }}
-                  title="SCADA PLANTA DE GAS LDC"
+                  title="SCADA ANAEROBIO DE BIOGAS LDC"
                 />
               ) : (
                 <PlantEquipmentView projectId={projectId} embedded />

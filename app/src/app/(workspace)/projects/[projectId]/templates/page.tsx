@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useCallback } from "react";
-import { useParams } from "next/navigation";
-import { X, Plus, Search, Loader2, Layers, ChevronDown, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { X, Plus, Search, Loader2, Layers, ChevronDown, ChevronLeft, ChevronRight, AlertCircle, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useFormTemplates,
@@ -496,6 +496,7 @@ function OriginLegend() {
 export default function TemplatesPage() {
   const params    = useParams() as { projectId: string };
   const projectId = params.projectId;
+  const router    = useRouter();
 
   const [activeTab, setActiveTab] = useState<Tab>("tipo");
 
@@ -553,9 +554,18 @@ export default function TemplatesPage() {
                         <p className="text-[11px] font-mono font-bold text-slate-200">{t.key}</p>
                         <p className="text-[10px] text-slate-500 leading-tight mt-0.5 truncate">{t.name}</p>
                       </div>
-                      {ft?.test_type && (
-                        <span className="text-[8px] text-slate-600 flex-shrink-0 mt-0.5 font-mono">{ft.test_type}</span>
-                      )}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {ft?.test_type && (
+                          <span className="text-[8px] text-slate-600 mt-0.5 font-mono">{ft.test_type}</span>
+                        )}
+                        <button
+                          onClick={() => router.push(`/projects/${projectId}/templates/configure/${t.id}`)}
+                          title="Configurar secciones y campos"
+                          className="p-1 rounded text-slate-400 hover:text-blue-400 hover:bg-slate-700 transition-colors"
+                        >
+                          <Settings2 size={14} />
+                        </button>
+                      </div>
                     </div>
                     {ft?.project_id === null && (
                       <span className="text-[8px] text-slate-700">global</span>

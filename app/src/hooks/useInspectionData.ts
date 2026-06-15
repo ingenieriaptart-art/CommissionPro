@@ -112,14 +112,18 @@ export function useInspectionTemplate(templateId: string) {
 
       const sectionIds: string[] = sectionRows.map((s: any) => s.section_id as string);
 
-      // 3. is_universal por sección
+      // 3. is_universal + is_active por sección
       const { data: sectionMeta } = await supabase
         .from("template_sections")
-        .select("id, is_universal")
+        .select("id, is_universal, is_active")
         .in("id", sectionIds);
 
       const universalMap: Record<string, boolean> = {};
-      for (const s of (sectionMeta ?? [])) universalMap[s.id] = s.is_universal;
+      const activeMapSec: Record<string, boolean> = {};
+      for (const s of (sectionMeta ?? [])) {
+        universalMap[s.id] = s.is_universal;
+        activeMapSec[s.id] = s.is_active ?? true;
+      }
 
       // 4. Campos de todas las secciones
       const { data: allFields } = await supabase
@@ -133,12 +137,14 @@ export function useInspectionTemplate(templateId: string) {
         if (!fieldsBySectionId[f.section_id]) fieldsBySectionId[f.section_id] = [];
         fieldsBySectionId[f.section_id].push({
           key:         f.key,
+          _db_id:      f.id,
           label:       f.label,
           type:        f.type as FieldType,
           required:    f.required,
           options:     (f.options as string[]) ?? undefined,
           validations: (f.validations as { unit?: string; min?: number; max?: number }) ?? undefined,
           hint:        f.hint ?? undefined,
+          is_active:   f.is_active ?? true,
         });
       }
 
@@ -148,6 +154,7 @@ export function useInspectionTemplate(templateId: string) {
         code:         s.section_code as string,
         name:         s.section_name as string,
         is_universal: universalMap[s.section_id] ?? false,
+        is_active:    activeMapSec[s.section_id] ?? true,
         fields:       fieldsBySectionId[s.section_id] ?? [],
       }));
 

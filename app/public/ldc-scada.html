@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PLANTA DE GAS LDC — SCADA</title>
+<title>PLANTA DE BIOGAS LDC — SCADA</title>
 <style>
   :root {
     --bg-body:     #0b54a8;
@@ -401,32 +401,38 @@
     border-radius:6px; padding:10px 18px; font-size:12px; font-weight:bold;
     align-items:center; gap:8px;
   }
+
+  /* ── UNIFILAR POTENCIA ── */
+  #view-main{position:relative;overflow:hidden;background:#040C18;}
+  #uni-canvas{position:absolute;transform-origin:0 0;background:#040C18;}
+  #uni-arr{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
+  .blk{position:absolute;border-radius:6px;border:1.5px solid;padding:7px 10px;text-align:center;}
+  .blk-label{font-size:11px;font-weight:bold;letter-spacing:0.5px;line-height:1.2;}
+  .blk-sub{font-size:9px;margin-top:3px;opacity:0.55;line-height:1.3;font-family:system-ui,sans-serif;}
+  .blk.bus{border-radius:3px;display:flex;align-items:center;justify-content:center;}
+  .blk.bus .blk-label{font-size:9px;letter-spacing:1.5px;opacity:0.7;}
+  .p-mt  {background:#2e1065;border-color:#7c3aed;color:#ddd6fe;}
+  .p-n   {background:#0c1a3a;border-color:#1d4ed8;color:#93c5fd;}
+  .p-e   {background:#2c0a00;border-color:#c2410c;color:#fed7aa;}
+  .p-ccm1{background:#0c2340;border-color:#38bdf8;color:#bae6fd;}
+  .p-ccm2{background:#2c1400;border-color:#f97316;color:#fed7aa;}
+  .p-aux {background:#0f1e30;border-color:#475569;color:#94a3b8;}
+  .p-tf  {background:#1c1400;border-color:#ca8a04;color:#fef08a;}
+  .sec{position:absolute;font-size:8px;font-weight:bold;letter-spacing:2px;color:#1e3a5f;text-transform:uppercase;pointer-events:none;}
+  .uni-leg{display:flex;align-items:center;gap:5px;font-size:9px;color:#64748b;}
+  .uni-leg-line{width:20px;height:2.5px;border-radius:2px;flex-shrink:0;}
 </style>
 </head>
 <body>
 
 <!-- ═══ HEADER ═══ -->
-<div class="hdr">
-  <div class="hdr-left">
-    <div class="logo">⚡</div>
-    <div class="hdr-title">
-      <div class="plant">PLANTA DE GAS LDC</div>
-      <div class="sub">BEBEDOURO, BRASIL · LDC-001 · BIOTEC</div>
-    </div>
+<div class="hdr" style="justify-content:center; gap:24px;">
+  <div class="logo">⚡</div>
+  <div class="hdr-title" style="text-align:center;">
+    <div class="plant">PLANTA DE BIOGAS</div>
+    <div class="sub">BEBEDOURO, BRASIL · LDC-001 · BIOTEC</div>
   </div>
-  <div class="hdr-right">
-    <div class="hdr-stat">
-      <div class="label">Equipos</div>
-      <div class="val">40 / 40</div>
-    </div>
-    <div class="hdr-stat">
-      <div class="label">CCMs</div>
-      <div class="val">CCM1 · CCM2 · CCM3</div>
-    </div>
-    <div class="hdr-stat">
-      <div class="label">Tensión</div>
-      <div class="val">440/220 V · 60 Hz</div>
-    </div>
+  <div class="hdr-right" style="margin-left:auto;">
     <div class="status-badge">● PRE-COMISIONAMIENTO</div>
     <button class="cfg-gear-btn" onclick="openConfig()">⚙ Unifilares</button>
   </div>
@@ -452,162 +458,149 @@
   <div class="flow-node orange" style="margin-left:8px;"><span class="fn-name">LODOS → CCM2</span><span class="fn-sub">Purga · Deshidratación · Nutrientes</span></div>
 </div>
 
-<!-- ═══════════════════════════════════════════════ -->
-<!--  VISTA PRINCIPAL  →  Subestación + 3 CCM cards  -->
-<!-- ═══════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<!--  VISTA PRINCIPAL  →  Diagrama Eléctrico Unifilar       -->
+<!-- ═══════════════════════════════════════════════════════ -->
 <div id="view-main">
-
-  <!-- ── SUBESTACIÓN (siempre visible, primer nivel) ── -->
-  <div class="sub-strip">
-    <div class="sub-strip-header">
-      <span class="sub-strip-title">⚡ Subestación Eléctrica</span>
-      <div class="sub-strip-line"></div>
-      <span style="font-size:11px;color:#64748b;font-weight:bold">13.8 kV entrada → 440/220V distribución</span>
-      <button class="mt-unif-btn" onclick="openUnifilar('mt',event)">📋 Plano Unifilar MT</button>
-    </div>
-
-    <div class="sub-row-label" style="font-size:10px;font-weight:bold;color:#7c3aed;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding:3px 6px;background:#ede9fe;border-radius:3px;display:inline-block;">
-      ① Media Tensión — 13.8 kV
-    </div>
-    <div class="sub-eq-row" style="margin-bottom:10px;">
-      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
-        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-REMONTE</div>
-        <div class="sub-eq-name">Celda de remonte</div>
-        <div class="sub-eq-data">Acometida MT · 13.8 kV · Entrada</div>
-        <div class="tooltip"><div class="tt-tag">CELDA REMONTE</div><div class="tt-name">Celda de remonte — acometida media tensión</div><div class="tt-row"><span class="k">Tensión:</span><span class="v">13.8 kV</span></div><div class="tt-row"><span class="k">Función:</span><span class="v">Entrada MT desde red pública</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
-        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-MEDIDA</div>
-        <div class="sub-eq-name">Celda de medida</div>
-        <div class="sub-eq-data">kWh · kVArh · Medidor Siemens</div>
-        <div class="tooltip"><div class="tt-tag">CELDA MEDIDA</div><div class="tt-name">Celda de medida MT</div><div class="tt-row"><span class="k">Equipos:</span><span class="v">TC + TP tipo interior</span></div><div class="tt-row"><span class="k">Medidor:</span><span class="v">Electrónico Siemens + telemetría</span></div><div class="tt-row"><span class="k">Registra:</span><span class="v">kWh / kVArh</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
-        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-PROTEC</div>
-        <div class="sub-eq-name">Celda de protección MT</div>
-        <div class="sub-eq-data">Siemens 8MF8SE 13.2 kV · ANSI 50/51</div>
-        <div class="tooltip"><div class="tt-tag">CELDA PROTECCIÓN MT</div><div class="tt-name">Celda de protección en media tensión</div><div class="tt-row"><span class="k">Celda:</span><span class="v">Siemens 8MF8SE 13.2 kV</span></div><div class="tt-row"><span class="k">Relé:</span><span class="v">ANSI 50/51 sobreintensidad</span></div><div class="tt-row"><span class="k">Fuente ctrl:</span><span class="v">24–230V AC/DC</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="border-color:#7c3aed33;overflow:visible;">
-        <div class="sub-eq-tag" style="color:#6d28d9;">CELDA-TRAFO</div>
-        <div class="sub-eq-name">Celda transformador TR-1</div>
-        <div class="sub-eq-data">2000 KVA · 13.8 kV → 440/220V</div>
-        <div class="tooltip"><div class="tt-tag">CELDA TRANSFORMADOR · TR-1</div><div class="tt-name">Celda con transformador principal de potencia</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">2000 KVA</span></div><div class="tt-row"><span class="k">Relación:</span><span class="v">13.8 kV → 440/220V</span></div><div class="tt-row"><span class="k">Cable entrada:</span><span class="v">150 mm² Cu XLPE</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-    </div>
-
-    <div class="sub-row-label" style="font-size:10px;font-weight:bold;color:#0369a1;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;padding:3px 6px;background:#e0f2fe;border-radius:3px;display:inline-block;">
-      ② Baja Tensión — 440 / 220 V
-    </div>
-    <div class="sub-eq-row">
-      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
-        <div class="sub-eq-tag">TR-2</div>
-        <div class="sub-eq-name">Transformador auxiliar</div>
-        <div class="sub-eq-data">150 KVA · 440V → 220/208V · SECO</div>
-        <div class="tooltip"><div class="tt-tag">TR-2</div><div class="tt-name">Transformador auxiliar seco para TGD220</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">150 KVA</span></div><div class="tt-row"><span class="k">Relación:</span><span class="v">440V → 220/208V</span></div><div class="tt-row"><span class="k">Tipo:</span><span class="v">Seco Clase H</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
-        <div class="sub-eq-tag">TGD220</div>
-        <div class="sub-eq-name">Tablero distribución 220V</div>
-        <div class="sub-eq-data">800A · 220/208V · 60Hz · IP55</div>
-        <div class="tooltip"><div class="tt-tag">TGD220</div><div class="tt-name">Tablero general distribución 220V</div><div class="tt-row"><span class="k">Barras:</span><span class="v">800A · 220/208V 60Hz</span></div><div class="tt-row"><span class="k">Alimenta:</span><span class="v">TA_1 · TA_2 · TA_3 · UPS</span></div><div class="tt-row"><span class="k">Fuente:</span><span class="v">TR-2 (150KVA)</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
-        <div class="sub-eq-tag">GED</div>
-        <div class="sub-eq-name">Grupo electrógeno diesel</div>
-        <div class="sub-eq-data">1200 KW · 440V / 3F / 60Hz</div>
-        <div class="tooltip"><div class="tt-tag">GED</div><div class="tt-name">Grupo electrógeno diesel de emergencia</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">1200 KW</span></div><div class="tt-row"><span class="k">Tensión:</span><span class="v">440V / 3F / 60Hz</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
-        <div class="sub-eq-tag">TGE</div>
-        <div class="sub-eq-name">Tablero Gral. Emergencia</div>
-        <div class="sub-eq-data">440V · Alimentado por GED</div>
-        <div class="tooltip"><div class="tt-tag">TGE</div><div class="tt-name">Tablero General de Emergencia</div><div class="tt-row"><span class="k">Tensión:</span><span class="v">440V 3F 60Hz</span></div><div class="tt-row"><span class="k">Fuente:</span><span class="v">Grupo electrógeno GED</span></div><div class="tt-row"><span class="k">Alimenta:</span><span class="v">CCM1E · CCM2E · CCM3E</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
-        <div class="sub-eq-tag">BCOND</div>
-        <div class="sub-eq-name">Banco condensadores</div>
-        <div class="sub-eq-data">~254 KVAR · 10 pasos · Control FP</div>
-        <div class="tooltip"><div class="tt-tag">BCOND</div><div class="tt-name">Banco de condensadores — compensación FP</div><div class="tt-row"><span class="k">Capacidad:</span><span class="v">~254 KVAR</span></div><div class="tt-row"><span class="k">Pasos:</span><span class="v">9+15+30×8 KVAR</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
-        <div class="sub-eq-tag">UPS-1</div>
-        <div class="sub-eq-name">UPS cuarto operaciones</div>
-        <div class="sub-eq-data">6 KVA · Tablero regulado TR_1</div>
-        <div class="tooltip"><div class="tt-tag">UPS-1</div><div class="tt-name">UPS para cuarto de operaciones</div><div class="tt-row"><span class="k">Potencia:</span><span class="v">6 KVA</span></div><div class="tt-row"><span class="k">Alimenta:</span><span class="v">Tablero regulado TR_1</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-      <div class="sub-eq" onclick="clickEquip(this)" style="overflow:visible;">
-        <div class="sub-eq-tag">PAC3220</div>
-        <div class="sub-eq-name">Analizadores de potencia</div>
-        <div class="sub-eq-data">Siemens PAC3220 · 1 por CCM × 3</div>
-        <div class="tooltip"><div class="tt-tag">PAC3220</div><div class="tt-name">Medidor multifuncional Siemens</div><div class="tt-row"><span class="k">Modelo:</span><span class="v">PAC3220 Siemens</span></div><div class="tt-row"><span class="k">Cantidad:</span><span class="v">1 por CCM (×3)</span></div><div class="tt-row"><span class="k">Conexión:</span><span class="v">3P4W · 400A primario</span></div><div class="tt-status pending">● PENDIENTE INSPECCIÓN</div></div>
-      </div>
-    </div>
+  <div id="uni-canvas">
+    <svg id="uni-arr"></svg>
   </div>
-
-  <!-- ── 3 CCM CARDS ── -->
-  <div class="ccm-cards">
-
-    <!-- CARD CCM1 -->
-    <div class="ccm-card blue" onclick="openCcm('1')">
-      <div class="ccm-card-bar"></div>
-      <div class="ccm-card-body">
-        <div class="ccm-card-title">CCM 1 — ALIMENTACIÓN</div>
-        <div class="ccm-card-sub">CCM1N · CCM1E · 1200A · 440/254V 60Hz · VDF PowerFlex 755</div>
-        <div class="ccm-card-stats">
-          <div class="ccm-stat"><div class="ccm-stat-val">4</div><div class="ccm-stat-lbl">Equipos</div></div>
-          <div class="ccm-stat"><div class="ccm-stat-val">580</div><div class="ccm-stat-lbl">KW Total</div></div>
-        </div>
-        <div class="ccm-card-badges">
-          <span class="ccm-badge n">2 Normal</span>
-          <span class="ccm-badge e">2 Emergencia</span>
-        </div>
-        <div class="ccm-card-cta">VER DETALLE →</div>
-        <button class="ccm-unif-btn" onclick="openUnifilar('ccm1',event)">📋 Ver Plano Unifilar</button>
-      </div>
-    </div>
-
-    <!-- CARD CCM3 -->
-    <div class="ccm-card green" onclick="openCcm('3')">
-      <div class="ccm-card-bar"></div>
-      <div class="ccm-card-body">
-        <div class="ccm-card-title">CCM 3 — BIOGÁS + FILTRACIÓN</div>
-        <div class="ccm-card-sub">CCM3N 1200A · CCM3E 2000A · 440/254V 60Hz</div>
-        <div class="ccm-card-stats">
-          <div class="ccm-stat"><div class="ccm-stat-val">17</div><div class="ccm-stat-lbl">Equipos</div></div>
-          <div class="ccm-stat"><div class="ccm-stat-val">811</div><div class="ccm-stat-lbl">KW Total</div></div>
-        </div>
-        <div class="ccm-card-badges">
-          <span class="ccm-badge n">6 Normal</span>
-          <span class="ccm-badge e">11 Emergencia</span>
-        </div>
-        <div class="ccm-card-cta">VER DETALLE →</div>
-        <button class="ccm-unif-btn" onclick="openUnifilar('ccm3',event)">📋 Ver Plano Unifilar</button>
-      </div>
-    </div>
-
-    <!-- CARD CCM2 -->
-    <div class="ccm-card orange" onclick="openCcm('2')">
-      <div class="ccm-card-bar"></div>
-      <div class="ccm-card-body">
-        <div class="ccm-card-title">CCM 2 — LODOS + NUTRIENTES</div>
-        <div class="ccm-card-sub">CCM2N 1200A · CCM2E 200A · 440/254V 60Hz</div>
-        <div class="ccm-card-stats">
-          <div class="ccm-stat"><div class="ccm-stat-val">14</div><div class="ccm-stat-lbl">Equipos</div></div>
-          <div class="ccm-stat"><div class="ccm-stat-val">~76</div><div class="ccm-stat-lbl">KW Activos</div></div>
-        </div>
-        <div class="ccm-card-badges">
-          <span class="ccm-badge n">9 Normal</span>
-          <span class="ccm-badge e">3 Emergencia</span>
-          <span class="ccm-badge f">2 Futuro</span>
-        </div>
-        <div class="ccm-card-cta">VER DETALLE →</div>
-        <button class="ccm-unif-btn" onclick="openUnifilar('ccm2',event)">📋 Ver Plano Unifilar</button>
-      </div>
-    </div>
-
+  <div id="uni-legend" style="position:absolute;bottom:10px;left:12px;display:flex;gap:12px;align-items:center;background:rgba(4,12,24,0.85);padding:6px 14px;border-radius:5px;border:1px solid rgba(255,255,255,0.05);">
+    <div class="uni-leg"><div class="uni-leg-line" style="background:#a78bfa;"></div>&nbsp;13.8 kV MT</div>
+    <div class="uni-leg"><div class="uni-leg-line" style="background:#38bdf8;"></div>&nbsp;440 V Normal</div>
+    <div class="uni-leg"><div class="uni-leg-line" style="background:#f97316;"></div>&nbsp;440 V Emergencia</div>
+    <div class="uni-leg"><div class="uni-leg-line" style="background:#ca8a04;"></div>&nbsp;Transformador</div>
+    <div class="uni-leg"><div class="uni-leg-line" style="background:#c2410c;"></div>&nbsp;220 V Emergencia</div>
+    <div class="uni-leg"><div class="uni-leg-line" style="background:#475569;"></div>&nbsp;220 V Auxiliares</div>
   </div>
 </div><!-- /view-main -->
+<script>
+(function(){
+const UNI_BLOCKS={
+  remonte:{x:120,y:60,w:125,h:68,label:'REMONTE',sub:'Celda remonte 13.8kV',p:'mt'},
+  cmedida:{x:300,y:60,w:125,h:68,label:'C.MEDIDA',sub:'kWh · kVArh · Siemens',p:'mt'},
+  cprotec:{x:480,y:60,w:125,h:68,label:'C.PROTEC',sub:'8MF8SE · ANSI 50/51',p:'mt'},
+  trafo:{x:660,y:55,w:138,h:80,label:'TR-1 TRAFO',sub:'2000 KVA · 13.8→440V',p:'tf'},
+  tgd440:{x:120,y:200,w:135,h:68,label:'TGD440',sub:'Tablero Gral. Dist. 440V',p:'n'},
+  bbtrafo:{x:275,y:228,w:320,h:18,label:'BLINDOBARRA TRAFO PRINCIPAL',sub:'',p:'n',bus:true},
+  ats:{x:610,y:210,w:132,h:64,label:'TRANSFERENCIA',sub:'ATS · 440 V',p:'aux'},
+  bbgen:{x:770,y:228,w:310,h:18,label:'BLINDOBARRA GENERADOR',sub:'',p:'e',bus:true},
+  ged:{x:1090,y:200,w:148,h:68,label:'GED',sub:'Generador Diesel · 1200KW',p:'e'},
+  ccm1n:{x:0,y:310,w:112,h:68,label:'CCM1N',sub:'Alimentación Normal',p:'ccm2'},
+  ccm2n:{x:130,y:310,w:112,h:68,label:'CCM2N',sub:'Lodos Normal',p:'ccm2'},
+  ccm3n:{x:260,y:310,w:112,h:68,label:'CCM3N',sub:'Biogás Normal',p:'ccm2'},
+  bbtge:{x:540,y:300,w:280,h:18,label:'BLINDOBARRA AL TGE440',sub:'',p:'e',bus:true},
+  tge440:{x:620,y:350,w:122,h:68,label:'TGE440',sub:'Tablero Gral. Emergencia',p:'e'},
+  bcond:{x:410,y:490,w:114,h:68,label:'BANCO COND',sub:'~254 KVAR · FP',p:'aux'},
+  ccm1e:{x:550,y:480,w:108,h:62,label:'CCM1E',sub:'Alimentación Emerg.',p:'ccm1'},
+  ccm2e:{x:670,y:490,w:108,h:62,label:'CCM2E',sub:'Lodos Emerg.',p:'ccm1'},
+  ccm3e:{x:800,y:490,w:108,h:62,label:'CCM3E',sub:'Biogás Emerg.',p:'ccm1'},
+  tr2e:{x:940,y:480,w:110,h:62,label:'TR2-E',sub:'Trafo 440→220V Emerg.',p:'e'},
+  tgd220e:{x:940,y:570,w:120,h:62,label:'TGD220-E',sub:'Tablero 220V Emergencia',p:'e'},
+  ups:{x:800,y:690,w:90,h:52,label:'UPS',sub:'UPS 6 KVA',p:'aux'},
+  tr1:{x:800,y:780,w:90,h:52,label:'TR1',sub:'Tablero Regulado',p:'aux'},
+  tn1e:{x:930,y:690,w:86,h:52,label:'TN1-E',sub:'T.Aux.1 Emerg.',p:'aux'},
+  tn2e:{x:1040,y:690,w:86,h:52,label:'TN2-E',sub:'T.Aux.2 Emerg.',p:'aux'},
+  tauxe:{x:1160,y:690,w:86,h:52,label:'TAUX-E',sub:'T.Auxiliares Emerg.',p:'aux'},
+};
+const UNI_CONNS=[
+  {f:'remonte',t:'cmedida',c:'#a78bfa',w:2.5},
+  {f:'cmedida',t:'cprotec',c:'#a78bfa',w:2.5},
+  {f:'cprotec',t:'trafo',c:'#a78bfa',w:2.5},
+  {f:'trafo',t:'tgd440',c:'#ca8a04',w:3,exitBot:true},
+  {f:'tgd440',t:'ccm1n',c:'#38bdf8',w:2},
+  {f:'tgd440',t:'ccm2n',c:'#38bdf8',w:2},
+  {f:'tgd440',t:'ccm3n',c:'#38bdf8',w:2},
+  {f:'tgd440',t:'bbtrafo',c:'#38bdf8',w:2.5},
+  {f:'bbtrafo',t:'ats',c:'#38bdf8',w:2.5},
+  {f:'ats',t:'bbgen',c:'#f97316',w:2.5},
+  {f:'bbgen',t:'ged',c:'#f97316',w:3},
+  {f:'ats',t:'bbtge',c:'#f97316',w:2.5},
+  {f:'bbtge',t:'tge440',c:'#f97316',w:2.5},
+  {f:'tge440',t:'ccm1e',c:'#f97316',w:2},
+  {f:'tge440',t:'ccm2e',c:'#f97316',w:2},
+  {f:'tge440',t:'ccm3e',c:'#f97316',w:2},
+  {f:'tge440',t:'bcond',c:'#f97316',w:2},
+  {f:'tge440',t:'tr2e',c:'#f97316',w:2},
+  {f:'tr2e',t:'tgd220e',c:'#c2410c',w:2},
+  {f:'tgd220e',t:'ups',c:'#c2410c',w:1.5},
+  {f:'tgd220e',t:'tn1e',c:'#475569',w:1.5},
+  {f:'tgd220e',t:'tn2e',c:'#475569',w:1.5},
+  {f:'tgd220e',t:'tauxe',c:'#475569',w:1.5},
+  {f:'ups',t:'tr1',c:'#475569',w:1.5},
+];
+const CW=1280,CH=870;
+const canvas=document.getElementById('uni-canvas');
+const svgEl=document.getElementById('uni-arr');
+canvas.style.width=CW+'px';
+canvas.style.height=CH+'px';
+for(const[id,b]of Object.entries(UNI_BLOCKS)){
+  const div=document.createElement('div');
+  div.className='blk p-'+b.p+(b.bus?' bus':'');
+  div.style.cssText='left:'+b.x+'px;top:'+b.y+'px;width:'+b.w+'px;'+(b.bus?'height:'+b.h+'px;':'');
+  div.innerHTML=b.bus
+    ?'<span class="blk-label">'+b.label+'</span>'
+    :'<div class="blk-label">'+b.label+'</div>'+(b.sub?'<div class="blk-sub">'+b.sub+'</div>':'');
+  canvas.appendChild(div);
+}
+let paths='';
+for(const conn of UNI_CONNS){
+  const fb=UNI_BLOCKS[conn.f],tb=UNI_BLOCKS[conn.t];
+  if(!fb||!tb)continue;
+  const fh=fb.h||20,th=tb.h||20;
+  const fdx=(tb.x+tb.w/2)-(fb.x+fb.w/2);
+  const fdy=(tb.y+th/2)-(fb.y+fh/2);
+  let fx,fy,tx,ty,d;
+  if(conn.exitBot){
+    fx=fb.x+fb.w/2;fy=fb.y+fh;
+    tx=tb.x+tb.w/2;ty=tb.y;
+    const my=(fy+ty)/2;
+    d='M'+fx+','+fy+' L'+fx+','+my+' L'+tx+','+my+' L'+tx+','+ty;
+  }else if(Math.abs(fdx)>Math.abs(fdy)*2){
+    if(fdx>0){fx=fb.x+fb.w;fy=fb.y+fh/2;tx=tb.x;ty=tb.y+th/2;}
+    else{fx=fb.x;fy=fb.y+fh/2;tx=tb.x+tb.w;ty=tb.y+th/2;}
+    const mx=(fx+tx)/2;
+    d='M'+fx+','+fy+' L'+mx+','+fy+' L'+mx+','+ty+' L'+tx+','+ty;
+  }else{
+    if(fdy>0){fx=fb.x+fb.w/2;fy=fb.y+fh;tx=tb.x+tb.w/2;ty=tb.y;}
+    else{fx=fb.x+fb.w/2;fy=fb.y;tx=tb.x+tb.w/2;ty=tb.y+th;}
+    const my=(fy+ty)/2;
+    d='M'+fx+','+fy+' L'+fx+','+my+' L'+tx+','+my+' L'+tx+','+ty;
+  }
+  paths+='<path d="'+d+'" stroke="'+conn.c+'" stroke-width="'+conn.w+'" fill="none" opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>';
+}
+svgEl.innerHTML=paths;
+const secs=[
+  {x:120,y:42,label:'MEDIA TENSIÓN — 13.8 kV'},
+  {x:120,y:184,label:'BAJA TENSIÓN — 440 V'},
+  {x:0,y:295,label:'CCM NORMAL'},
+  {x:540,y:284,label:'CCM EMERGENCIA'},
+  {x:940,y:560,label:'220 V EMERGENCIA'},
+  {x:800,y:674,label:'AUXILIARES EMERGENCIA'},
+];
+for(const s of secs){
+  const el=document.createElement('div');
+  el.className='sec';
+  el.style.cssText='left:'+s.x+'px;top:'+s.y+'px;';
+  el.textContent=s.label;
+  canvas.appendChild(el);
+}
+function unifit(){
+  const wrap=document.getElementById('view-main');
+  wrap.style.height=(window.innerHeight-wrap.getBoundingClientRect().top)+'px';
+  const sw=wrap.clientWidth/CW;
+  const sh=wrap.clientHeight/CH;
+  const s=Math.min(sw,sh,1);
+  const ox=Math.max(0,(wrap.clientWidth-CW*s)/2);
+  const oy=Math.max(0,(wrap.clientHeight-CH*s)/2);
+  canvas.style.transform='scale('+s+')';
+  canvas.style.left=ox+'px';
+  canvas.style.top=oy+'px';
+}
+unifit();
+window.addEventListener('resize',unifit);
+})();
+</script>
 
 
 <!-- ═══════════════════════════════════════════════ -->

@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Check, X, ChevronRight, Circle } from "lucide-react";
+import { Check, X, ChevronRight, Circle, PowerOff } from "lucide-react";
 import type { MockInspectionSection, SectionStatus } from "@/types/inspection";
 
 interface SectionSidebarProps {
@@ -12,7 +12,8 @@ interface SectionSidebarProps {
   onSectionSelect: (index: number) => void;
 }
 
-function SectionIcon({ status, active }: { status: SectionStatus; active: boolean }) {
+function SectionIcon({ status, active, inactive }: { status: SectionStatus; active: boolean; inactive: boolean }) {
+  if (inactive) return <PowerOff size={12} className="text-slate-600" />;
   if (active) return <ChevronRight size={13} className="text-blue-400" />;
   if (status === "complete")    return <Check  size={13} className="text-green-400" />;
   if (status === "failed")      return <X      size={13} className="text-red-400" />;
@@ -20,7 +21,8 @@ function SectionIcon({ status, active }: { status: SectionStatus; active: boolea
   return <Circle size={13} className="text-slate-600" />;
 }
 
-function statusBg(status: SectionStatus, active: boolean): string {
+function statusBg(status: SectionStatus, active: boolean, inactive: boolean): string {
+  if (inactive)                  return "opacity-50 cursor-default";
   if (active)                    return "bg-blue-900/40 border-l-2 border-blue-500";
   if (status === "complete")     return "hover:bg-slate-800/60";
   if (status === "failed")       return "hover:bg-slate-800/60";
@@ -38,7 +40,9 @@ export function SectionSidebar({
   const { totalRequired, totalFilled } = useMemo(() => {
     let req = 0, filled = 0;
     for (const sec of sections) {
+      if (sec.is_active === false) continue;
       for (const f of sec.fields) {
+        if (f.is_active === false) continue;
         if (f.required) {
           req++;
           const v = answers[f.key];
@@ -63,28 +67,33 @@ export function SectionSidebar({
         {sections.map((section, index) => {
           const status = sectionStatus[section.code] ?? "pending";
           const active = index === activeSectionIndex;
+          const inactive = section.is_active === false;
           return (
             <button
               key={section.code}
-              onClick={() => onSectionSelect(index)}
+              onClick={() => !inactive && onSectionSelect(index)}
               className={cn(
                 "w-full text-left px-3 py-2.5 flex items-start gap-2 transition-colors",
-                statusBg(status, active)
+                statusBg(status, active, inactive)
               )}
             >
               <span className="mt-0.5 flex-shrink-0">
-                <SectionIcon status={status} active={active} />
+                <SectionIcon status={status} active={active} inactive={inactive} />
               </span>
               <div className="min-w-0">
                 <p className={cn(
                   "text-xs leading-tight",
-                  active ? "text-blue-300 font-semibold" : "text-slate-300"
+                  inactive       ? "text-slate-600 line-through" :
+                  active         ? "text-blue-300 font-semibold" :
+                                   "text-slate-300"
                 )}>
                   {section.name}
                 </p>
-                {section.is_universal && (
+                {inactive ? (
+                  <p className="text-[9px] text-slate-600 mt-0.5">Desactivada</p>
+                ) : section.is_universal ? (
                   <p className="text-[9px] text-slate-600 mt-0.5">Universal</p>
-                )}
+                ) : null}
               </div>
             </button>
           );

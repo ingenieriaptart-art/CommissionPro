@@ -2,12 +2,14 @@ import type { FieldType, EquipmentStatus } from "@/types";
 
 export interface MockInspectionField {
   key: string;
+  _db_id?: string;          // UUID from section_fields.id (only set for real Supabase rows)
   label: string;
   type: FieldType;
   required: boolean;
   options?: string[];
   validations?: { unit?: string; min?: number; max?: number };
   hint?: string;
+  is_active?: boolean;
 }
 
 export interface MockInspectionSection {
@@ -16,6 +18,7 @@ export interface MockInspectionSection {
   name: string;
   is_universal: boolean;
   fields: MockInspectionField[];
+  is_active?: boolean;
 }
 
 export interface MockInspectionTemplate {
