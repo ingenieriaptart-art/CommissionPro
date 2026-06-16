@@ -21,7 +21,7 @@ interface Props {
 
 const NAV_ITEMS = (projectId: string): NavItem[] => [
   { icon: '⬡',  label: 'Dashboard',         sub: 'Resumen del proyecto',     href: `/projects/${projectId}/dashboard`      },
-  { icon: '⚡',  label: 'SCADA · Potencia',   sub: 'Diagrama planta y CCMs',   href: `/projects/${projectId}/plant-map`      },
+  { icon: '⚡',  label: 'Equipo · Potencia',   sub: 'Diagrama planta y CCMs',   href: `/projects/${projectId}/plant-map`      },
   { icon: '🗺',  label: 'Mapa · Equipos',     sub: 'Lista de todos los equipos', href: `/projects/${projectId}/plant-map?tab=equipos` },
   { icon: '⚙',  label: 'Instrumentos IC02',  sub: 'PLC · RTU · FIT · SC/SO',  href: `/projects/${projectId}/ic02-rtu`       },
   { icon: '✓',  label: 'Pruebas',            sub: 'Precom · FAT · Loop Check', href: `/projects/${projectId}/tests`          },

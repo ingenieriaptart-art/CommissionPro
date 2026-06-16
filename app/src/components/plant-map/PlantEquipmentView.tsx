@@ -72,10 +72,16 @@ function useSubsystemAreaMap(subsystemIds: string[]) {
 
 // ─── TAGs del SCADA Potencia (unifilar eléctrico LDC) ────────────────────────
 const SCADA_POTENCIA_TAGS = new Set([
-  'REMONTE','C-MEDIDA','C-PROTEC','TR-1','TGD440','BB-PRINC',
-  'ATS','BB-GEN','GGD','CCM1N','CCM2N','CCM3N','BB-TGE','TGE440',
-  'BC-COND','CCM1E','CCM2E','CCM3E','TR2-E','TGD220-E',
-  'UPS','TDA-1','TDA-2','TIAE-R',
+  // Media tensión
+  'REMONTE','C-MEDIDA','C-PROTEC',
+  // 440V Normal
+  'TR-1','TGD440','BB-TRAFO','BB-PRINC','ATS','BB-GEN','GGD',
+  // CCM Normal
+  'CCM1N','CCM2N','CCM3N',
+  // Emergencia 440V
+  'BB-TGE','TGE440','BC-COND','CCM1E','CCM2E','CCM3E','TR2-E',
+  // 220V / Auxiliares emergencia
+  'TGD220-E','UPS','TR1-REG','TDA-1','TDA-2','TIAE-R',
 ]);
 
 // ─── Tipos internos ───────────────────────────────────────────────────────────
