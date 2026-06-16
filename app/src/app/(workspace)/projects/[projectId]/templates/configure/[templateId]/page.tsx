@@ -5,14 +5,22 @@ import { ArrowLeft, Loader2, AlertCircle, ChevronDown, ChevronRight, Eye, EyeOff
 import { cn } from "@/lib/utils";
 import { useInspectionTemplate } from "@/hooks/useInspectionData";
 import { useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@/lib/supabase/client";
 import type { MockInspectionSection } from "@/types/inspection";
 
 // ── Toggle call ───────────────────────────────────────────────────────────────
 
 async function patchActive(table: "template_sections" | "section_fields", id: string, is_active: boolean) {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? "";
+
   const res = await fetch("/api/admin/template-config", {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
     body: JSON.stringify({ table, id, is_active }),
   });
   if (!res.ok) {
