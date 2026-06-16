@@ -270,7 +270,7 @@ export default function PlantMapPage() {
                   VISTA:
                 </span>
                 {([
-                  { key: 'unifilar' as const, label: '⚡ SCADA · Potencia' },
+                  { key: 'unifilar' as const, label: '⚡ Potencia' },
                   { key: 'diagrama' as const, label: '🗺 Equipos' },
                 ]).map(tab => {
                   const active = activeTab === tab.key;
