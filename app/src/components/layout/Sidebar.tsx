@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -7,7 +8,7 @@ import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   LayoutDashboard, FolderKanban, Wrench, CheckSquare,
-  AlertTriangle, FileText, Users, Settings, ChevronLeft, Zap, BookOpen,
+  AlertTriangle, FileText, Users, Settings, ChevronLeft, BookOpen,
 } from "lucide-react";
 
 const navItems = [
@@ -36,13 +37,22 @@ export function Sidebar() {
       sidebarOpen ? "w-60" : "w-16"
     )}>
       {/* Logo */}
-      <div className={cn("flex items-center h-16 px-4 border-b border-slate-700 gap-3",
-        !sidebarOpen && "justify-center px-0")}>
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-          <Zap size={16} />
+      <div className={cn("flex items-center h-16 px-3 border-b border-slate-700",
+        sidebarOpen ? "gap-2" : "justify-center px-0")}>
+        <div className={cn(
+          "bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden",
+          sidebarOpen ? "w-8 h-8" : "w-9 h-9"
+        )}>
+          <Image
+            src="/logo-biotec.png"
+            alt="Biotec"
+            width={sidebarOpen ? 28 : 34}
+            height={sidebarOpen ? 28 : 34}
+            className="object-contain"
+          />
         </div>
         {sidebarOpen && (
-          <span className="font-bold text-sm leading-tight">
+          <span className="font-bold text-xs leading-tight text-slate-200 truncate">
             Commission<span className="text-blue-400">Pro</span>
           </span>
         )}

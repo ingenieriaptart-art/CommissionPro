@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface NavItem {
   icon: string;
@@ -146,13 +147,27 @@ export function ScadaHeader({ projectId, hint, title, subtitle, icon }: Props) {
         </div>
       </div>
 
-      <div style={{ marginLeft: 'auto' }}>
+      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
         <div style={{
           background: 'rgba(70,118,170,0.15)', border: '1px solid rgba(70,118,170,0.35)',
           borderRadius: '6px', padding: '5px 12px', fontSize: '11px', color: '#93B5D6',
           fontWeight: '600', letterSpacing: '0.5px',
         }}>
           {hint ?? 'Selecciona un instrumento para iniciar inspección'}
+        </div>
+        <div style={{
+          background: '#FFFFFF', borderRadius: '8px',
+          padding: '4px 10px', display: 'flex', alignItems: 'center',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+          flexShrink: 0,
+        }}>
+          <Image
+            src="/logo-biotec.png"
+            alt="Biotec"
+            width={72}
+            height={32}
+            style={{ objectFit: 'contain', display: 'block' }}
+          />
         </div>
       </div>
     </header>

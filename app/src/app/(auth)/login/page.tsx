@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Zap, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/stores/auth.store";
 import { Input } from "@/components/ui/Input";
@@ -63,8 +64,15 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
-            <Zap size={28} className="text-white" />
+          <div className="w-40 mx-auto mb-4 bg-white rounded-2xl p-3 shadow-lg shadow-black/30">
+            <Image
+              src="/logo-biotec.png"
+              alt="Biotec"
+              width={160}
+              height={72}
+              className="object-contain w-full h-auto"
+              priority
+            />
           </div>
           <h1 className="text-2xl font-bold text-white">CommissionPro</h1>
           <p className="text-slate-400 text-sm mt-1">Plataforma de Comisionamiento Industrial</p>

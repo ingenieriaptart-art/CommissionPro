@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui.store";
@@ -136,6 +137,25 @@ export function ProjectSidebar() {
           <Settings size={20} className="flex-shrink-0" />
           {sidebarOpen && <span>Configuración</span>}
         </Link>
+      </div>
+
+      {/* Biotec logo */}
+      <div className={cn(
+        "flex items-center justify-center px-3 py-2 border-t border-slate-800",
+        !sidebarOpen && "px-0"
+      )}>
+        <div className={cn(
+          "bg-white rounded-lg overflow-hidden flex items-center justify-center",
+          sidebarOpen ? "w-32 h-8 px-2" : "w-9 h-9"
+        )}>
+          <Image
+            src="/logo-biotec.png"
+            alt="Biotec"
+            width={sidebarOpen ? 112 : 32}
+            height={sidebarOpen ? 28 : 32}
+            className="object-contain"
+          />
+        </div>
       </div>
 
       {/* Toggle */}
