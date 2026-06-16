@@ -78,7 +78,34 @@ export function FloatingEquipmentPanel({
     };
   }, [onClose]);
 
-  if (!equipment) return null;
+  // Equipo no encontrado en Supabase — mostrar mini panel de "pendiente de registro"
+  if (!equipment) {
+    const tag = equipmentId.startsWith('__tag__') ? equipmentId.slice(7) : equipmentId;
+    return createPortal(
+      <div
+        ref={panelRef}
+        style={{ position: "fixed", left, top, width: panelWidth, zIndex: 9999 }}
+        className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden"
+      >
+        <div className="flex items-start justify-between p-3 pb-2 border-b border-slate-700">
+          <div>
+            <p className="text-sm font-bold font-mono text-amber-400">{tag}</p>
+            <p className="text-xs text-slate-400 leading-tight mt-0.5">Equipo eléctrico</p>
+          </div>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors p-0.5">
+            <X size={14} />
+          </button>
+        </div>
+        <div className="px-3 py-3">
+          <p className="text-[10px] text-slate-500 leading-relaxed">
+            Este equipo aún no está registrado en el sistema. Registralo en{" "}
+            <span className="text-amber-400 font-medium">Equipos</span> para poder iniciar el precomisionamiento.
+          </p>
+        </div>
+      </div>,
+      document.body
+    );
+  }
 
   const color = equipmentStatusColor(equipment.status);
 

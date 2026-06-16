@@ -114,8 +114,12 @@ export default function PlantMapPage() {
   // ── SCADA iframe: escucha clicks de equipos desde ldc-scada.html ───────────
   const handleEquipmentTagClick = useCallback((tag: string, x: number, y: number) => {
     const eq = equipment.find(e => e.tag === tag);
-    if (!eq) return;
-    setFloatingPanel({ equipmentId: eq.id, x, y, equipmentObj: eq });
+    if (eq) {
+      setFloatingPanel({ equipmentId: eq.id, x, y, equipmentObj: eq });
+    } else {
+      // Equipo eléctrico aún no registrado — mostrar panel con el tag para feedback
+      setFloatingPanel({ equipmentId: `__tag__${tag}`, x, y, equipmentObj: undefined });
+    }
   }, [equipment]);
 
   useEffect(() => {
