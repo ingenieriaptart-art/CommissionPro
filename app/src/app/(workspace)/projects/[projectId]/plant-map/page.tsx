@@ -298,7 +298,7 @@ export default function PlantMapPage() {
                   title="SCADA ANAEROBICO DE BIOGAS LDC"
                 />
               ) : (
-                <PlantEquipmentView projectId={projectId} embedded />
+                <PlantEquipmentView projectId={projectId} embedded potenciaFilter />
               )}
             </div>
           ) : (

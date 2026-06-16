@@ -70,6 +70,14 @@ function useSubsystemAreaMap(subsystemIds: string[]) {
   });
 }
 
+// ─── TAGs del SCADA Potencia (unifilar eléctrico LDC) ────────────────────────
+const SCADA_POTENCIA_TAGS = new Set([
+  'REMONTE','C-MEDIDA','C-PROTEC','TR-1','TGD440','BB-PRINC',
+  'ATS','BB-GEN','GGD','CCM1N','CCM2N','CCM3N','BB-TGE','TGE440',
+  'BC-COND','CCM1E','CCM2E','CCM3E','TR2-E','TGD220-E',
+  'UPS','TDA-1','TDA-2','TIAE-R',
+]);
+
 // ─── Tipos internos ───────────────────────────────────────────────────────────
 interface AreaGroup {
   areaId: string;
@@ -106,9 +114,10 @@ const STYLES = `
 interface Props {
   projectId: string;
   embedded?: boolean;
+  potenciaFilter?: boolean;
 }
 
-export function PlantEquipmentView({ projectId, embedded = false }: Props) {
+export function PlantEquipmentView({ projectId, embedded = false, potenciaFilter = false }: Props) {
   const { data: equipment = [], isLoading } = useEquipment(projectId);
 
   const subsystemIds = useMemo(
@@ -118,9 +127,10 @@ export function PlantEquipmentView({ projectId, embedded = false }: Props) {
 
   const { data: subAreaMap = {} } = useSubsystemAreaMap(subsystemIds);
 
-  const [areaFilter, setAreaFilter] = useState<string | null>(null);
-  const [search, setSearch]         = useState('');
-  const [selectedEq, setSelectedEq] = useState<Equipment | null>(null);
+  const [areaFilter, setAreaFilter]   = useState<string | null>(null);
+  const [potenciaMode, setPotenciaMode] = useState(false);
+  const [search, setSearch]           = useState('');
+  const [selectedEq, setSelectedEq]   = useState<Equipment | null>(null);
 
   // Agrupar por área
   const areaGroups: AreaGroup[] = useMemo(() => {
@@ -143,15 +153,16 @@ export function PlantEquipmentView({ projectId, embedded = false }: Props) {
       .filter(g => !areaFilter || g.areaId === areaFilter)
       .map(g => ({
         ...g,
-        equipment: q
-          ? g.equipment.filter(e =>
-              e.tag.toLowerCase().includes(q) ||
-              e.name.toLowerCase().includes(q) ||
-              (e.service ?? '').toLowerCase().includes(q))
-          : g.equipment,
+        equipment: g.equipment.filter(e => {
+          if (potenciaMode && !SCADA_POTENCIA_TAGS.has(e.tag)) return false;
+          if (!q) return true;
+          return e.tag.toLowerCase().includes(q) ||
+                 e.name.toLowerCase().includes(q) ||
+                 (e.service ?? '').toLowerCase().includes(q);
+        }),
       }))
       .filter(g => g.equipment.length > 0);
-  }, [areaGroups, areaFilter, search]);
+  }, [areaGroups, areaFilter, search, potenciaMode]);
 
   // Stats por área (para resumen footer)
   const areaStats = useMemo(() =>
@@ -225,14 +236,30 @@ export function PlantEquipmentView({ projectId, embedded = false }: Props) {
         <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: '700', letterSpacing: '1.5px', flexShrink: 0, marginRight: '4px' }}>
           ÁREA:
         </span>
-        <button className={`pe-chip${!areaFilter ? ' active' : ''}`} onClick={() => setAreaFilter(null)}>
+        <button
+          className={`pe-chip${!areaFilter && !potenciaMode ? ' active' : ''}`}
+          onClick={() => { setAreaFilter(null); setPotenciaMode(false); }}
+        >
           Todas
         </button>
+        {potenciaFilter && (
+          <button
+            className={`pe-chip${potenciaMode ? ' active' : ''}`}
+            onClick={() => { setPotenciaMode(m => !m); setAreaFilter(null); }}
+            style={potenciaMode ? { borderColor: '#FCD34D', color: '#FCD34D', background: 'rgba(252,211,77,0.14)' } : {}}
+          >
+            ⚡ Potencia
+            <span style={{
+              marginLeft: '5px', fontSize: '9px', fontWeight: '700',
+              background: 'rgba(255,255,255,0.12)', borderRadius: '8px', padding: '0 5px',
+            }}>{SCADA_POTENCIA_TAGS.size}</span>
+          </button>
+        )}
         {areaGroups.map(g => (
           <button
             key={g.areaId}
             className={`pe-chip${areaFilter === g.areaId ? ' active' : ''}`}
-            onClick={() => setAreaFilter(f => f === g.areaId ? null : g.areaId)}
+            onClick={() => { setAreaFilter(f => f === g.areaId ? null : g.areaId); setPotenciaMode(false); }}
           >
             {g.areaName}
             <span style={{
