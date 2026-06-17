@@ -9,6 +9,7 @@ import { DynamicFormSection } from "@/components/inspection/DynamicFormSection";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
 import type { InspectionState, SectionStatus } from "@/types/inspection";
 import type { Equipment } from "@/types";
+import { syncEquipmentStatus, calcFormPct } from "@/hooks/useEquipmentStatusSync";
 
 function buildInitialState(
   equipmentId: string,
@@ -148,7 +149,12 @@ export default function InspectionPage() {
 
   const handleSectionSelect = useCallback((index: number) => {
     setState(prev => prev ? { ...prev, activeSectionIndex: index } : prev);
-  }, []);
+    // Sync progreso al BD al cambiar sección (fire-and-forget)
+    if (state && equipment) {
+      const pct = calcFormPct(state.sectionStatus);
+      if (pct > 0) syncEquipmentStatus(equipment.id, "en_ejecucion", pct);
+    }
+  }, [state, equipment]);
 
   const handleNext = useCallback(() => {
     setState(prev => {
@@ -156,7 +162,12 @@ export default function InspectionPage() {
       const next = Math.min(prev.activeSectionIndex + 1, template.sections.length - 1);
       return { ...prev, activeSectionIndex: next };
     });
-  }, [template]);
+    // Sync progreso al BD al avanzar sección (fire-and-forget)
+    if (state && equipment) {
+      const pct = calcFormPct(state.sectionStatus);
+      if (pct > 0) syncEquipmentStatus(equipment.id, "en_ejecucion", pct);
+    }
+  }, [template, state, equipment]);
 
   const handlePrev = useCallback(() => {
     setState(prev => {
