@@ -6,6 +6,7 @@ import { useEquipment } from '@/hooks/useEquipment';
 import { createClient } from '@/lib/supabase/client';
 import { InstrumentDrawer } from '@/components/ic02-scada/InstrumentDrawer';
 import type { Equipment, EquipmentStatus } from '@/types';
+import { EquipmentProgressBadge } from '@/components/equipment/EquipmentProgressBadge';
 
 // ─── Paleta de colores ────────────────────────────────────────────────────────
 const P = {
@@ -333,6 +334,10 @@ export function PlantEquipmentView({ projectId, embedded = false, potenciaFilter
                           {cfg.label}
                         </span>
                       </div>
+                      <EquipmentProgressBadge
+                        status={eq.status}
+                        formPct={typeof eq.metadata?.form_pct === 'number' ? eq.metadata.form_pct : undefined}
+                      />
                     </div>
                   );
                 })}
