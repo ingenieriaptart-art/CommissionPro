@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
@@ -38,7 +39,7 @@ export function ProjectSidebar() {
   const params    = useParams<{ projectId: string }>();
   const projectId = params.projectId;
   const pathname  = usePathname();
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, setSidebarOpen, sidebarAutoCloseMs } = useUIStore();
   const { isRole } = useAuthStore();
   const { data: uiPrefs } = useAppUIPrefs();
   const setUIPrefs = useSetAppUIPrefs();
@@ -52,6 +53,16 @@ export function ProjectSidebar() {
   // flotante encima del overlay (z-index 9999) del módulo
   const isFullscreen =
     pathname.includes('/plant-map') || pathname.includes('/ic02-rtu');
+
+  // Auto-cierre en módulos fullscreen: se cierra solo después de sidebarAutoCloseMs
+  const autoCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!isFullscreen || !sidebarOpen) return;
+    autoCloseTimer.current = setTimeout(() => setSidebarOpen(false), sidebarAutoCloseMs);
+    return () => {
+      if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
+    };
+  }, [isFullscreen, sidebarOpen, sidebarAutoCloseMs, setSidebarOpen]);
 
   // Cuando el módulo es full-screen y el sidebar está cerrado,
   // mostramos solo un botón ▶ flotante en el borde izquierdo
