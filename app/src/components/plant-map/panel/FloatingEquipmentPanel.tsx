@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { equipmentStatusColor } from "@/components/plant-map/visual/EquipmentOverlay";
 import { useEquipmentInspectionTemplates } from "@/hooks/useInspectionData";
 import type { Equipment } from "@/types";
+import { EquipmentProgressBadge } from "@/components/equipment/EquipmentProgressBadge";
 
 interface FloatingEquipmentPanelProps {
   equipmentId: string;
@@ -139,6 +140,12 @@ export function FloatingEquipmentPanel({
             <span className="text-[10px] text-slate-400">
               {STATUS_LABELS[equipment.status] ?? equipment.status}
             </span>
+          </div>
+          <div className="mt-1 pr-1">
+            <EquipmentProgressBadge
+              status={equipment.status}
+              formPct={typeof equipment.metadata?.form_pct === "number" ? equipment.metadata.form_pct : undefined}
+            />
           </div>
         </div>
         <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors p-0.5">
