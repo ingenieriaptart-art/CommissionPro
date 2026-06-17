@@ -7,20 +7,20 @@ import { useUIStore } from "@/stores/ui.store";
 import { useProject } from "@/hooks/useProject";
 import {
   LayoutDashboard, Wrench, CheckSquare, AlertTriangle,
-  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity, Home, Printer, ChevronRight,
+  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity, Home, Printer, ChevronRight, Eye, EyeOff,
 } from "lucide-react";
 
 const navItems = [
-  { segment: "dashboard",   icon: LayoutDashboard, label: "Dashboard"    },
-  { segment: "equipment",   icon: Wrench,          label: "Equipos"      },
-  { segment: "plant-map",   icon: Map,             label: "Mapa de Planta" },
+  { segment: "dashboard",   icon: LayoutDashboard, label: "Dashboard"         },
+  { segment: "equipment",   icon: Wrench,          label: "Equipos", toggleable: true },
+  { segment: "plant-map",   icon: Map,             label: "Mapa de Planta"    },
   { segment: "ic02-rtu",    icon: Activity,        label: "Instrumentos IC02" },
-  { segment: "tests",       icon: CheckSquare,     label: "Pruebas"      },
-  { segment: "punch",       icon: AlertTriangle,   label: "Punch List"   },
-  { segment: "reports",     icon: Printer,         label: "Informes"     },
-  { segment: "documents",   icon: FileText,        label: "Documentos"   },
-  { segment: "templates",   icon: ClipboardList,   label: "Templates"    },
-  { segment: "engineering", icon: Cpu,             label: "Ing. Digital" },
+  { segment: "tests",       icon: CheckSquare,     label: "Pruebas"           },
+  { segment: "punch",       icon: AlertTriangle,   label: "Punch List"        },
+  { segment: "reports",     icon: Printer,         label: "Informes"          },
+  { segment: "documents",   icon: FileText,        label: "Documentos"        },
+  { segment: "templates",   icon: ClipboardList,   label: "Templates"         },
+  { segment: "engineering", icon: Cpu,             label: "Ing. Digital"      },
 ];
 
 const AVATAR_COLORS = [
@@ -36,7 +36,7 @@ export function ProjectSidebar() {
   const params    = useParams<{ projectId: string }>();
   const projectId = params.projectId;
   const pathname  = usePathname();
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, showEquipmentNav, toggleEquipmentNav } = useUIStore();
   const { data: project } = useProject(projectId);
 
   const base = `/projects/${projectId}`;
@@ -126,7 +126,8 @@ export function ProjectSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-2 overflow-y-auto space-y-0.5 px-2">
-        {navItems.map(({ segment, icon: Icon, label }) => {
+        {navItems.map(({ segment, icon: Icon, label, toggleable }) => {
+          if (toggleable && !showEquipmentNav) return null;
           const href   = `${base}/${segment}`;
           const active = pathname.startsWith(href);
           return (
@@ -147,6 +148,25 @@ export function ProjectSidebar() {
             </Link>
           );
         })}
+
+        {/* Toggle visibilidad de Equipos */}
+        <button
+          onClick={toggleEquipmentNav}
+          title={!sidebarOpen ? (showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos") : undefined}
+          className={cn(
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-colors",
+            "text-slate-600 hover:bg-slate-800 hover:text-slate-300",
+            !sidebarOpen && "justify-center px-0"
+          )}
+        >
+          {showEquipmentNav
+            ? <EyeOff size={15} className="flex-shrink-0" />
+            : <Eye size={15} className="flex-shrink-0" />
+          }
+          {sidebarOpen && (
+            <span>{showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos"}</span>
+          )}
+        </button>
       </nav>
 
       {/* Config */}
