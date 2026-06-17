@@ -7,7 +7,7 @@ import { useUIStore } from "@/stores/ui.store";
 import { useProject } from "@/hooks/useProject";
 import {
   LayoutDashboard, Wrench, CheckSquare, AlertTriangle,
-  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity, Home, Printer,
+  FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity, Home, Printer, ChevronRight,
 } from "lucide-react";
 
 const navItems = [
@@ -41,9 +41,34 @@ export function ProjectSidebar() {
 
   const base = `/projects/${projectId}`;
 
+  // En módulos full-screen (plant-map, ic02-rtu) el sidebar actúa como drawer
+  // flotante encima del overlay (z-index 9999) del módulo
+  const isFullscreen =
+    pathname.includes('/plant-map') || pathname.includes('/ic02-rtu');
+
+  // Cuando el módulo es full-screen y el sidebar está cerrado,
+  // mostramos solo un botón ▶ flotante en el borde izquierdo
+  if (isFullscreen && !sidebarOpen) {
+    return (
+      <button
+        onClick={toggleSidebar}
+        title="Abrir menú"
+        className="fixed top-1/2 left-0 -translate-y-1/2 z-[10001]
+          flex items-center justify-center
+          w-6 h-14 rounded-r-xl
+          bg-slate-800 border border-l-0 border-slate-700
+          text-slate-400 hover:text-white hover:bg-slate-700
+          transition-colors shadow-lg"
+      >
+        <ChevronRight size={14} />
+      </button>
+    );
+  }
+
   return (
     <aside className={cn(
-      "fixed inset-y-0 left-0 z-30 flex flex-col bg-slate-900 text-white transition-all duration-300",
+      "fixed inset-y-0 left-0 flex flex-col bg-slate-900 text-white transition-all duration-300",
+      isFullscreen ? "z-[10001]" : "z-30",
       sidebarOpen ? "w-60" : "w-16"
     )}>
       {/* Project header */}

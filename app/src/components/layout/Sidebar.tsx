@@ -8,24 +8,24 @@ import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   LayoutDashboard, FolderKanban, Wrench, CheckSquare,
-  AlertTriangle, FileText, Users, Settings, ChevronLeft, BookOpen,
+  AlertTriangle, FileText, Users, Settings, ChevronLeft, BookOpen, Eye, EyeOff,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", permission: null },
-  { href: "/projects",  icon: FolderKanban,    label: "Proyectos",  permission: null },
-  { href: "/equipment", icon: Wrench,          label: "Equipos",    permission: null },
-  { href: "/tests",     icon: CheckSquare,     label: "Pruebas",    permission: "test.create" },
-  { href: "/punch",     icon: AlertTriangle,   label: "Punch List", permission: "punch.create" },
-  { href: "/documents", icon: FileText,        label: "Documentos", permission: null },
-  { href: "/help",      icon: BookOpen,        label: "Manual",     permission: null },
-  { href: "/admin/users",icon: Users,          label: "Usuarios",   permission: "user.create" },
-  { href: "/admin/forms",icon: Settings,       label: "Formularios",permission: "form.configure" },
+  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard",   permission: null },
+  { href: "/projects",   icon: FolderKanban,    label: "Proyectos",   permission: null },
+  { href: "/equipment",  icon: Wrench,          label: "Equipos",     permission: null, toggleable: true },
+  { href: "/tests",      icon: CheckSquare,     label: "Pruebas",     permission: "test.create" },
+  { href: "/punch",      icon: AlertTriangle,   label: "Punch List",  permission: "punch.create" },
+  { href: "/documents",  icon: FileText,        label: "Documentos",  permission: null },
+  { href: "/help",       icon: BookOpen,        label: "Manual",      permission: null },
+  { href: "/admin/users",icon: Users,           label: "Usuarios",    permission: "user.create" },
+  { href: "/admin/forms",icon: Settings,        label: "Formularios", permission: "form.configure" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, showEquipmentNav, toggleEquipmentNav } = useUIStore();
   const { hasPermission } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -60,8 +60,9 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 py-4 overflow-y-auto space-y-0.5 px-2">
-        {navItems.map(({ href, icon: Icon, label, permission }) => {
+        {navItems.map(({ href, icon: Icon, label, permission, toggleable }) => {
           if (mounted && permission && !hasPermission(permission)) return null;
+          if (toggleable && !showEquipmentNav) return null;
           const active = pathname.startsWith(href);
           return (
             <Link key={href} href={href}
@@ -78,6 +79,25 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Toggle visibilidad de Equipos */}
+        <button
+          onClick={toggleEquipmentNav}
+          title={!sidebarOpen ? (showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos") : undefined}
+          className={cn(
+            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-colors",
+            "text-slate-600 hover:bg-slate-800 hover:text-slate-300",
+            !sidebarOpen && "justify-center px-0"
+          )}
+        >
+          {showEquipmentNav
+            ? <EyeOff size={15} className="flex-shrink-0" />
+            : <Eye size={15} className="flex-shrink-0" />
+          }
+          {sidebarOpen && (
+            <span>{showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos"}</span>
+          )}
+        </button>
       </nav>
 
       {/* Toggle */}
