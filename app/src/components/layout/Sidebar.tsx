@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
+import { useAppUIPrefs, useSetAppUIPrefs } from "@/hooks/useAppConfig";
 import {
   LayoutDashboard, FolderKanban, Wrench, CheckSquare,
   AlertTriangle, FileText, Users, Settings, ChevronLeft, BookOpen, Eye, EyeOff,
@@ -25,8 +26,12 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarOpen, toggleSidebar, showEquipmentNav, toggleEquipmentNav } = useUIStore();
-  const { hasPermission } = useAuthStore();
+  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { hasPermission, isRole } = useAuthStore();
+  const { data: uiPrefs } = useAppUIPrefs();
+  const setUIPrefs = useSetAppUIPrefs();
+  const showEquipmentNav = uiPrefs?.showEquipmentNav ?? false;
+  const isAdmin = isRole("admin");
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
@@ -80,24 +85,26 @@ export function Sidebar() {
           );
         })}
 
-        {/* Toggle visibilidad de Equipos */}
-        <button
-          onClick={toggleEquipmentNav}
-          title={!sidebarOpen ? (showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos") : undefined}
-          className={cn(
-            "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-colors",
-            "text-slate-600 hover:bg-slate-800 hover:text-slate-300",
-            !sidebarOpen && "justify-center px-0"
-          )}
-        >
-          {showEquipmentNav
-            ? <EyeOff size={15} className="flex-shrink-0" />
-            : <Eye size={15} className="flex-shrink-0" />
-          }
-          {sidebarOpen && (
-            <span>{showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos"}</span>
-          )}
-        </button>
+        {/* Toggle visibilidad de Equipos — solo admin */}
+        {isAdmin && (
+          <button
+            onClick={() => setUIPrefs.mutate({ showEquipmentNav: !showEquipmentNav })}
+            title={!sidebarOpen ? (showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos") : undefined}
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-colors",
+              "text-slate-600 hover:bg-slate-800 hover:text-slate-300",
+              !sidebarOpen && "justify-center px-0"
+            )}
+          >
+            {showEquipmentNav
+              ? <EyeOff size={15} className="flex-shrink-0" />
+              : <Eye size={15} className="flex-shrink-0" />
+            }
+            {sidebarOpen && (
+              <span>{showEquipmentNav ? "Ocultar Equipos" : "Mostrar Equipos"}</span>
+            )}
+          </button>
+        )}
       </nav>
 
       {/* Toggle */}
