@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { InspectionState } from "@/types/inspection";
+import { syncEquipmentStatus } from "@/hooks/useEquipmentStatusSync";
 
 interface SubmitResult {
   testId: string;
@@ -91,6 +92,9 @@ export function useSubmitInspection() {
       if (evidenceRows.length > 0) {
         await supabase.from("evidences").insert(evidenceRows);
       }
+
+      // ── 3. Sync equipo → en_ejecucion + form_pct: 100 ──────────────────────
+      await syncEquipmentStatus(state.equipmentId, "en_ejecucion", 100);
 
       return { testId: test.id };
     } catch (e) {
