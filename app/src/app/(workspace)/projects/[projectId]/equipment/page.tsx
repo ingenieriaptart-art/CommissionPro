@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
-import { Plus, Wrench, Search, ScanSearch, FileOutput } from "lucide-react";
+import { Plus, Wrench, Search, ScanSearch, FileOutput, FileText, X } from "lucide-react";
 import { TagSearchModal } from "@/components/shared/TagSearchModal";
+import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
+import { useAuthStore } from "@/stores/auth.store";
 import type { Equipment, Criticality } from "@/types";
 
 interface Props { params: Promise<{ projectId: string }> }
@@ -20,10 +22,12 @@ export default function EquipmentPage({ params }: Props) {
   const router          = useRouter();
   const { data: equipment = [], isLoading } = useEquipment(projectId);
   const createEquipment = useCreateEquipment();
+  const canEditEquipment = useAuthStore((s) => s.canWrite(projectId, "equipment"));
 
   const [search, setSearch]               = useState(searchParams.get("tag") ?? "");
   const [showForm, setShowForm]           = useState(false);
   const [tagSearchOpen, setTagSearchOpen] = useState(false);
+  const [docsEquipment, setDocsEquipment] = useState<Equipment | null>(null);
 
   const filtered = equipment.filter((e) =>
     e.tag.toLowerCase().includes(search.toLowerCase()) ||
@@ -56,9 +60,11 @@ export default function EquipmentPage({ params }: Props) {
           >
             Listado Inspección
           </Button>
-          <Button icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
-            Nuevo equipo
-          </Button>
+          {canEditEquipment && (
+            <Button icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
+              Nuevo equipo
+            </Button>
+          )}
         </div>
       </div>
 
@@ -99,7 +105,16 @@ export default function EquipmentPage({ params }: Props) {
                   <p className="font-mono text-xs text-blue-600 font-bold">{eq.tag}</p>
                   <p className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{eq.name}</p>
                 </div>
-                <EquipmentStatusBadge status={eq.status} />
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setDocsEquipment(eq)}
+                    title="Documentos técnicos (manual / FAT)"
+                    className="p-1 rounded text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                  >
+                    <FileText size={14} />
+                  </button>
+                  <EquipmentStatusBadge status={eq.status} />
+                </div>
               </div>
               <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <Badge variant={criticalityColor[eq.criticality]}>
@@ -133,6 +148,37 @@ export default function EquipmentPage({ params }: Props) {
         isOpen={tagSearchOpen}
         onClose={() => setTagSearchOpen(false)}
       />
+
+      {/* Panel documentos técnicos */}
+      {docsEquipment && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDocsEquipment(null)} />
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-mono text-xs text-blue-600 font-bold">{docsEquipment.tag}</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{docsEquipment.name}</p>
+              </div>
+              <button onClick={() => setDocsEquipment(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Documentos técnicos</p>
+            <EquipmentPdfUpload
+              equipmentId={docsEquipment.id}
+              field="catalog_url"
+              label="Manual del catálogo (fabricante)"
+              currentUrl={docsEquipment.catalog_url}
+            />
+            <EquipmentPdfUpload
+              equipmentId={docsEquipment.id}
+              field="fat_protocol_url"
+              label="Protocolo de pruebas FAT"
+              currentUrl={docsEquipment.fat_protocol_url}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

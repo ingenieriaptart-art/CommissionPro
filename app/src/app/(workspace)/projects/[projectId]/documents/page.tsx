@@ -12,6 +12,7 @@ import {
   ChevronRight, FolderOpen, RotateCcw, Trash2,
 } from "lucide-react";
 import { useReprocessDocument, useDeleteDocument } from "@/hooks/useDocuments";
+import { useAuthStore } from "@/stores/auth.store";
 import type { Document, DocumentProcessingStatus } from "@/types";
 
 interface Props { params: Promise<{ projectId: string }> }
@@ -56,6 +57,8 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
   const meta       = doc.processing_metadata as { tags_found?: number } | undefined;
   const reprocess  = useReprocessDocument();
   const deleteMut  = useDeleteDocument();
+  const canWrite   = useAuthStore((s) => s.canWrite(projectId, "documents"));
+  const canDelete  = useAuthStore((s) => s.canFull(projectId, "documents"));
 
   return (
     <div className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors rounded-xl">
@@ -89,7 +92,7 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
       </Badge>
 
       {/* Reprocesar */}
-      {status === "completed" && (
+      {status === "completed" && canWrite && (
         <button
           title="Reprocesar documento"
           disabled={reprocess.isPending}
@@ -113,18 +116,20 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
       )}
 
       {/* Eliminar */}
-      <button
-        title="Eliminar documento"
-        disabled={deleteMut.isPending}
-        onClick={() => {
-          if (confirm(`¿Eliminar "${doc.name}"? Esta acción no se puede deshacer.`)) {
-            deleteMut.mutate({ document: doc, projectId });
-          }
-        }}
-        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50 flex-shrink-0"
-      >
-        {deleteMut.isPending ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-      </button>
+      {canDelete && (
+        <button
+          title="Eliminar documento"
+          disabled={deleteMut.isPending}
+          onClick={() => {
+            if (confirm(`¿Eliminar "${doc.name}"? Esta acción no se puede deshacer.`)) {
+              deleteMut.mutate({ document: doc, projectId });
+            }
+          }}
+          className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50 flex-shrink-0"
+        >
+          {deleteMut.isPending ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+        </button>
+      )}
     </div>
   );
 }
@@ -134,6 +139,7 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
 export default function DocumentsPage({ params }: Props) {
   const { projectId } = use(params);
   const { data: docs = [], isLoading } = useDocuments(projectId);
+  const canUpload = useAuthStore((s) => s.canWrite(projectId, "documents"));
 
   const completedCount  = docs.filter((d) => d.processing_status === "completed").length;
   const processingCount = docs.filter((d) => d.processing_status === "processing").length;
@@ -150,13 +156,15 @@ export default function DocumentsPage({ params }: Props) {
       </div>
 
       {/* Upload */}
-      <Card>
-        <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Subir documentos</h3>
-        <DocumentUploader
-          projectId={projectId}
-          onUploaded={() => {/* query se auto-refresca con refetchInterval */}}
-        />
-      </Card>
+      {canUpload && (
+        <Card>
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Subir documentos</h3>
+          <DocumentUploader
+            projectId={projectId}
+            onUploaded={() => {/* query se auto-refresca con refetchInterval */}}
+          />
+        </Card>
+      )}
 
       {/* Stats rápidas */}
       {docs.length > 0 && (
