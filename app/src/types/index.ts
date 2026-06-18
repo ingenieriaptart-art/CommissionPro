@@ -81,13 +81,16 @@ export interface User {
   role?: Role;
 }
 
+export type { Access, ModuleAccessMap } from "@/lib/modules";
+
 export interface ProjectMember {
-  project_id: string;
-  user_id:    string;
-  role_id:    string;
-  added_at:   string;
-  project?:   Pick<Project, "id" | "name">;
-  role?:      Pick<Role,    "id" | "key" | "name">;
+  project_id:     string;
+  user_id:        string;
+  role_id:        string;
+  added_at:       string;
+  module_access?: import("@/lib/modules").ModuleAccessMap;
+  project?:       Pick<Project, "id" | "name">;
+  role?:          Pick<Role,    "id" | "key" | "name">;
 }
 
 export interface Project {
@@ -160,6 +163,8 @@ export interface Equipment {
   power_kw?: number;
   power_installed_kw?: number;
   ccm_panel?: string;
+  catalog_url?: string;
+  fat_protocol_url?: string;
   // sync
   version?: number;
   sync_status?: SyncStatus;
