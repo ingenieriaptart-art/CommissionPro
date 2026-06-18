@@ -83,6 +83,17 @@ export interface User {
 
 export type { Access, ModuleAccessMap } from "@/lib/modules";
 
+export interface AuditRow {
+  id:         number;
+  created_at: string;
+  user:       { full_name: string; email: string } | null;
+  entity:     string;
+  entity_id:  string | null;
+  action:     "INSERT" | "UPDATE" | "DELETE";
+  before:     Record<string, unknown> | null;
+  after:      Record<string, unknown> | null;
+}
+
 export interface ProjectMember {
   project_id:     string;
   user_id:        string;
