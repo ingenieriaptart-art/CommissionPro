@@ -1,6 +1,10 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { EquipmentPdfUpload } from '@/components/equipment/EquipmentPdfUpload';
+import { useEquipmentInspectionTemplates } from '@/hooks/useInspectionData';
 import type { SelectionCardData } from './SelectionCard';
 
 interface Props {
@@ -64,6 +68,32 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
   const pathname = usePathname();
   const { tag, description, signalBadge, signalColor, accentColor, subTags, isFuture, precomStatus = 'pending' } = card;
 
+  // Busca el equipo real en Supabase por tag (necesario para subir PDFs)
+  const { data: realEquipment } = useQuery({
+    queryKey: ['equipment-by-tag', projectId, tag],
+    queryFn: async () => {
+      if (!projectId) return null;
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('equipment')
+        .select('id, catalog_url, fat_protocol_url')
+        .eq('project_id', projectId)
+        .ilike('tag', tag)
+        .maybeSingle();
+      return data as { id: string; catalog_url?: string; fat_protocol_url?: string } | null;
+    },
+    enabled: !!projectId && !!tag,
+    staleTime: 60_000,
+  });
+
+  const realEquipmentId = equipmentIdProp ?? realEquipment?.id;
+
+  // Plantillas reales asignadas al equipo (incluye la CHK del seed); prioriza CHK
+  const { data: assignedTemplates = [] } = useEquipmentInspectionTemplates(realEquipmentId ?? '');
+  const realTemplate =
+    assignedTemplates.find((t) => (t.code ?? '').toUpperCase().startsWith('CHK')) ??
+    assignedTemplates[0];
+
   const precomCfg = {
     pending:      { label: 'PENDIENTE',   color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
     'in-progress':{ label: 'EN PROGRESO', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)'  },
@@ -80,10 +110,16 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
     : 'PLC 1756-L73 · Control Principal';
 
   function handleAction(type: 'inspeccion' | 'precom') {
-    const eqId       = equipmentIdProp ?? tagToEquipmentId(tag);
-    const returnTo   = encodeURIComponent(pathname);
-    const templateId = templateForBadge(signalBadge, tag);
-    router.push(`/equipment/${eqId}/inspection/${templateId}?returnTo=${returnTo}`);
+    const returnTo = encodeURIComponent(pathname);
+    // Si el instrumento existe como equipo real y tiene plantilla asignada (CHK),
+    // usar esa. Si no, caer al comportamiento mock por tipo de señal.
+    if (realEquipmentId && realTemplate) {
+      router.push(`/equipment/${realEquipmentId}/inspection/${realTemplate.id}?returnTo=${returnTo}`);
+    } else {
+      const eqId       = equipmentIdProp ?? tagToEquipmentId(tag);
+      const templateId = templateForBadge(signalBadge, tag);
+      router.push(`/equipment/${eqId}/inspection/${templateId}?returnTo=${returnTo}`);
+    }
     onClose();
   }
 
@@ -236,6 +272,32 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
               </div>
               <div style={{ fontSize: '10px', color: '#A8BFDA', lineHeight: 1.5 }}>{sigDesc}</div>
             </div>
+          </div>
+        )}
+
+        {/* Documentos técnicos */}
+        {realEquipmentId && (
+          <div style={{
+            padding: '14px 20px',
+            borderBottom: '1px solid rgba(255,255,255,0.12)',
+            display: 'flex', flexDirection: 'column', gap: '10px',
+            flexShrink: 0,
+          }}>
+            <div style={{ fontSize: '9px', fontWeight: '700', color: '#93B5D6', letterSpacing: '1.5px' }}>
+              DOCUMENTOS TÉCNICOS
+            </div>
+            <EquipmentPdfUpload
+              equipmentId={realEquipmentId}
+              field="catalog_url"
+              label="Manual del catálogo"
+              currentUrl={realEquipment?.catalog_url}
+            />
+            <EquipmentPdfUpload
+              equipmentId={realEquipmentId}
+              field="fat_protocol_url"
+              label="Protocolo pruebas FAT"
+              currentUrl={realEquipment?.fat_protocol_url}
+            />
           </div>
         )}
 
