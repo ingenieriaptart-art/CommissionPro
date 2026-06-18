@@ -9,11 +9,11 @@ import { useAuthStore } from "@/stores/auth.store";
 import { useAppUIPrefs, useSetAppUIPrefs } from "@/hooks/useAppConfig";
 import {
   LayoutDashboard, FolderKanban, Wrench, CheckSquare,
-  AlertTriangle, FileText, Users, Settings, ChevronLeft, BookOpen, Eye, EyeOff,
+  AlertTriangle, FileText, Users, Settings, ChevronLeft, BookOpen, Eye, EyeOff, ScrollText,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard",   permission: null },
+  { href: "/dashboard",  icon: LayoutDashboard, label: "Dashboard Principal", permission: null },
   { href: "/projects",   icon: FolderKanban,    label: "Proyectos",   permission: null },
   { href: "/equipment",  icon: Wrench,          label: "Equipos",     permission: null, toggleable: true },
   { href: "/tests",      icon: CheckSquare,     label: "Pruebas",     permission: "test.create" },
@@ -21,12 +21,13 @@ const navItems = [
   { href: "/documents",  icon: FileText,        label: "Documentos",  permission: null },
   { href: "/help",       icon: BookOpen,        label: "Manual",      permission: null },
   { href: "/admin/users",icon: Users,           label: "Usuarios",    permission: "user.create" },
+  { href: "/admin/bitacora",icon: ScrollText,   label: "Bitácora",    permission: "permission.configure" },
   { href: "/admin/forms",icon: Settings,        label: "Formularios", permission: "form.configure" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore();
   const { hasPermission, isRole } = useAuthStore();
   const { data: uiPrefs } = useAppUIPrefs();
   const setUIPrefs = useSetAppUIPrefs();
@@ -36,10 +37,28 @@ export function Sidebar() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
+  // Móvil: arrancar con el drawer cerrado y cerrarlo al navegar (no tapar contenido).
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) setSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
   return (
+    <>
+    {/* Backdrop móvil: cierra el drawer al tocar fuera */}
+    {sidebarOpen && (
+      <div
+        className="fixed inset-0 z-30 bg-black/50 md:hidden"
+        onClick={() => setSidebarOpen(false)}
+      />
+    )}
     <aside className={cn(
-      "fixed inset-y-0 left-0 z-30 flex flex-col bg-slate-900 text-white transition-all duration-300",
-      sidebarOpen ? "w-60" : "w-16"
+      "fixed inset-y-0 left-0 z-40 flex flex-col bg-slate-900 text-white transition-transform duration-300",
+      "w-60 md:transition-all",
+      // En móvil el drawer entra/sale con translate; en desktop siempre visible.
+      sidebarOpen ? "translate-x-0" : "-translate-x-full",
+      "md:translate-x-0",
+      sidebarOpen ? "md:w-60" : "md:w-16"
     )}>
       {/* Logo */}
       <div className={cn("flex items-center h-16 px-3 border-b border-slate-700",
@@ -113,5 +132,6 @@ export function Sidebar() {
         <ChevronLeft size={18} className={cn("transition-transform duration-300", !sidebarOpen && "rotate-180")} />
       </button>
     </aside>
+    </>
   );
 }
