@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useUpdateUser, useUserProjects, useRemoveProject, useRoles } from "@/hooks/useUsers";
+import { useUpdateUser, useUserProjects, useRemoveProject, useRoles, useUpdateMembership } from "@/hooks/useUsers";
 import { AssignProjectModal } from "./AssignProjectModal";
-import type { User, UserStatus, Role } from "@/types";
+import { ModuleAccessMatrix } from "./ModuleAccessMatrix";
+import type { User, UserStatus, Role, ModuleAccessMap } from "@/types";
 
 const inputCls = "w-full bg-slate-800 border border-slate-500 rounded-md px-3 py-1.5 text-xs text-slate-100 placeholder-slate-400 focus:outline-none focus:border-blue-400";
 
@@ -22,8 +23,13 @@ interface Props {
 export function UserDetailPanel({ user, onUpdated }: Props) {
   const { data: roles = [] }                           = useRoles();
   const { data: members = [], isLoading: loadingProj } = useUserProjects(user.id);
-  const updateUser    = useUpdateUser(user.id);
-  const removeProject = useRemoveProject(user.id);
+  const updateUser       = useUpdateUser(user.id);
+  const removeProject    = useRemoveProject(user.id);
+  const updateMembership = useUpdateMembership(user.id);
+
+  const isAdminTarget = user.role?.key === "admin";
+  const [expandedProj, setExpandedProj] = useState<string | null>(null);
+  const [draftAccess,  setDraftAccess]  = useState<ModuleAccessMap>({});
 
   const [form, setForm] = useState({
     full_name: user.full_name,
@@ -34,6 +40,24 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
   });
   const [saveError,  setSaveError]  = useState<string | null>(null);
   const [showAssign, setShowAssign] = useState(false);
+
+  const toggleAccess = (projectId: string, current: ModuleAccessMap | undefined) => {
+    if (expandedProj === projectId) {
+      setExpandedProj(null);
+    } else {
+      setExpandedProj(projectId);
+      setDraftAccess({ ...(current ?? {}) });
+    }
+  };
+
+  const saveAccess = async (projectId: string) => {
+    try {
+      await updateMembership.mutateAsync({ projectId, module_access: draftAccess });
+      setExpandedProj(null);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Error al guardar acceso");
+    }
+  };
 
   useEffect(() => {
     setForm({
@@ -174,20 +198,62 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
               const projectName = m.project?.name ?? m.project_id;
               const roleName    = m.role?.name    ?? "";
               const roleKey     = m.role?.key     ?? "";
+              const isOpen = expandedProj === m.project_id;
               return (
                 <div key={m.project_id}
-                  className="flex items-center justify-between bg-slate-800 border border-slate-600 rounded-lg px-3 py-2">
-                  <div>
-                    <p className="text-xs text-slate-200">📁 {projectName}</p>
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 inline-block",
-                      ROLE_COLORS[roleKey] ?? "bg-slate-800 text-slate-400")}>
-                      {roleName}
-                    </span>
+                  className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-slate-200">📁 {projectName}</p>
+                      <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 inline-block",
+                        ROLE_COLORS[roleKey] ?? "bg-slate-800 text-slate-400")}>
+                        {roleName}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => toggleAccess(m.project_id, m.module_access)}
+                        className={cn(
+                          "flex items-center gap-1 text-[10px] px-2 py-1 rounded-md border transition-colors",
+                          isOpen
+                            ? "bg-blue-900 text-blue-200 border-blue-600"
+                            : "bg-slate-700 text-slate-300 border-slate-500 hover:border-blue-500"
+                        )}>
+                        <SlidersHorizontal size={11} />
+                        Acceso por módulo
+                        <ChevronDown size={11} className={cn("transition-transform", isOpen && "rotate-180")} />
+                      </button>
+                      <button onClick={() => handleRemoveProject(m.project_id, projectName)}
+                        className="text-[10px] text-red-500 hover:text-red-400 transition-colors">
+                        Remover ✕
+                      </button>
+                    </div>
                   </div>
-                  <button onClick={() => handleRemoveProject(m.project_id, projectName)}
-                    className="text-[10px] text-red-500 hover:text-red-400 transition-colors">
-                    Remover ✕
-                  </button>
+
+                  {isOpen && (
+                    <div className="mt-3 pt-3 border-t border-slate-700">
+                      {isAdminTarget && (
+                        <p className="text-[10px] text-purple-300 bg-purple-950/40 border border-purple-800 rounded-md px-2 py-1.5 mb-2">
+                          Este usuario es <b>Admin global</b>: tiene control total en todo el sistema
+                          sin importar esta matriz.
+                        </p>
+                      )}
+                      <ModuleAccessMatrix
+                        value={draftAccess}
+                        onChange={setDraftAccess}
+                        isAdminTarget={isAdminTarget}
+                      />
+                      <div className="flex justify-end gap-2 mt-3">
+                        <button onClick={() => setExpandedProj(null)}
+                          className="text-[10px] px-3 py-1.5 rounded-md bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600">
+                          Cancelar
+                        </button>
+                        <button onClick={() => saveAccess(m.project_id)} disabled={updateMembership.isPending}
+                          className="text-[10px] px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white font-semibold disabled:opacity-60">
+                          {updateMembership.isPending ? "Guardando…" : "Guardar acceso"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

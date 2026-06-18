@@ -1,7 +1,7 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type { User, Role, ProjectMember } from "@/types";
+import type { User, Role, ProjectMember, ModuleAccessMap } from "@/types";
 
 async function getToken(): Promise<string> {
   const supabase = createClient();
@@ -113,7 +113,9 @@ export function useUpdateUser(userId: string) {
 export function useAssignProject(userId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { project_id: string; role_id: string }): Promise<ProjectMember> => {
+    mutationFn: async (payload: {
+      project_id: string; role_id: string; module_access?: ModuleAccessMap;
+    }): Promise<ProjectMember> => {
       const res = await adminFetch(`/api/admin/users/${userId}/projects`, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -121,6 +123,28 @@ export function useAssignProject(userId: string) {
       if (!res.ok) {
         const { error } = await res.json();
         throw new Error(error ?? "Error al asignar proyecto");
+      }
+      return res.json();
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["user-projects", userId] }),
+  });
+}
+
+/** Edita la jerarquía (role_id) y/o la matriz de acceso (module_access) de una membresía. */
+export function useUpdateMembership(userId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      projectId: string; role_id?: string; module_access?: ModuleAccessMap;
+    }): Promise<ProjectMember> => {
+      const { projectId, ...rest } = payload;
+      const res = await adminFetch(`/api/admin/users/${userId}/projects/${projectId}`, {
+        method: "PATCH",
+        body: JSON.stringify(rest),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error ?? "Error al actualizar acceso");
       }
       return res.json();
     },
