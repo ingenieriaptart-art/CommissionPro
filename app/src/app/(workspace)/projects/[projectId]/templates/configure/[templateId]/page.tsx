@@ -10,7 +10,12 @@ import type { MockInspectionSection } from "@/types/inspection";
 
 // ── Toggle call ───────────────────────────────────────────────────────────────
 
-async function patchActive(table: "template_sections" | "section_fields", id: string, is_active: boolean) {
+async function patchActive(
+  table: "template_sections" | "section_fields",
+  id: string,
+  is_active: boolean,
+  template_id?: string,
+) {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? "";
@@ -21,7 +26,7 @@ async function patchActive(table: "template_sections" | "section_fields", id: st
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
     },
-    body: JSON.stringify({ table, id, is_active }),
+    body: JSON.stringify({ table, id, is_active, template_id }),
   });
   if (!res.ok) {
     const { error } = await res.json().catch(() => ({ error: "Error desconocido" }));
@@ -95,10 +100,12 @@ function FieldRow({
 
 function SectionCard({
   section,
+  templateId,
   onToggleSection,
   onToggleField,
 }: {
   section: MockInspectionSection & { id: string };
+  templateId: string;
   onToggleSection: (id: string, value: boolean) => void;
   onToggleField: (sectionId: string, fieldKey: string, value: boolean) => void;
 }) {
@@ -111,7 +118,7 @@ function SectionCard({
     setLoading(true);
     setError(null);
     try {
-      await patchActive("template_sections", section.id, !active);
+      await patchActive("template_sections", section.id, !active, templateId);
       onToggleSection(section.id, !active);
     } catch (e: any) {
       setError(e.message);
@@ -295,14 +302,16 @@ export default function TemplateConfigurePage() {
         {sections.length > 0 && (
           <>
             <p className="text-[11px] text-slate-600 mb-4 leading-relaxed">
-              Activa o desactiva secciones y campos. Los campos desactivados no aparecen en el formulario
-              de inspección. Las secciones desactivadas se muestran como marcador de posición.
+              Activa o desactiva secciones y campos. El estado de cada <strong>sección</strong> es propio de
+              esta plantilla: desactivar una sección universal (p.ej. Anclaje) aquí no afecta a otros equipos.
+              Los campos desactivados no aparecen en el formulario de inspección.
             </p>
             <div className="space-y-3">
               {sections.map(s => (
                 <SectionCard
                   key={s.id}
                   section={s}
+                  templateId={params.templateId}
                   onToggleSection={handleToggleSection}
                   onToggleField={handleToggleField}
                 />

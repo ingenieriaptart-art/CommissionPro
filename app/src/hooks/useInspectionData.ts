@@ -112,17 +112,21 @@ export function useInspectionTemplate(templateId: string) {
 
       const sectionIds: string[] = sectionRows.map((s: any) => s.section_id as string);
 
-      // 3. is_universal + is_active por sección
+      // 3a. is_universal por sección (metadato global de la sección)
       const { data: sectionMeta } = await supabase
         .from("template_sections")
-        .select("id, is_universal, is_active")
+        .select("id, is_universal")
         .in("id", sectionIds);
 
       const universalMap: Record<string, boolean> = {};
-      const activeMapSec: Record<string, boolean> = {};
       for (const s of (sectionMeta ?? [])) {
         universalMap[s.id] = s.is_universal;
-        activeMapSec[s.id] = s.is_active ?? true;
+      }
+
+      // 3b. is_active POR PLANTILLA: viene resuelto del RPC get_template_sections
+      const activeMapSec: Record<string, boolean> = {};
+      for (const s of sectionRows) {
+        activeMapSec[s.section_id as string] = (s as any).is_active ?? true;
       }
 
       // 4. Campos de todas las secciones
