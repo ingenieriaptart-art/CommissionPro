@@ -1,6 +1,7 @@
 import { ProjectSidebar } from "@/components/layout/ProjectSidebar";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Topbar } from "@/components/layout/Topbar";
+import { ModuleGuard } from "@/components/auth/ModuleGuard";
 
 export default function ProjectWorkspaceLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,7 +10,7 @@ export default function ProjectWorkspaceLayout({ children }: { children: React.R
       <DashboardShell>
         <Topbar />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
+          <ModuleGuard>{children}</ModuleGuard>
         </main>
       </DashboardShell>
     </div>

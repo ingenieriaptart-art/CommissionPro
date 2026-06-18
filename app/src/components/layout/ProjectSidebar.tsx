@@ -8,13 +8,14 @@ import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { useAppUIPrefs, useSetAppUIPrefs } from "@/hooks/useAppConfig";
 import { useProject } from "@/hooks/useProject";
+import { useMyModuleAccess } from "@/hooks/useMyModuleAccess";
 import {
   LayoutDashboard, Wrench, CheckSquare, AlertTriangle,
   FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity, Home, Printer, ChevronRight, Eye, EyeOff,
 } from "lucide-react";
 
 const navItems = [
-  { segment: "dashboard",   icon: LayoutDashboard, label: "Dashboard"         },
+  { segment: "dashboard",   icon: LayoutDashboard, label: "Dashboard LDC"    },
   { segment: "equipment",   icon: Wrench,          label: "Equipos", toggleable: true },
   { segment: "plant-map",   icon: Map,             label: "Mapa de Planta"    },
   { segment: "ic02-rtu",    icon: Activity,        label: "Instrumentos IC02" },
@@ -40,12 +41,18 @@ export function ProjectSidebar() {
   const projectId = params.projectId;
   const pathname  = usePathname();
   const { sidebarOpen, toggleSidebar, setSidebarOpen, sidebarAutoCloseMs } = useUIStore();
-  const { isRole } = useAuthStore();
+  const { isRole, getAccess } = useAuthStore();
   const { data: uiPrefs } = useAppUIPrefs();
   const setUIPrefs = useSetAppUIPrefs();
   const showEquipmentNav = uiPrefs?.showEquipmentNav ?? false;
   const isAdmin = isRole("admin");
   const { data: project } = useProject(projectId);
+  useMyModuleAccess(projectId);
+
+  // El dashboard es la landing y siempre es accesible para un miembro del proyecto.
+  const canSeeModule = (segment: string) =>
+    isAdmin || segment === "dashboard" || getAccess(projectId, segment) !== "none";
+  const canSeeSettings = isAdmin || getAccess(projectId, "settings") !== "none";
 
   const base = `/projects/${projectId}`;
 
@@ -63,6 +70,12 @@ export function ProjectSidebar() {
       if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
     };
   }, [isFullscreen, sidebarOpen, sidebarAutoCloseMs, setSidebarOpen]);
+
+  // Móvil: arrancar con el drawer cerrado y cerrarlo al navegar.
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) setSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // Cuando el módulo es full-screen y el sidebar está cerrado,
   // mostramos solo un botón ▶ flotante en el borde izquierdo
@@ -84,10 +97,22 @@ export function ProjectSidebar() {
   }
 
   return (
+    <>
+    {/* Backdrop móvil: cierra el drawer al tocar fuera */}
+    {sidebarOpen && (
+      <div
+        className={cn("fixed inset-0 bg-black/50 md:hidden", isFullscreen ? "z-[10000]" : "z-30")}
+        onClick={() => setSidebarOpen(false)}
+      />
+    )}
     <aside className={cn(
-      "fixed inset-y-0 left-0 flex flex-col bg-slate-900 text-white transition-all duration-300",
-      isFullscreen ? "z-[10001]" : "z-30",
-      sidebarOpen ? "w-60" : "w-16"
+      "fixed inset-y-0 left-0 flex flex-col bg-slate-900 text-white transition-transform duration-300 md:transition-all",
+      isFullscreen ? "z-[10001]" : "z-40",
+      "w-60",
+      // Móvil: el drawer entra/sale con translate; desktop siempre visible.
+      sidebarOpen ? "translate-x-0" : "-translate-x-full",
+      "md:translate-x-0",
+      sidebarOpen ? "md:w-60" : "md:w-16"
     )}>
       {/* Project header */}
       <div className={cn(
@@ -125,7 +150,7 @@ export function ProjectSidebar() {
           )}
         >
           <Home size={14} className="flex-shrink-0" />
-          {sidebarOpen && <span>Dashboard</span>}
+          {sidebarOpen && <span>Dashboard Principal</span>}
         </Link>
         <Link
           href="/projects"
@@ -146,6 +171,7 @@ export function ProjectSidebar() {
       <nav className="flex-1 py-2 overflow-y-auto space-y-0.5 px-2">
         {navItems.map(({ segment, icon: Icon, label, toggleable }) => {
           if (toggleable && !showEquipmentNav) return null;
+          if (!canSeeModule(segment)) return null;
           const href   = `${base}/${segment}`;
           const active = pathname.startsWith(href);
           return (
@@ -190,6 +216,7 @@ export function ProjectSidebar() {
       </nav>
 
       {/* Config */}
+      {canSeeSettings && (
       <div className="px-2 pb-2 border-t border-slate-800 pt-2">
         <Link
           href={`${base}/settings`}
@@ -203,6 +230,7 @@ export function ProjectSidebar() {
           {sidebarOpen && <span>Configuración</span>}
         </Link>
       </div>
+      )}
 
       {/* Biotec logo */}
       <div className={cn(
@@ -234,5 +262,6 @@ export function ProjectSidebar() {
         )} />
       </button>
     </aside>
+    </>
   );
 }
