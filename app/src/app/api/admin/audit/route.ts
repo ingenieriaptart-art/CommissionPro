@@ -22,10 +22,12 @@ export async function GET(req: NextRequest) {
   const to     = sp.get("to");
   const q      = sp.get("q");
 
+  // NOTA: audit_log.user_id NO tiene FK a users (tabla append-only), así que no se
+  // puede usar el embed de PostgREST. Se resuelven los nombres en una 2ª consulta.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (serviceClient as any)
     .from("audit_log")
-    .select("id, created_at, entity, entity_id, action, before, after, user:users(full_name,email)", { count: "exact" })
+    .select("id, created_at, user_id, entity, entity_id, action, before, after", { count: "exact" })
     .order("created_at", { ascending: false })
     .order("id", { ascending: false });
 
@@ -42,5 +44,31 @@ export async function GET(req: NextRequest) {
   const { data, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ rows: data ?? [], total: count ?? 0, page, pageSize });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const auditRows: any[] = data ?? [];
+
+  // Resolver nombres de usuario (join manual).
+  const ids = [...new Set(auditRows.map((r) => r.user_id).filter(Boolean))];
+  const userMap = new Map<string, { full_name: string; email: string }>();
+  if (ids.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: us } = await (serviceClient as any)
+      .from("users")
+      .select("id, full_name, email")
+      .in("id", ids);
+    for (const u of us ?? []) userMap.set(u.id, { full_name: u.full_name, email: u.email });
+  }
+
+  const rows = auditRows.map((r) => ({
+    id:         r.id,
+    created_at: r.created_at,
+    user:       r.user_id ? (userMap.get(r.user_id) ?? null) : null,
+    entity:     r.entity,
+    entity_id:  r.entity_id,
+    action:     r.action,
+    before:     r.before,
+    after:      r.after,
+  }));
+
+  return NextResponse.json({ rows, total: count ?? 0, page, pageSize });
 }
