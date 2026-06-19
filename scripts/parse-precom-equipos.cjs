@@ -7,7 +7,6 @@
 // vienen de scripts/precom-equipos.config.cjs.
 
 const path = require("path");
-const fs = require("fs");
 const crypto = require("crypto");
 const XLSX = require(path.join(__dirname, "..", "app", "node_modules", "xlsx"));
 const CONFIG = require("./precom-equipos.config.cjs");
@@ -54,16 +53,21 @@ function parseForm(cfg) {
   const rowText = [];
   for (let r = range.s.r; r <= range.e.r; r++) rowText[r] = firstText(ws, r, range);
 
-  // Localizar marcadores.
+  // Localizar marcadores — dos pasadas para evitar que rFooter quede anclado
+  // a un rChecklist parcial detectado dentro del mismo bucle.
   let rChecklist = -1, rPlaca = -1, rFooter = -1;
+  // Pass 1: primer rPlaca y último rChecklist.
   for (let r = range.s.r; r <= range.e.r; r++) {
     const t = rowText[r];
     if (!t) continue;
     if (rPlaca === -1 && RE_PLACA.test(t)) rPlaca = r;
     if (RE_CHECKLIST.test(t)) rChecklist = r;          // última ocurrencia gana
-    if (rChecklist !== -1 && rFooter === -1 && r > rChecklist && RE_FOOTER.test(t)) rFooter = r;
   }
   if (rChecklist === -1) throw new Error(`No se halló 'Check List' en ${cfg.key}`);
+  // Pass 2: primer rFooter a partir de rChecklist+1.
+  for (let r = rChecklist + 1; r <= range.e.r; r++) {
+    if (rowText[r] && RE_FOOTER.test(rowText[r])) { rFooter = r; break; }
+  }
   if (rFooter === -1) rFooter = range.e.r + 1;
 
   const titleSet = new Set(cfg.sectionTitles.map(norm));
