@@ -26,3 +26,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ── Red de seguridad responsive ──────────────────────────────
+   Evita desbordamiento horizontal de la página completa y que
+   medios/elementos rígidos rompan el layout en celular/tablet. */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+/* Palabras/URLs largas no rompen contenedores estrechos */
+p, span, h1, h2, h3, h4, td, th, li, a {
+  overflow-wrap: break-word;
+}
