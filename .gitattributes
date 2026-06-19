@@ -1,0 +1,3 @@
+# Tratar PDFs como binarios — evita corrupción por conversión de fin de línea
+# (core.autocrlf=true podría mutar un PDF clasificado como texto en el checkout)
+*.pdf binary
