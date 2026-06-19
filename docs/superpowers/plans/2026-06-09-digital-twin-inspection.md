@@ -344,7 +344,7 @@ export const MOCK_TEMPLATES: MockInspectionTemplate[] = [
 
 // ─── Mock Equipments (Bojacá) ──────────────────────────────────────────────
 
-const PROJECT_ID = "101d41a1-a197-4f20-9308-2fa07827657b"; // Bojacá
+const PROJECT_ID = "9023a92f-5294-4a20-ac20-1c579662340a"; // Zipaquirá (proyecto principal)
 const SUB_ID_SAL_MAQ = "mock-sub-sala-maquinas";
 const SUB_ID_SAL_ELE = "mock-sub-sala-electrica";
 const NOW = new Date().toISOString();
