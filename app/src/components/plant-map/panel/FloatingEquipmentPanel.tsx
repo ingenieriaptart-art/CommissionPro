@@ -1,11 +1,14 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { X, ExternalLink, Play, Loader2, Activity } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { X, ExternalLink, Play, Loader2, Activity, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { equipmentStatusColor } from "@/components/plant-map/visual/EquipmentOverlay";
 import { useEquipmentInspectionTemplates } from "@/hooks/useInspectionData";
+
+import { createClient } from "@/lib/supabase/client";
 import type { Equipment } from "@/types";
 import { EquipmentProgressBadge } from "@/components/equipment/EquipmentProgressBadge";
 
@@ -54,29 +57,45 @@ export function FloatingEquipmentPanel({
   const router   = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const equipment = equipmentProp;
+  // Fetch fresco del equipo desde Supabase — ignora el prop del padre que puede ser stale
+  const isTag = equipmentId.startsWith("__tag__");
+  const { data: freshEquipment } = useQuery<Equipment | null>({
+    queryKey: ["equipment-panel", equipmentId],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("equipment").select("*").eq("id", equipmentId).maybeSingle();
+      return data as Equipment | null;
+    },
+    enabled: !isTag,
+    staleTime: 0,
+  });
+  const equipment = freshEquipment ?? equipmentProp;
 
   const { data: templates = [], isLoading: templatesLoading } =
     useEquipmentInspectionTemplates(equipmentId);
 
+  const [showUnifilar, setShowUnifilar] = useState(false);
+  const showUnifilarRef = useRef(false);
+
   const panelWidth = 256;
   const viewW = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const viewH = typeof window !== "undefined" ? window.innerHeight : 800;
+  const isMobile = viewW < 640;
   const left  = anchorX + 12 + panelWidth > viewW ? anchorX - panelWidth - 12 : anchorX + 12;
-  const top   = Math.min(anchorY, (typeof window !== "undefined" ? window.innerHeight : 800) - 420);
+  const top   = Math.min(anchorY, viewH - 420);
+
+  // En móvil: hoja inferior a ancho completo con scroll. En desktop: panel anclado.
+  const panelStyle: React.CSSProperties = isMobile
+    ? { position: "fixed", left: 8, right: 8, bottom: 8, maxHeight: "70vh", overflowY: "auto", zIndex: 9999 }
+    : { position: "fixed", left, top, width: panelWidth, zIndex: 9999 };
 
   useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose();
-    }
     function escHandler(e: KeyboardEvent) {
+      if (showUnifilarRef.current) { showUnifilarRef.current = false; setShowUnifilar(false); return; }
       if (e.key === "Escape") onClose();
     }
-    document.addEventListener("mousedown", handler);
     document.addEventListener("keydown", escHandler);
-    return () => {
-      document.removeEventListener("mousedown", handler);
-      document.removeEventListener("keydown", escHandler);
-    };
+    return () => document.removeEventListener("keydown", escHandler);
   }, [onClose]);
 
   // Equipo no encontrado en Supabase — mostrar mini panel de "pendiente de registro"
@@ -85,7 +104,7 @@ export function FloatingEquipmentPanel({
     return createPortal(
       <div
         ref={panelRef}
-        style={{ position: "fixed", left, top, width: panelWidth, zIndex: 9999 }}
+        style={panelStyle}
         className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden"
       >
         <div className="flex items-start justify-between p-3 pb-2 border-b border-slate-700">
@@ -125,9 +144,16 @@ export function FloatingEquipmentPanel({
   }
 
   const panel = (
+    <>
+      {/* Backdrop: cierra el panel al tocar fuera — funciona en móvil y desktop */}
+      <div
+        style={{ position: "fixed", inset: 0, zIndex: 9998 }}
+        onMouseDown={onClose}
+        onTouchStart={onClose}
+      />
     <div
       ref={panelRef}
-      style={{ position: "fixed", left, top, width: panelWidth, zIndex: 9999 }}
+      style={panelStyle}
       className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl overflow-hidden"
     >
       {/* Header */}
@@ -176,6 +202,19 @@ export function FloatingEquipmentPanel({
             <span className="text-[10px] text-slate-300">{equipment.ccm_panel}</span>
           </div>
         )}
+      </div>
+
+      {/* Plano Unifilar */}
+      <div className="px-3 py-2 border-b border-slate-700">
+        <p className="text-[9px] text-slate-500 uppercase tracking-wider mb-1">Plano Unifilar</p>
+        <button
+          onClick={() => { showUnifilarRef.current = true; setShowUnifilar(true); }}
+          className="w-full flex items-center gap-1.5 px-2 py-1.5 bg-blue-900/30 hover:bg-blue-800/40 border border-blue-800/50 hover:border-blue-600 rounded-lg text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          <FileText size={11} />
+          <span className="truncate">Abrir plano unifilar</span>
+          <ExternalLink size={9} className="flex-shrink-0 ml-auto" />
+        </button>
       </div>
 
       {/* Templates */}
@@ -233,7 +272,41 @@ export function FloatingEquipmentPanel({
         </button>
       </div>
     </div>
+    </>
   );
 
-  return typeof document !== "undefined" ? createPortal(panel, document.body) : null;
+  const unifilarOverlay = showUnifilar && typeof document !== "undefined"
+    ? createPortal(
+        <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "#0f172a", display: "flex", flexDirection: "column" }}>
+          <div style={{ padding: "10px 16px", background: "#1e293b", borderBottom: "1px solid #334155", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, gap: 8 }}>
+            <span style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Plano — {equipment.tag}</span>
+            <button
+              onClick={() => window.open(`/unifilares/${equipment.tag}.pdf`, "_blank")}
+              style={{ color: "#60a5fa", background: "none", border: "1px solid #3b82f6", borderRadius: 6, cursor: "pointer", padding: "4px 10px", fontSize: 11, whiteSpace: "nowrap", flexShrink: 0 }}
+            >
+              Abrir PDF
+            </button>
+            <button
+              onClick={() => { showUnifilarRef.current = false; setShowUnifilar(false); }}
+              style={{ color: "#94a3b8", background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0 }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <iframe
+            src={`/unifilares/${equipment.tag}.pdf`}
+            style={{ flex: 1, border: "none", width: "100%", background: "#fff" }}
+            title={`Plano Unifilar ${equipment.tag}`}
+          />
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      {typeof document !== "undefined" ? createPortal(panel, document.body) : null}
+      {unifilarOverlay}
+    </>
+  );
 }

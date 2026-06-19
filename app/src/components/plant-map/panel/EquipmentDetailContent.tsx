@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEquipment } from "@/hooks/useEquipment";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
+import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import type { Equipment } from "@/types";
 
 interface EquipmentDetailContentProps {
@@ -67,6 +68,24 @@ export function EquipmentDetailContent({ projectId, equipmentId }: EquipmentDeta
           </dl>
         </div>
       )}
+
+      <div className="px-4 py-3 border-b border-slate-700 space-y-3">
+        <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+          Documentos técnicos
+        </p>
+        <EquipmentPdfUpload
+          equipmentId={eq.id}
+          field="catalog_url"
+          label="Manual del catálogo"
+          currentUrl={eq.catalog_url}
+        />
+        <EquipmentPdfUpload
+          equipmentId={eq.id}
+          field="fat_protocol_url"
+          label="Protocolo pruebas FAT"
+          currentUrl={eq.fat_protocol_url}
+        />
+      </div>
 
       <div className="p-3">
         <button
