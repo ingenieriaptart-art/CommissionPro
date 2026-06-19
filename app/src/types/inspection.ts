@@ -27,6 +27,8 @@ export interface MockInspectionTemplate {
   name: string;
   discipline: string;
   sections: MockInspectionSection[];
+  revision?: string;
+  _source?: "online" | "offline";
 }
 
 export type SectionStatus = "pending" | "in_progress" | "complete" | "failed";
