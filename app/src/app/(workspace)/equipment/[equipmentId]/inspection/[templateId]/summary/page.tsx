@@ -36,7 +36,7 @@ export default function InspectionSummaryPage() {
   const handleSave = useCallback(async () => {
     if (!state || !equipment?.project_id || !template) return;
 
-    const result = await submit(state, equipment.project_id, template.code);
+    const result = await submit(state, equipment.project_id, template);
     if (!result) return; // error shown via saveError
 
     // Limpiar sesión y volver al plano
