@@ -136,6 +136,7 @@ export function PlantEquipmentView({ projectId, embedded = false, potenciaFilter
 
   const [areaFilter, setAreaFilter]   = useState<string | null>(null);
   const [potenciaMode, setPotenciaMode] = useState(false);
+  const [pidView, setPidView]         = useState<null | 'lodos' | 'biogas'>(null); // visor P&ID
   const [search, setSearch]           = useState('');
   const [selectedEq, setSelectedEq]   = useState<Equipment | null>(null);
 
@@ -244,15 +245,15 @@ export function PlantEquipmentView({ projectId, embedded = false, potenciaFilter
           ÁREA:
         </span>
         <button
-          className={`pe-chip${!areaFilter && !potenciaMode ? ' active' : ''}`}
-          onClick={() => { setAreaFilter(null); setPotenciaMode(false); }}
+          className={`pe-chip${!areaFilter && !potenciaMode && !pidView ? ' active' : ''}`}
+          onClick={() => { setAreaFilter(null); setPotenciaMode(false); setPidView(null); }}
         >
           Todas
         </button>
         {potenciaFilter && (
           <button
             className={`pe-chip${potenciaMode ? ' active' : ''}`}
-            onClick={() => { setPotenciaMode(m => !m); setAreaFilter(null); }}
+            onClick={() => { setPotenciaMode(m => !m); setAreaFilter(null); setPidView(null); }}
             style={potenciaMode ? { borderColor: '#FCD34D', color: '#FCD34D', background: 'rgba(252,211,77,0.14)' } : {}}
           >
             ⚡ Potencia
@@ -266,7 +267,7 @@ export function PlantEquipmentView({ projectId, embedded = false, potenciaFilter
           <button
             key={g.areaId}
             className={`pe-chip${areaFilter === g.areaId ? ' active' : ''}`}
-            onClick={() => { setAreaFilter(f => f === g.areaId ? null : g.areaId); setPotenciaMode(false); }}
+            onClick={() => { setAreaFilter(f => f === g.areaId ? null : g.areaId); setPotenciaMode(false); setPidView(null); }}
           >
             {g.areaName}
             <span style={{
@@ -275,9 +276,42 @@ export function PlantEquipmentView({ projectId, embedded = false, potenciaFilter
             }}>{g.equipment.length}</span>
           </button>
         ))}
+        {potenciaFilter && (
+          <button
+            className={`pe-chip${pidView === 'lodos' ? ' active' : ''}`}
+            onClick={() => { setPidView('lodos'); setAreaFilter(null); setPotenciaMode(false); }}
+            style={pidView === 'lodos' ? { borderColor: '#34D399', color: '#34D399', background: 'rgba(52,211,153,0.14)' } : {}}
+          >
+            📄 P&ID Lodos
+          </button>
+        )}
+        {potenciaFilter && (
+          <button
+            className={`pe-chip${pidView === 'biogas' ? ' active' : ''}`}
+            onClick={() => { setPidView('biogas'); setAreaFilter(null); setPotenciaMode(false); }}
+            style={pidView === 'biogas' ? { borderColor: '#34D399', color: '#34D399', background: 'rgba(52,211,153,0.14)' } : {}}
+          >
+            📄 P&ID Biogas
+          </button>
+        )}
       </div>
 
       {/* ── Contenido principal ── */}
+      {pidView ? (
+        /* Visor de P&ID — iframe con visor PDF nativo del navegador (zoom/scroll) */
+        <div style={{ flex: 1, overflow: 'hidden', background: '#1e1e1e', display: 'flex', flexDirection: 'column' }}>
+          <iframe
+            key={pidView}
+            src={pidView === 'lodos'
+              ? '/pid/pid-lodos-ic01.pdf#zoom=page-width&toolbar=1'
+              : '/pid/pid-biogas-ic02.pdf#zoom=page-width&toolbar=1'}
+            title={pidView === 'lodos'
+              ? 'P&ID Efluente y Lodo — I&C01 (LDC)'
+              : 'P&ID Biogas y Aire — I&C02 (LDC)'}
+            style={{ flex: 1, width: '100%', border: 'none' }}
+          />
+        </div>
+      ) : (
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 8px' }}>
         {filteredGroups.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', paddingTop: '60px', fontSize: '13px' }}>
@@ -346,6 +380,7 @@ export function PlantEquipmentView({ projectId, embedded = false, potenciaFilter
           ))
         )}
       </div>
+      )}
 
       {/* ── Resumen por área ── */}
       <div style={{
