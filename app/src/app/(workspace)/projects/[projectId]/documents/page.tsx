@@ -1,5 +1,5 @@
 "use client";
-import { use } from "react";
+import { use, useState } from "react";
 import { useDocuments } from "@/hooks/useDocuments";
 import { DocumentUploader } from "@/components/engineering/DocumentUploader";
 import { Card } from "@/components/ui/Card";
@@ -9,8 +9,10 @@ import Link from "next/link";
 import {
   FileText, FileType2, FileSpreadsheet, Image, File,
   Loader2, CheckCircle, AlertCircle, Clock,
-  ChevronRight, FolderOpen, RotateCcw, Trash2,
+  ChevronRight, ChevronLeft, FolderOpen, RotateCcw, Trash2,
 } from "lucide-react";
+
+const DOCS_PAGE_SIZE = 20;
 import { useReprocessDocument, useDeleteDocument } from "@/hooks/useDocuments";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Document, DocumentProcessingStatus } from "@/types";
@@ -139,11 +141,15 @@ function DocumentRow({ doc, projectId }: { doc: Document; projectId: string }) {
 export default function DocumentsPage({ params }: Props) {
   const { projectId } = use(params);
   const { data: docs = [], isLoading } = useDocuments(projectId);
-  const canUpload = useAuthStore((s) => s.canWrite(projectId, "documents"));
+  const canUpload   = useAuthStore((s) => s.canWrite(projectId, "documents"));
+  const [docsPage,   setDocsPage]   = useState(1);
 
   const completedCount  = docs.filter((d) => d.processing_status === "completed").length;
   const processingCount = docs.filter((d) => d.processing_status === "processing").length;
   const failedCount     = docs.filter((d) => d.processing_status === "failed").length;
+
+  const totalDocPages = Math.max(1, Math.ceil(docs.length / DOCS_PAGE_SIZE));
+  const pagedDocs     = docs.slice((docsPage - 1) * DOCS_PAGE_SIZE, docsPage * DOCS_PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -199,11 +205,35 @@ export default function DocumentsPage({ params }: Props) {
             <p className="text-sm">Sube el primer documento para comenzar</p>
           </div>
         ) : (
-          <div className="space-y-1 divide-y divide-slate-100 dark:divide-slate-800">
-            {docs.map((doc) => (
-              <DocumentRow key={doc.id} doc={doc} projectId={projectId} />
-            ))}
-          </div>
+          <>
+            <div className="space-y-1 divide-y divide-slate-100 dark:divide-slate-800">
+              {pagedDocs.map((doc) => (
+                <DocumentRow key={doc.id} doc={doc} projectId={projectId} />
+              ))}
+            </div>
+
+            {totalDocPages > 1 && (
+              <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <span>{docs.length} documento(s) · página {docsPage} de {totalDocPages}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={docsPage <= 1}
+                    onClick={() => setDocsPage((p) => p - 1)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+                  >
+                    <ChevronLeft size={13} /> Anterior
+                  </button>
+                  <button
+                    disabled={docsPage >= totalDocPages}
+                    onClick={() => setDocsPage((p) => p + 1)}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+                  >
+                    Siguiente <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </Card>
     </div>

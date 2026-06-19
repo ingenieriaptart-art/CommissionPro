@@ -1,57 +1,71 @@
 "use client";
 import { useState } from "react";
-import { usePunch, useCreatePunch } from "@/hooks/usePunch";
-import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
+import { usePunchPaged, useCreatePunch, PUNCH_PAGE_SIZE } from "@/hooks/usePunch";
+import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { PunchStatusBadge, PunchPriorityBadge } from "@/components/ui/StatusBadge";
 import { fmtDate } from "@/lib/utils";
-import { Plus, AlertTriangle } from "lucide-react";
+import { Plus, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import type { PunchPriority, PunchStatus } from "@/types";
 
 interface PunchListProps { projectId: string; }
 
 export function PunchList({ projectId }: PunchListProps) {
-  const [showForm, setShowForm] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<PunchStatus | "">("");
+  const [showForm,       setShowForm]       = useState(false);
+  const [filterStatus,   setFilterStatus]   = useState<PunchStatus | "">("");
   const [filterPriority, setFilterPriority] = useState<PunchPriority | "">("");
+  const [page,           setPage]           = useState(1);
 
-  const { data: items = [], isLoading } = usePunch(projectId);
+  const { data: result, isLoading, isFetching } = usePunchPaged(projectId, {
+    status:   filterStatus   || undefined,
+    priority: filterPriority || undefined,
+    page,
+    pageSize: PUNCH_PAGE_SIZE,
+  });
+
+  const items      = result?.data ?? [];
+  const total      = result?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PUNCH_PAGE_SIZE));
+
   const createMutation = useCreatePunch();
 
-  const filteredItems = items.filter((i) => {
-    if (filterStatus && i.status !== filterStatus) return false;
-    if (filterPriority && i.priority !== filterPriority) return false;
-    return true;
-  });
+  const resetPage = (setter: (v: string) => void) =>
+    (e: React.ChangeEvent<HTMLSelectElement>) => { setter(e.target.value); setPage(1); };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
           <Select
             options={[
-              { value: "abierto", label: "Abierto" },
+              { value: "abierto",    label: "Abierto"    },
               { value: "en_proceso", label: "En proceso" },
-              { value: "corregido", label: "Corregido" },
-              { value: "cerrado", label: "Cerrado" },
+              { value: "corregido",  label: "Corregido"  },
+              { value: "cerrado",    label: "Cerrado"    },
             ]}
             placeholder="Todo estado"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as PunchStatus | "")}
+            onChange={resetPage(setFilterStatus as (v: string) => void)}
           />
           <Select
             options={[
               { value: "critica", label: "Crítica" },
-              { value: "alta", label: "Alta" },
-              { value: "media", label: "Media" },
-              { value: "baja", label: "Baja" },
+              { value: "alta",    label: "Alta"    },
+              { value: "media",   label: "Media"   },
+              { value: "baja",    label: "Baja"    },
             ]}
             placeholder="Toda prioridad"
             value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value as PunchPriority | "")}
+            onChange={resetPage(setFilterPriority as (v: string) => void)}
           />
+          {!isLoading && (
+            <span className="text-xs text-slate-400">
+              {total} item{total !== 1 ? "s" : ""}
+              {isFetching && !isLoading && " · actualizando…"}
+            </span>
+          )}
         </div>
         <Button icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
           Nuevo Punch
@@ -75,31 +89,57 @@ export function PunchList({ projectId }: PunchListProps) {
         <div className="flex justify-center py-8">
           <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : filteredItems.length === 0 ? (
+      ) : items.length === 0 ? (
         <Card className="text-center py-12">
           <AlertTriangle size={40} className="text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 text-sm">No hay items de punch list</p>
+          <p className="text-slate-500 text-sm">
+            {filterStatus || filterPriority ? "Sin resultados con esos filtros" : "No hay items de punch list"}
+          </p>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filteredItems.map((item) => (
-            <Card key={item.id} className="hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <PunchPriorityBadge priority={item.priority} />
-                    <PunchStatusBadge status={item.status} />
+        <>
+          <div className="space-y-3">
+            {items.map((item) => (
+              <Card key={item.id} className="hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <PunchPriorityBadge priority={item.priority} />
+                      <PunchStatusBadge status={item.status} />
+                    </div>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{item.title}</p>
+                    {item.description && (
+                      <p className="text-sm text-slate-500 mt-1 line-clamp-2">{item.description}</p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-2">Creado {fmtDate(item.created_at)}</p>
                   </div>
-                  <p className="font-medium text-slate-900 dark:text-slate-100">{item.title}</p>
-                  {item.description && (
-                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">{item.description}</p>
-                  )}
-                  <p className="text-xs text-slate-400 mt-2">Creado {fmtDate(item.created_at)}</p>
                 </div>
+              </Card>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>{total} item(s) · página {page} de {totalPages}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+                >
+                  <ChevronLeft size={13} /> Anterior
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+                >
+                  Siguiente <ChevronRight size={13} />
+                </button>
               </div>
-            </Card>
-          ))}
-        </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

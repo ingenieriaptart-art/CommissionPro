@@ -1,9 +1,25 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { localDB, enqueueSync } from "@/lib/db/local";
 import { v4 as uuidv4 } from "uuid";
 import type { PunchItem, PunchPriority, PunchStatus } from "@/types";
+
+export const PUNCH_PAGE_SIZE = 30;
+
+export interface PunchFilters {
+  status?: PunchStatus | "";
+  priority?: PunchPriority | "";
+  page: number;
+  pageSize?: number;
+}
+
+export interface PagedPunch {
+  data: PunchItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 export function usePunch(projectId: string) {
   return useQuery({
@@ -96,5 +112,43 @@ export function useClosePunch() {
   return useMutation({
     mutationFn: ({ id, projectId }: { id: string; projectId: string }) =>
       updatePunch.mutateAsync({ id, projectId, status: "cerrado" as PunchStatus }),
+  });
+}
+
+export function usePunchPaged(projectId: string, filters: PunchFilters) {
+  const { status, priority, page, pageSize = PUNCH_PAGE_SIZE } = filters;
+
+  return useQuery({
+    queryKey: ["punch-paged", projectId, status, priority, page, pageSize],
+    queryFn: async (): Promise<PagedPunch> => {
+      if (navigator.onLine) {
+        const supabase = createClient();
+        let q = supabase
+          .from("punch_items")
+          .select("*", { count: "exact" })
+          .eq("project_id", projectId)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false });
+
+        if (status)   q = q.eq("status",   status);
+        if (priority) q = q.eq("priority", priority);
+
+        const from = (page - 1) * pageSize;
+        q = q.range(from, from + pageSize - 1);
+
+        const { data, error, count } = await q;
+        if (error) throw error;
+        if (data) await localDB.punchItems.bulkPut(data as PunchItem[]);
+        return { data: (data ?? []) as PunchItem[], total: count ?? 0, page, pageSize };
+      } else {
+        let items = await localDB.punchItems.where("project_id").equals(projectId).toArray();
+        if (status)   items = items.filter((i) => i.status   === status);
+        if (priority) items = items.filter((i) => i.priority === priority);
+        items.sort((a, b) => b.created_at.localeCompare(a.created_at));
+        return { data: items, total: items.length, page: 1, pageSize: items.length };
+      }
+    },
+    enabled: !!projectId,
+    placeholderData: keepPreviousData,
   });
 }
