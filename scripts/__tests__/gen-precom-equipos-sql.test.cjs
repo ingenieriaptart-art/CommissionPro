@@ -40,3 +40,8 @@ test("assign: equipment_type_templates por código de tipo", () => {
   assert.match(assign, /code = 'SOPLADOR'/);
   assert.match(assign, /ON CONFLICT .* DO NOTHING/);
 });
+
+test("seed: alcance solo en las 2 plantillas de chiller", () => {
+  const matches = [...seed.matchAll(/'con_instrumentos'|'sin_instrumentos'/g)];
+  assert.strictEqual(matches.length, 2, "alcance debe aparecer exactamente 2 veces");
+});

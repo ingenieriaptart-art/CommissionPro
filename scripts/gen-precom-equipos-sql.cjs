@@ -50,7 +50,7 @@ function genSeed(forms) {
         const vals = s.fields.map((fl, fi) => {
           const fid = detUuid(`fld:${s.code}:${fl.key}`);
           return `  ('${fid}', '${s.sectionId}', ${sqlStr(fl.key)}, ${sqlStr(fl.label)}, ` +
-            `'${fl.type}'::public.field_type, ${fl.required ? "TRUE" : "FALSE"}, ` +
+            `${sqlStr(fl.type)}::public.field_type, ${fl.required ? "TRUE" : "FALSE"}, ` +
             `${jsonb(fl.options)}, ${jsonb(fl.validations)}, ${(fi + 1) * 10})`;
         });
         L.push(vals.join(",\n") + ";");
