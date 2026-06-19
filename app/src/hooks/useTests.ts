@@ -1,9 +1,24 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { localDB, enqueueSync } from "@/lib/db/local";
 import { v4 as uuidv4 } from "uuid";
-import type { Test, ChecklistItem } from "@/types";
+import type { Test, ChecklistItem, TestType } from "@/types";
+
+export const TESTS_PAGE_SIZE = 30;
+
+export interface TestFilters {
+  type?: TestType | "";
+  page: number;
+  pageSize?: number;
+}
+
+export interface PagedTests {
+  data: Test[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 export function useTests(projectId: string) {
   return useQuery({
@@ -100,5 +115,44 @@ export function useSaveChecklist() {
       }
     },
     onSuccess: (_, { testId }) => qc.invalidateQueries({ queryKey: ["tests"] }),
+  });
+}
+
+// Hook paginado para la lista de protocolos.
+// No carga relaciones embebidas (equipment, checklist_items, approvals)
+// para evitar cargar miles de filas en una sola query.
+export function useTestsPaged(projectId: string, filters: TestFilters) {
+  const { type, page, pageSize = TESTS_PAGE_SIZE } = filters;
+
+  return useQuery({
+    queryKey: ["tests-paged", projectId, type, page, pageSize],
+    queryFn: async (): Promise<PagedTests> => {
+      if (navigator.onLine) {
+        const supabase = createClient();
+        let q = supabase
+          .from("tests")
+          .select("*", { count: "exact" })   // sin embeds — solo campos propios
+          .eq("project_id", projectId)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false });
+
+        if (type) q = q.eq("type", type);
+
+        const from = (page - 1) * pageSize;
+        q = q.range(from, from + pageSize - 1);
+
+        const { data, error, count } = await q;
+        if (error) throw error;
+        if (data) await localDB.tests.bulkPut(data as Test[]);
+        return { data: (data ?? []) as Test[], total: count ?? 0, page, pageSize };
+      } else {
+        let items = await localDB.tests.where("project_id").equals(projectId).toArray();
+        if (type) items = items.filter((t) => t.type === type);
+        items.sort((a, b) => b.created_at.localeCompare(a.created_at));
+        return { data: items, total: items.length, page: 1, pageSize: items.length };
+      }
+    },
+    enabled: !!projectId,
+    placeholderData: keepPreviousData,
   });
 }

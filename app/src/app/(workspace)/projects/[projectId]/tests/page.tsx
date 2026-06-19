@@ -1,13 +1,13 @@
 "use client";
 import { use, useState } from "react";
-import { useTests, useCreateTest } from "@/hooks/useTests";
+import { useTestsPaged, useCreateTest, TESTS_PAGE_SIZE } from "@/hooks/useTests";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { TestStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { fmtDate } from "@/lib/utils";
-import { Plus, CheckSquare } from "lucide-react";
+import { Plus, CheckSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import type { TestType } from "@/types";
 
 interface Props { params: Promise<{ projectId: string }> }
@@ -32,19 +32,30 @@ const typeColor: Record<TestType, string> = {
 
 export default function TestsPage({ params }: Props) {
   const { projectId } = use(params);
-  const { data: tests = [], isLoading } = useTests(projectId);
-  const createTest = useCreateTest();
-  const [showForm, setShowForm] = useState(false);
-  const [filterType, setFilterType] = useState<TestType | "">("");
+  const createTest    = useCreateTest();
 
-  const filtered = tests.filter((t) => !filterType || t.type === filterType);
+  const [showForm,    setShowForm]    = useState(false);
+  const [filterType,  setFilterType]  = useState<TestType | "">("");
+  const [page,        setPage]        = useState(1);
+
+  const { data: result, isLoading, isFetching } = useTestsPaged(projectId, {
+    type: filterType || undefined,
+    page,
+    pageSize: TESTS_PAGE_SIZE,
+  });
+
+  const tests      = result?.data ?? [];
+  const total      = result?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / TESTS_PAGE_SIZE));
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Pruebas y Protocolos</h1>
-          <p className="text-slate-500 text-sm mt-1">{filtered.length} protocolo(s)</p>
+          <p className="text-slate-500 text-sm mt-1">
+            {total} protocolo(s){isFetching && !isLoading && " · actualizando…"}
+          </p>
         </div>
         <Button icon={<Plus size={16} />} onClick={() => setShowForm(true)}>
           Nuevo protocolo
@@ -55,7 +66,10 @@ export default function TestsPage({ params }: Props) {
         options={Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l }))}
         placeholder="Todos los tipos"
         value={filterType}
-        onChange={(e) => setFilterType(e.target.value as TestType | "")}
+        onChange={(e) => {
+          setFilterType(e.target.value as TestType | "");
+          setPage(1);
+        }}
       />
 
       {showForm && (
@@ -76,35 +90,62 @@ export default function TestsPage({ params }: Props) {
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : tests.length === 0 ? (
         <Card className="text-center py-16">
           <CheckSquare size={48} className="text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500">No hay protocolos registrados</p>
+          <p className="text-slate-500">
+            {filterType ? "Sin protocolos de ese tipo" : "No hay protocolos registrados"}
+          </p>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((t) => (
-            <Card key={t.id} className="hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeColor[t.type]}`}>
-                      {typeLabel[t.type]}
-                    </span>
-                    <TestStatusBadge status={t.status} />
-                    {t.sync_status === "pending" && (
-                      <Badge variant="warning">Pendiente sync</Badge>
-                    )}
+        <>
+          <div className="space-y-3">
+            {tests.map((t) => (
+              <Card key={t.id} className="hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeColor[t.type]}`}>
+                        {typeLabel[t.type]}
+                      </span>
+                      <TestStatusBadge status={t.status} />
+                      {t.sync_status === "pending" && (
+                        <Badge variant="warning">Pendiente sync</Badge>
+                      )}
+                    </div>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">
+                      {t.code ?? `Protocolo ${t.type}`}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">{fmtDate(t.created_at)}</p>
                   </div>
-                  <p className="font-medium text-slate-900 dark:text-slate-100">
-                    {t.code ?? `Protocolo ${t.type}`}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">{fmtDate(t.created_at)}</p>
                 </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span>{total} protocolo(s) · página {page} de {totalPages}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+                >
+                  <ChevronLeft size={13} /> Anterior
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+                >
+                  Siguiente <ChevronRight size={13} />
+                </button>
               </div>
-            </Card>
-          ))}
-        </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

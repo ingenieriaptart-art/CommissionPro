@@ -1,11 +1,26 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { localDB, enqueueSync } from "@/lib/db/local";
 import { v4 as uuidv4 } from "uuid";
 import type { Equipment } from "@/types";
 
 const PAGE_LIMIT = 500;
+export const EQUIP_PAGE_SIZE = 50;
+
+export interface EquipmentFilters {
+  search?: string;
+  subsystemId?: string;
+  page: number;
+  pageSize?: number;
+}
+
+export interface PagedEquipment {
+  data: Equipment[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 // [A-005 FIX] projectId es SIEMPRE obligatorio para garantizar aislamiento multi-tenant
 export function useEquipment(projectId: string, subsystemId?: string) {
@@ -88,5 +103,49 @@ export function useUpdateEquipment() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["equipment"] }),
+  });
+}
+
+// Hook paginado para la lista de equipos del proyecto.
+// Los callers del plant-map siguen usando useEquipment (carga todos).
+export function useEquipmentPaged(projectId: string, filters: EquipmentFilters) {
+  const { search = "", subsystemId, page, pageSize = EQUIP_PAGE_SIZE } = filters;
+
+  return useQuery({
+    queryKey: ["equipment-paged", projectId, subsystemId, search, page, pageSize],
+    queryFn: async (): Promise<PagedEquipment> => {
+      if (navigator.onLine) {
+        const supabase = createClient();
+        let q = supabase
+          .from("equipment")
+          .select("*", { count: "exact" })
+          .eq("project_id", projectId)
+          .is("deleted_at", null)
+          .order("tag");
+
+        if (subsystemId) q = q.eq("subsystem_id", subsystemId);
+        if (search.trim()) {
+          q = q.or(`tag.ilike.%${search.trim()}%,name.ilike.%${search.trim()}%`);
+        }
+
+        const from = (page - 1) * pageSize;
+        q = q.range(from, from + pageSize - 1);
+
+        const { data, error, count } = await q;
+        if (error) throw error;
+        return { data: (data ?? []) as Equipment[], total: count ?? 0, page, pageSize };
+      } else {
+        let items = await localDB.equipment.where("project_id").equals(projectId).toArray();
+        if (search.trim()) {
+          const q = search.toLowerCase();
+          items = items.filter(
+            (e) => e.tag.toLowerCase().includes(q) || e.name.toLowerCase().includes(q),
+          );
+        }
+        return { data: items, total: items.length, page: 1, pageSize: items.length };
+      }
+    },
+    enabled: !!projectId,
+    placeholderData: keepPreviousData,
   });
 }

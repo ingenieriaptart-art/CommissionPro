@@ -1,14 +1,14 @@
 "use client";
-import { use, useState }   from "react";
+import { use, useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEquipment, useCreateEquipment } from "@/hooks/useEquipment";
+import { useEquipmentPaged, useCreateEquipment, EQUIP_PAGE_SIZE } from "@/hooks/useEquipment";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
-import { Plus, Wrench, Search, ScanSearch, FileOutput, FileText, X } from "lucide-react";
+import { Plus, Wrench, Search, ScanSearch, FileOutput, FileText, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { TagSearchModal } from "@/components/shared/TagSearchModal";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import { useAuthStore } from "@/stores/auth.store";
@@ -20,19 +20,36 @@ export default function EquipmentPage({ params }: Props) {
   const { projectId }   = use(params);
   const searchParams    = useSearchParams();
   const router          = useRouter();
-  const { data: equipment = [], isLoading } = useEquipment(projectId);
-  const createEquipment = useCreateEquipment();
   const canEditEquipment = useAuthStore((s) => s.canWrite(projectId, "equipment"));
 
+  const [inputValue, setInputValue]       = useState(searchParams.get("tag") ?? "");
   const [search, setSearch]               = useState(searchParams.get("tag") ?? "");
+  const [page, setPage]                   = useState(1);
   const [showForm, setShowForm]           = useState(false);
   const [tagSearchOpen, setTagSearchOpen] = useState(false);
   const [docsEquipment, setDocsEquipment] = useState<Equipment | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const filtered = equipment.filter((e) =>
-    e.tag.toLowerCase().includes(search.toLowerCase()) ||
-    e.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // Debounce: aplica el search 350ms después de que el usuario deja de escribir
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearch(inputValue);
+      setPage(1);
+    }, 350);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [inputValue]);
+
+  const createEquipment = useCreateEquipment();
+  const { data: result, isLoading, isFetching } = useEquipmentPaged(projectId, {
+    search,
+    page,
+    pageSize: EQUIP_PAGE_SIZE,
+  });
+
+  const equipment  = result?.data ?? [];
+  const total      = result?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / EQUIP_PAGE_SIZE));
 
   const criticalityColor: Record<Criticality, "danger" | "warning" | "default"> = {
     alta: "danger", media: "warning", baja: "default",
@@ -43,7 +60,9 @@ export default function EquipmentPage({ params }: Props) {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Equipos</h1>
-          <p className="text-slate-500 text-sm mt-1">{filtered.length} equipo(s)</p>
+          <p className="text-slate-500 text-sm mt-1">
+            {total} equipo(s){isFetching && !isLoading && " · actualizando…"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -69,10 +88,10 @@ export default function EquipmentPage({ params }: Props) {
       </div>
 
       <Input
-        placeholder="Buscar por TAG o nombre..."
+        placeholder="Buscar por TAG o nombre…"
         icon={<Search size={16} />}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
       />
 
       {showForm && (
@@ -91,14 +110,16 @@ export default function EquipmentPage({ params }: Props) {
         <div className="flex justify-center py-16">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : equipment.length === 0 ? (
         <Card className="text-center py-16">
           <Wrench size={48} className="text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500">No hay equipos registrados</p>
+          <p className="text-slate-500">
+            {search ? "Sin resultados para esa búsqueda" : "No hay equipos registrados"}
+          </p>
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((eq) => (
+          {equipment.map((eq) => (
             <Card key={eq.id} className="hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -143,6 +164,29 @@ export default function EquipmentPage({ params }: Props) {
           ))}
         </div>
       )}
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-xs text-slate-400">
+          <span>{total} equipo(s) · página {page} de {totalPages}</span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+            >
+              <ChevronLeft size={13} /> Anterior
+            </button>
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 disabled:opacity-40 hover:border-slate-400 transition-colors"
+            >
+              Siguiente <ChevronRight size={13} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <TagSearchModal
         projectId={projectId}
         isOpen={tagSearchOpen}
