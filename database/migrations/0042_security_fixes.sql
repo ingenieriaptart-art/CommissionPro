@@ -9,22 +9,44 @@
 
 BEGIN;
 
--- ─── 1. RLS EN mv_project_stats ─────────────────────────────
--- La vista materializada era visible por cualquier usuario autenticado,
--- sin importar a qué proyectos pertenece. Esto exponía métricas
--- (equipos, pruebas, punch) de proyectos de otros clientes.
+-- ─── 1. ACCESO SEGURO A mv_project_stats ────────────────────
+-- PostgreSQL NO soporta ENABLE ROW LEVEL SECURITY en vistas
+-- materializadas. Solución: renombrar la MV a nombre privado y
+-- crear una vista security_barrier con el nombre original.
+-- El código de la app NO necesita cambios.
 
-ALTER TABLE public.mv_project_stats ENABLE ROW LEVEL SECURITY;
+-- 1a. Renombrar MV al nombre interno
+ALTER MATERIALIZED VIEW public.mv_project_stats
+  RENAME TO _mv_project_stats_raw;
 
-CREATE POLICY "mv_stats_by_membership" ON public.mv_project_stats
-  FOR SELECT USING (
-    public.app_is_admin() OR
-    EXISTS (
-      SELECT 1 FROM public.project_members pm
-      WHERE pm.project_id = mv_project_stats.project_id
-        AND pm.user_id = public.app_current_user_id()
-    )
-  );
+-- 1b. Revocar acceso directo a la MV interna
+REVOKE ALL ON public._mv_project_stats_raw FROM authenticated, anon;
+
+-- 1c. Vista pública con filtro por membresía (security_barrier evita
+--     que el planificador reordene el WHERE y filtre antes de las
+--     condiciones de autorización)
+CREATE VIEW public.mv_project_stats
+  WITH (security_barrier = true) AS
+SELECT *
+FROM public._mv_project_stats_raw mv
+WHERE public.app_is_admin()
+   OR EXISTS (
+     SELECT 1 FROM public.project_members pm
+     WHERE pm.project_id = mv.project_id
+       AND pm.user_id = public.app_current_user_id()
+   );
+
+GRANT SELECT ON public.mv_project_stats TO authenticated;
+
+-- 1d. Actualizar la función de refresh para apuntar al nombre interno
+CREATE OR REPLACE FUNCTION public.refresh_project_stats()
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  REFRESH MATERIALIZED VIEW CONCURRENTLY public._mv_project_stats_raw;
+END;
+$$;
 
 
 -- ─── 2. form_template_sections ──────────────────────────────
@@ -152,8 +174,13 @@ COMMIT;
 -- ============================================================
 -- ROLLBACK:
 -- BEGIN;
--- DROP POLICY IF EXISTS "mv_stats_by_membership"  ON public.mv_project_stats;
--- ALTER TABLE public.mv_project_stats DISABLE ROW LEVEL SECURITY;
+-- DROP VIEW IF EXISTS public.mv_project_stats;
+-- GRANT ALL ON public._mv_project_stats_raw TO authenticated;
+-- ALTER MATERIALIZED VIEW public._mv_project_stats_raw RENAME TO mv_project_stats;
+-- CREATE OR REPLACE FUNCTION public.refresh_project_stats()
+--   RETURNS void LANGUAGE plpgsql AS $$ BEGIN
+--     REFRESH MATERIALIZED VIEW CONCURRENTLY public.mv_project_stats;
+--   END; $$;
 -- DROP POLICY IF EXISTS "fts_select"              ON public.form_template_sections;
 -- DROP POLICY IF EXISTS "equip_templates_select"  ON public.equipment_templates;
 -- DROP POLICY IF EXISTS "equip_templates_write"   ON public.equipment_templates;
