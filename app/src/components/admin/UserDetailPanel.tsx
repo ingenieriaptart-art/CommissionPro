@@ -18,9 +18,10 @@ const ROLE_COLORS: Record<string, string> = {
 interface Props {
   user:      User;
   onUpdated: (user: User) => void;
+  onBack?:   () => void;
 }
 
-export function UserDetailPanel({ user, onUpdated }: Props) {
+export function UserDetailPanel({ user, onUpdated, onBack }: Props) {
   const { data: roles = [] }                           = useRoles();
   const { data: members = [], isLoading: loadingProj } = useUserProjects(user.id);
   const updateUser       = useUpdateUser(user.id);
@@ -107,13 +108,22 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-slate-800">
-      <div className="flex items-start justify-between mb-5">
-        <div>
-          <h2 className="text-base font-bold text-slate-100">{user.full_name}</h2>
-          <p className="text-xs text-slate-300">{user.email}</p>
+    <div className="flex-1 flex flex-col overflow-hidden bg-slate-800 min-w-0">
+      {/* Volver a la lista — solo móvil */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="md:hidden flex items-center gap-1.5 text-xs text-slate-300 hover:text-white bg-slate-700 border-b border-slate-600 px-5 py-2.5 text-left"
+        >
+          ← Volver a usuarios
+        </button>
+      )}
+      <div className="flex flex-wrap items-start justify-between gap-2 p-5 pb-0 md:p-0 md:mb-5">
+        <div className="min-w-0">
+          <h2 className="text-base font-bold text-slate-100 break-words">{user.full_name}</h2>
+          <p className="text-xs text-slate-300 break-all">{user.email}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {user.status !== "active" && (
             <button onClick={() => handleStatusChange("active")}
               className="text-xs px-3 py-1.5 rounded-lg bg-green-900 text-green-300 border border-green-700 hover:bg-green-800 transition-colors">
@@ -138,7 +148,7 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
     <div className="flex-1 overflow-y-auto p-5">
       <form id="user-detail-form" onSubmit={handleSave} className="bg-slate-700 border border-slate-600 rounded-xl p-4 mb-4">
         <p className="text-[10px] text-slate-300 uppercase tracking-wider mb-3">Información del usuario</p>
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-[10px] text-slate-300 mb-1">Nombre completo</label>
             <input value={form.full_name} onChange={set("full_name")} required className={inputCls} />
@@ -202,9 +212,9 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
               return (
                 <div key={m.project_id}
                   className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-slate-200">📁 {projectName}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs text-slate-200 break-words">📁 {projectName}</p>
                       <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 inline-block",
                         ROLE_COLORS[roleKey] ?? "bg-slate-800 text-slate-400")}>
                         {roleName}
@@ -267,7 +277,7 @@ export function UserDetailPanel({ user, onUpdated }: Props) {
     </div>
 
     {/* Barra de acciones fija */}
-    <div className="flex-shrink-0 flex items-center justify-between gap-3 px-5 py-3 bg-slate-700 border-t border-slate-600">
+    <div className="flex-shrink-0 flex flex-wrap items-center justify-between gap-3 px-5 py-3 bg-slate-700 border-t border-slate-600">
       <div className="text-xs text-slate-400">
         Última actualización: {new Date(user.updated_at ?? "").toLocaleDateString("es", { day:"2-digit", month:"short", year:"numeric" })}
       </div>

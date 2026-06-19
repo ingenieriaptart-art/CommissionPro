@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Sun, Moon, LogOut, User } from "lucide-react";
+import { Bell, Sun, Moon, LogOut, User, Menu } from "lucide-react";
 import { useUIStore } from "@/stores/ui.store";
 import { useAuthStore } from "@/stores/auth.store";
 import { SyncIndicator } from "@/components/ui/SyncIndicator";
@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export function Topbar() {
-  const { theme, setTheme } = useUIStore();
+  const { theme, setTheme, toggleSidebar } = useUIStore();
   const { user, clear } = useAuthStore();
   const router = useRouter();
 
@@ -21,6 +21,14 @@ export function Topbar() {
 
   return (
     <header className="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex items-center px-4 gap-3">
+      {/* Hamburguesa — solo móvil: abre/cierra el drawer del sidebar.
+          Estilo de botón explícito (borde + fondo) para que se lea claramente
+          como acción y tenga buen área táctil. */}
+      <button onClick={toggleSidebar}
+        aria-label="Abrir menú lateral"
+        className="md:hidden flex items-center justify-center -ml-1 h-10 w-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition">
+        <Menu size={22} />
+      </button>
       <div className="flex-1" />
       <SyncIndicator />
 

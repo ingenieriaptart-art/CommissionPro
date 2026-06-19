@@ -39,7 +39,7 @@ export function UsersList({ users, roles, selectedId, onSelect, onNew }: Props) 
   });
 
   return (
-    <div className="w-[280px] flex-shrink-0 flex flex-col bg-slate-700 border-r border-slate-600 h-full">
+    <div className="w-full md:w-[280px] md:flex-shrink-0 flex flex-col bg-slate-700 border-r border-slate-600 h-full">
       <div className="p-3 border-b border-slate-600 space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-slate-100">

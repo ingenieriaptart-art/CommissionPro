@@ -6,6 +6,7 @@ import { useUserList, useRoles } from "@/hooks/useUsers";
 import { UsersList }       from "@/components/admin/UsersList";
 import { UserDetailPanel } from "@/components/admin/UserDetailPanel";
 import { CreateUserModal } from "@/components/admin/CreateUserModal";
+import { cn } from "@/lib/utils";
 import type { User } from "@/types";
 
 export default function UsersPage() {
@@ -70,24 +71,33 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Contenido principal */}
+      {/* Contenido principal — patrón maestro/detalle.
+          Móvil: se ve la lista O el detalle (no ambos), para no exprimir el panel.
+          Desktop (md+): ambos lado a lado. */}
       <div className="flex flex-1 overflow-hidden">
-        <UsersList
-          users={users}
-          roles={roles}
-          selectedId={selectedUserId}
-          onSelect={handleSelect}
-          onNew={handleNew}
-        />
+        {/* Lista: full width en móvil; se oculta al abrir un detalle. Siempre visible en desktop. */}
+        <div className={cn(
+          "w-full md:w-auto md:flex",
+          selectedUser ? "hidden md:flex" : "flex"
+        )}>
+          <UsersList
+            users={users}
+            roles={roles}
+            selectedId={selectedUserId}
+            onSelect={handleSelect}
+            onNew={handleNew}
+          />
+        </div>
 
         {selectedUser ? (
           <UserDetailPanel
             key={selectedUser.id}
             user={selectedUser}
             onUpdated={handleUpdated}
+            onBack={() => setSelectedUserId(null)}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-slate-800">
+          <div className="hidden md:flex flex-1 items-center justify-center bg-slate-800">
             <p className="text-sm text-slate-400">Selecciona un usuario para ver su detalle</p>
           </div>
         )}

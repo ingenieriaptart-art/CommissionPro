@@ -84,14 +84,15 @@ export function ProjectSidebar() {
       <button
         onClick={toggleSidebar}
         title="Abrir menú"
+        aria-label="Abrir menú lateral"
         className="fixed top-1/2 left-0 -translate-y-1/2 z-[10001]
           flex items-center justify-center
-          w-6 h-14 rounded-r-xl
-          bg-slate-800 border border-l-0 border-slate-700
-          text-slate-400 hover:text-white hover:bg-slate-700
+          w-9 h-20 md:w-7 md:h-16 rounded-r-xl
+          bg-blue-600 md:bg-slate-800 border border-l-0 border-blue-500 md:border-slate-700
+          text-white md:text-slate-300 hover:bg-blue-500 md:hover:bg-slate-700 hover:text-white
           transition-colors shadow-lg"
       >
-        <ChevronRight size={14} />
+        <ChevronRight size={18} />
       </button>
     );
   }
