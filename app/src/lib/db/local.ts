@@ -7,6 +7,7 @@ import type {
   Test, ChecklistItem, Evidence, PunchItem,
   Notification, FormTemplate,
 } from "@/types";
+import type { InspectionState } from "@/types/inspection";
 
 // Tipo para la cola de sincronización (outbox)
 export interface SyncOperation {
@@ -35,6 +36,13 @@ export interface SyncCursor {
   updatedAt: string;
 }
 
+// Borrador de inspección persistido en IndexedDB (reemplaza sessionStorage)
+export interface InspectionDraft {
+  id: string;         // `${equipmentId}_${templateId}` — clave primaria manual
+  state: InspectionState;
+  updatedAt: string;
+}
+
 class CommissionProDB extends Dexie {
   projects!: EntityTable<Project, "id">;
   areas!: EntityTable<Area, "id">;
@@ -50,6 +58,7 @@ class CommissionProDB extends Dexie {
   syncQueue!: EntityTable<SyncOperation, "id">;
   blobStore!: EntityTable<LocalBlobStore, "id">;
   syncCursors!: EntityTable<SyncCursor, "entity">;
+  inspectionDrafts!: EntityTable<InspectionDraft, "id">;
 
   constructor() {
     super("CommissionProDB");
@@ -78,6 +87,11 @@ class CommissionProDB extends Dexie {
     // [A-008 FIX] v3: tabla syncCursors en IndexedDB (reemplaza localStorage)
     this.version(3).stores({
       syncCursors: "entity",  // clave primaria: nombre de la entidad
+    });
+
+    // v4: borradores de inspección (reemplaza sessionStorage — se pierde al cerrar pestaña)
+    this.version(4).stores({
+      inspectionDrafts: "id, updatedAt",
     });
   }
 }
@@ -115,4 +129,39 @@ export async function getBlobForEvidence(evidenceId: string): Promise<Blob | und
   const record = await localDB.blobStore
     .where("evidenceId").equals(evidenceId).first();
   return record?.blob;
+}
+
+export function inspectionDraftKey(equipmentId: string, templateId: string): string {
+  return `${equipmentId}_${templateId}`;
+}
+
+export async function saveInspectionDraft(
+  equipmentId: string,
+  templateId: string,
+  state: InspectionState,
+): Promise<void> {
+  await localDB.inspectionDrafts.put({
+    id: inspectionDraftKey(equipmentId, templateId),
+    state,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function getInspectionDraft(
+  equipmentId: string,
+  templateId: string,
+): Promise<InspectionState | undefined> {
+  const draft = await localDB.inspectionDrafts.get(
+    inspectionDraftKey(equipmentId, templateId),
+  );
+  return draft?.state;
+}
+
+export async function deleteInspectionDraft(
+  equipmentId: string,
+  templateId: string,
+): Promise<void> {
+  await localDB.inspectionDrafts.delete(
+    inspectionDraftKey(equipmentId, templateId),
+  );
 }

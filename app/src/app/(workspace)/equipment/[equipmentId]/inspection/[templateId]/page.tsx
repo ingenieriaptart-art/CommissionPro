@@ -1,15 +1,21 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEquipmentForInspection, useInspectionTemplate } from "@/hooks/useInspectionData";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
 import { DynamicFormSection } from "@/components/inspection/DynamicFormSection";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
+import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import type { InspectionState, SectionStatus } from "@/types/inspection";
 import type { Equipment } from "@/types";
 import { syncEquipmentStatus, calcFormPct } from "@/hooks/useEquipmentStatusSync";
+import {
+  saveInspectionDraft,
+  getInspectionDraft,
+  deleteInspectionDraft,
+} from "@/lib/db/local";
 
 function buildInitialState(
   equipmentId: string,
@@ -45,9 +51,6 @@ function buildInitialState(
   };
 }
 
-const STORAGE_KEY = (eqId: string, tplId: string) =>
-  `inspection_${eqId}_${tplId}`;
-
 export default function InspectionPage() {
   const params       = useParams() as { equipmentId: string; templateId: string };
   const searchParams = useSearchParams();
@@ -59,36 +62,48 @@ export default function InspectionPage() {
   const { data: equipment, isLoading: eqLoading }  = useEquipmentForInspection(equipmentId);
   const { data: template,  isLoading: tplLoading } = useInspectionTemplate(templateId);
 
-  const [state, setState] = useState<InspectionState | null>(null);
+  const [state, setState]   = useState<InspectionState | null>(null);
+  const [docsOpen, setDocsOpen] = useState(false);
 
-  // Load or initialize state from sessionStorage
+  // Sólo equipos reales de Supabase tienen UUID (36 chars); los mock empiezan con ic02-/eq-/tpl-
+  const isRealEquipment = equipmentId.length === 36 && !equipmentId.startsWith("eq-");
+
+  // Load or initialize state from IndexedDB (survives tab close / browser restart)
   useEffect(() => {
     if (!template || !equipment) return;
-    const key = STORAGE_KEY(equipmentId, templateId);
-    try {
-      const stored = sessionStorage.getItem(key);
-      if (stored) {
-        setState(JSON.parse(stored) as InspectionState);
-        return;
-      }
-    } catch { /* ignore */ }
-    setState(
-      buildInitialState(
-        equipmentId,
-        templateId,
-        template.sections.map(s => s.code),
-        equipment,
-      )
-    );
+    getInspectionDraft(equipmentId, templateId)
+      .then((saved) => {
+        if (saved) {
+          setState(saved);
+        } else {
+          setState(
+            buildInitialState(
+              equipmentId,
+              templateId,
+              template.sections.map(s => s.code),
+              equipment,
+            )
+          );
+        }
+      })
+      .catch(() => {
+        setState(
+          buildInitialState(
+            equipmentId,
+            templateId,
+            template.sections.map(s => s.code),
+            equipment,
+          )
+        );
+      });
   }, [equipmentId, templateId, template, equipment]);
 
-  // Persist state on every change
+  // Persist state on every change to IndexedDB
   useEffect(() => {
     if (!state) return;
-    const key = STORAGE_KEY(equipmentId, templateId);
-    try {
-      sessionStorage.setItem(key, JSON.stringify(state));
-    } catch { /* quota exceeded — ignore for prototype */ }
+    saveInspectionDraft(equipmentId, templateId, state).catch(() => {
+      // IndexedDB quota exceeded or unavailable — fail silently
+    });
   }, [state, equipmentId, templateId]);
 
   const handleAnswerChange = useCallback((fieldKey: string, value: unknown) => {
@@ -177,6 +192,8 @@ export default function InspectionPage() {
   }, []);
 
   const handleComplete = useCallback(() => {
+    // Borra el borrador al completar (el estado ya está en Supabase desde syncEquipmentStatus)
+    deleteInspectionDraft(equipmentId, templateId).catch(() => {});
     router.push(`/equipment/${equipmentId}/inspection/${templateId}/summary?returnTo=${encodeURIComponent(returnTo)}`);
   }, [router, equipmentId, templateId, returnTo]);
 
@@ -207,34 +224,69 @@ export default function InspectionPage() {
   return (
     <>
       {/* HEADER */}
-      <header className="h-14 bg-slate-900 border-b border-slate-800 flex items-center px-4 gap-3 flex-shrink-0">
-        <button
-          onClick={() => router.push(returnTo)}
-          className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors"
-        >
-          <ArrowLeft size={16} /> Plano
-        </button>
-        <span className="text-slate-700">|</span>
-        <span className="text-sm font-mono font-bold text-blue-400">{equipment.tag}</span>
-        <span className="text-slate-600 text-sm">—</span>
-        <span className="text-sm text-slate-300 truncate">{equipment.name}</span>
-        <span className="text-slate-700 text-sm">›</span>
-        <span className="text-sm text-slate-400 truncate">{template.code}</span>
-        <div className="ml-auto flex items-center gap-2">
-          {state.savedAt && (
-            <span className="text-[10px] text-slate-600">
-              Guardado {new Date(state.savedAt).toLocaleTimeString("es-CO")}
-            </span>
-          )}
-          {allComplete && (
-            <button
-              onClick={handleComplete}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
-            >
-              <CheckCircle size={14} /> Revisar y Cerrar
-            </button>
-          )}
+      <header className="bg-slate-900 border-b border-slate-800 flex-shrink-0">
+        <div className="h-14 flex items-center px-4 gap-3">
+          <button
+            onClick={() => router.push(returnTo)}
+            className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors"
+          >
+            <ArrowLeft size={16} /> Plano
+          </button>
+          <span className="text-slate-700">|</span>
+          <span className="text-sm font-mono font-bold text-blue-400">{equipment.tag}</span>
+          <span className="text-slate-600 text-sm">—</span>
+          <span className="text-sm text-slate-300 truncate">{equipment.name}</span>
+          <span className="text-slate-700 text-sm">›</span>
+          <span className="text-sm text-slate-400 truncate">{template.code}</span>
+          <div className="ml-auto flex items-center gap-2">
+            {state.savedAt && (
+              <span className="text-[10px] text-slate-600">
+                Guardado {new Date(state.savedAt).toLocaleTimeString("es-CO")}
+              </span>
+            )}
+            {isRealEquipment && (
+              <button
+                onClick={() => setDocsOpen(o => !o)}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  docsOpen
+                    ? "bg-blue-900/60 text-blue-300 border border-blue-700"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                )}
+              >
+                <FileText size={13} />
+                Docs
+                {docsOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+              </button>
+            )}
+            {allComplete && (
+              <button
+                onClick={handleComplete}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                <CheckCircle size={14} /> Revisar y Cerrar
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Panel documentos desplegable */}
+        {isRealEquipment && docsOpen && (
+          <div className="px-4 pb-3 flex gap-6 border-t border-slate-800 pt-3">
+            <EquipmentPdfUpload
+              equipmentId={equipmentId}
+              field="catalog_url"
+              label="Manual del catálogo (fabricante)"
+              currentUrl={equipment.catalog_url}
+            />
+            <EquipmentPdfUpload
+              equipmentId={equipmentId}
+              field="fat_protocol_url"
+              label="Protocolo de pruebas FAT"
+              currentUrl={equipment.fat_protocol_url}
+            />
+          </div>
+        )}
       </header>
 
       {/* BODY: sidebar + form + minimap */}

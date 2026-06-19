@@ -1,17 +1,18 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import {
-  getEquipmentById,
-  getTemplateById,
-  getTemplatesForEquipment,
-} from "@/lib/inspection-mock-data";
 import type { Equipment, FieldType } from "@/types";
 import type { MockInspectionTemplate, MockInspectionSection, MockInspectionField } from "@/types/inspection";
 
 // IDs mock empiezan con "eq-" / "tpl-" / "ic02-"; los reales son UUIDs de 36 chars
 const isMockId = (id: string) =>
   id.startsWith("eq-") || id.startsWith("tpl-") || id.startsWith("ic02-");
+
+// Carga mock data solo en desarrollo (dynamic import — no incluido en bundle de producción)
+async function loadMock() {
+  if (process.env.NODE_ENV === "production") return null;
+  return import("@/lib/inspection-mock-data");
+}
 
 // ── Shapes intermedias ────────────────────────────────────────────────────────
 
@@ -29,7 +30,11 @@ export function useEquipmentForInspection(equipmentId: string) {
   return useQuery({
     queryKey: ["equipment-inspection", equipmentId],
     queryFn: async (): Promise<Equipment | null> => {
-      if (isMockId(equipmentId)) return getEquipmentById(equipmentId) ?? null;
+      if (isMockId(equipmentId)) {
+        const mock = await loadMock();
+        if (!mock) return null;
+        return mock.getEquipmentById(equipmentId) ?? null;
+      }
       const supabase = createClient();
       const { data } = await supabase
         .from("equipment")
@@ -51,7 +56,9 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
     queryKey: ["equipment-inspection-templates", equipmentId],
     queryFn: async (): Promise<TemplateRef[]> => {
       if (isMockId(equipmentId)) {
-        return getTemplatesForEquipment(equipmentId).map(t => ({
+        const mock = await loadMock();
+        if (!mock) return [];
+        return mock.getTemplatesForEquipment(equipmentId).map(t => ({
           id: t.id, code: t.code, name: t.name, discipline: t.discipline,
         }));
       }
@@ -92,7 +99,11 @@ export function useInspectionTemplate(templateId: string) {
   return useQuery({
     queryKey: ["inspection-template", templateId],
     queryFn: async (): Promise<MockInspectionTemplate | null> => {
-      if (isMockId(templateId)) return getTemplateById(templateId) ?? null;
+      if (isMockId(templateId)) {
+        const mock = await loadMock();
+        if (!mock) return null;
+        return mock.getTemplateById(templateId) ?? null;
+      }
 
       const supabase = createClient();
 
