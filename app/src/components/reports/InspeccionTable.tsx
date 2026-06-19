@@ -94,6 +94,8 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
         <col style={{ width: "38px" }} />
         <col style={{ width: "38px" }} />
         <col style={{ width: "38px" }} />
+        <col style={{ width: "30px" }} />
+        <col style={{ width: "30px" }} />
         <col style={{ width: "22px" }} />
         <col style={{ width: "22px" }} />
         <col />
@@ -109,6 +111,8 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
           <th style={thStyle} rowSpan={2}>Pot. Inst.<br />kW</th>
           <th style={thStyle} rowSpan={2}>FOTO<br />EQUIPO</th>
           <th style={thStyle} rowSpan={2}>FOTO<br />PLACA</th>
+          <th style={thStyle} rowSpan={2}>MANUAL<br />CATÁLOGO</th>
+          <th style={thStyle} rowSpan={2}>PROTOCOLO<br />FAT</th>
           <th style={thStyle} colSpan={2}>CONFORME</th>
           <th style={thStyle} rowSpan={2}>OBSERVACIONES</th>
         </tr>
@@ -124,7 +128,7 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
           <>
             <tr key={`area-${areaName}`}>
               <td
-                colSpan={14}
+                colSpan={16}
                 style={{
                   background: "#1e3a5f",
                   color: "#93c5fd",
@@ -174,6 +178,20 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
                       <img src={fotoPlaca.storage_url} alt="placa" style={{ maxWidth: "32px", maxHeight: "24px", objectFit: "cover" }} />
                     ) : (
                       <span style={{ color: "#94a3b8" }}>📷</span>
+                    )}
+                  </td>
+                  <td style={{ ...cell, textAlign: "center" }}>
+                    {eq.catalog_url ? (
+                      <a href={eq.catalog_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontSize: "11px", textDecoration: "none" }}>📄</a>
+                    ) : (
+                      <span style={{ color: "#cbd5e1" }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ ...cell, textAlign: "center" }}>
+                    {eq.fat_protocol_url ? (
+                      <a href={eq.fat_protocol_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontSize: "11px", textDecoration: "none" }}>📄</a>
+                    ) : (
+                      <span style={{ color: "#cbd5e1" }}>—</span>
                     )}
                   </td>
                   <td style={{ ...cell, textAlign: "center", color: "#16a34a", fontWeight: 700 }}>

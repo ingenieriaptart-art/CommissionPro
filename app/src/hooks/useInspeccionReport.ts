@@ -41,7 +41,7 @@ export function useInspeccionReport(projectId: string) {
         await Promise.all([
           supabase
             .from("projects")
-            .select("*, client_company:companies(id, name, type, nit)")
+            .select("*, client_company:companies(id, name, type, nit, logo_url)")
             .eq("id", projectId)
             .single(),
           supabase
@@ -77,7 +77,7 @@ export function useInspeccionReport(projectId: string) {
       if (userRes.data.user) {
         const { data: userData } = await supabase
           .from("users")
-          .select("company_id, company:companies(id, name)")
+          .select("company_id, company:companies(id, name, logo_url)")
           .eq("id", userRes.data.user.id)
           .single();
         contractorCompany = userData?.company as typeof contractorCompany;

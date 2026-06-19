@@ -50,14 +50,12 @@ export function InspeccionHeader({ data }: Props) {
               verticalAlign: "middle",
             }}
           >
-            {contractorLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={contractorLogo} alt="Logo empresa" style={{ maxHeight: "54px", maxWidth: "72px", objectFit: "contain" }} />
-            ) : (
-              <span style={{ color: "#2563eb", fontSize: "7px", fontWeight: 700, border: "1px dashed #2563eb", padding: "6px", display: "block" }}>
-                LOGO<br />EMPRESA
-              </span>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={contractorLogo ?? "/logo-biotec.png"}
+              alt="Logo empresa"
+              style={{ maxHeight: "54px", maxWidth: "72px", objectFit: "contain" }}
+            />
           </td>
           <td />
           <td style={{ background: "#fef9c3", border: "1px solid #e2e8f0", padding: "3px 6px", fontWeight: 600, textAlign: "left" }}>

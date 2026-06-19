@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
       .from("equipment")
       .select(`
         id, tag, name, status, power_kw, power_installed_kw,
+        catalog_url, fat_protocol_url,
         subsystem:subsystems(system:systems(area:areas(name)))
       `)
       .eq("project_id", projectId)
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
   const equipment = (equipmentRes.data ?? []) as Array<{
     id: string; tag: string; name: string; status: string;
     power_kw?: number; power_installed_kw?: number;
+    catalog_url?: string; fat_protocol_url?: string;
     subsystem?: { system?: { area?: { name: string } } };
   }>;
 
@@ -79,7 +81,9 @@ export async function GET(req: NextRequest) {
       eq.power_kw ?? null,
       hpFormula as unknown as string | null,
       eq.power_installed_kw ?? null,
-      "", "", "", "",
+      "", "",
+      eq.catalog_url ? "SI" : "",
+      eq.fat_protocol_url ? "SI" : "",
       eq.status === "aprobado" ? "✓" : "",
       eq.status === "rechazado" ? "✓" : "",
       "",
