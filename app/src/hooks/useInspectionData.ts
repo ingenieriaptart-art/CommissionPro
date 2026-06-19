@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { assembleTemplate } from "@/lib/sync/assembleTemplate";
+import { localDB } from "@/lib/db/local";
 import type { Equipment } from "@/types";
 import type { MockInspectionTemplate } from "@/types/inspection";
 
@@ -36,14 +37,21 @@ export function useEquipmentForInspection(equipmentId: string) {
         if (!mock) return null;
         return mock.getEquipmentById(equipmentId) ?? null;
       }
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("equipment")
-        .select("*")
-        .eq("id", equipmentId)
-        .is("deleted_at", null)
-        .single();
-      return (data as Equipment) ?? null;
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (!offline) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("equipment")
+          .select("*")
+          .eq("id", equipmentId)
+          .is("deleted_at", null)
+          .single();
+        if (data) {
+          await localDB.equipment.put({ ...(data as Record<string, unknown>), sync_status: "synced" } as never);
+          return data as Equipment;
+        }
+      }
+      return (await localDB.equipment.get(equipmentId)) ?? null;
     },
     enabled: !!equipmentId,
     staleTime: 5 * 60 * 1000,
@@ -63,6 +71,11 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
           id: t.id, code: t.code, name: t.name, discipline: t.discipline,
         }));
       }
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (offline) {
+        const row = await localDB.equipmentTemplateRefs.get(equipmentId);
+        return row?.refs ?? [];
+      }
       const supabase = createClient();
 
       // Usa el RPC unificado que combina los 4 niveles:
@@ -70,7 +83,11 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
       const { data: rows, error } = await supabase
         .rpc("get_equipment_templates", { p_equipment_id: equipmentId });
 
-      if (error) throw error;
+      if (error) {
+        const row = await localDB.equipmentTemplateRefs.get(equipmentId);
+        if (row) return row.refs;
+        throw error;
+      }
 
       // Deduplicar por template_id (pueden aparecer desde varios niveles)
       const seen = new Set<string>();
@@ -87,6 +104,7 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
           });
         }
       }
+      await localDB.equipmentTemplateRefs.put({ equipmentId, refs: result, updatedAt: new Date().toISOString() });
       return result;
     },
     enabled: !!equipmentId,
@@ -106,9 +124,18 @@ export function useInspectionTemplate(templateId: string) {
         return mock.getTemplateById(templateId) ?? null;
       }
 
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (offline) {
+        const row = await localDB.offlineTemplates.get(templateId);
+        if (row) { row.template._source = "offline"; return row.template; }
+        return null;
+      }
       const supabase = createClient();
       const tpl = await assembleTemplate(supabase, templateId);
-      if (tpl) tpl._source = "online";
+      if (tpl) {
+        tpl._source = "online";
+        await localDB.offlineTemplates.put({ id: templateId, template: tpl, updatedAt: new Date().toISOString() });
+      }
       return tpl;
     },
     enabled: !!templateId,
