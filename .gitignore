@@ -35,3 +35,18 @@ npm-debug.log*
 
 # Graphify cache — may contain source code snapshots with credentials
 graphify-out/cache/
+# Graphify — estado generado volátil (no versionar)
+graphify-out/manifest.json
+graphify-out/.graphify_uncached.txt
+
+# Vercel — link local del proyecto (el deploy usa la integración de GitHub)
+.vercel/
+
+# Artefactos de sesiones de brainstorming (locales)
+.superpowers/brainstorm/
+
+# Capturas de pantalla en la raíz de app/ (NO afecta assets de app/public/)
+app/*.png
+
+# Scripts de prueba locales (puppeteer/dev) en la raíz de app/
+app/test-*.cjs
