@@ -6,7 +6,7 @@
 // ============================================================
 "use client";
 
-import { localDB, type SyncOperation } from "@/lib/db/local";
+import { localDB, getBlobForEvidence, type SyncOperation } from "@/lib/db/local";
 import { createClient } from "@/lib/supabase/client";
 
 export type SyncState = "idle" | "syncing" | "error" | "success";
@@ -72,43 +72,80 @@ function getLocalTable(entity: SyncableEntity): any {
 }
 
 // -------------------- PUSH --------------------
-async function pushPendingOps(
+// Tablas locales por entidad (para actualizar sync_status del registro)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function localTableFor(entity: string): any {
+  const map: Record<string, unknown> = {
+    tests: localDB.tests, evidences: localDB.evidences, equipment: localDB.equipment,
+    punch_items: localDB.punchItems,
+  };
+  return map[entity];
+}
+
+export async function pushPendingOps(
   supabase: ReturnType<typeof createClient>
 ): Promise<{ pushed: number; errors: string[] }> {
-  const ops = await localDB.syncQueue
-    .orderBy("createdAt")
-    .toArray() as SyncOperation[];
-
+  const ops = await localDB.syncQueue.orderBy("createdAt").toArray() as SyncOperation[];
   let pushed = 0;
   const errors: string[] = [];
 
   for (const op of ops) {
-    // Omitir operaciones con demasiados intentos fallidos (se revisarán manualmente)
     if (op.attempts >= 5) {
       errors.push(`[SKIP] ${op.entity}/${op.entityId}: excedió 5 intentos`);
       continue;
     }
+    const table = localTableFor(op.entity);
     try {
+      if (table) await table.update(op.entityId, { sync_status: "syncing" });
+
       if (op.operation === "INSERT" || op.operation === "UPDATE") {
-        const { error } = await supabase
-          .from(op.entity)
-          .upsert(op.payload as Record<string, unknown>, { onConflict: "id" });
+        // Copia saneada para el servidor: forzar synced y quitar campos solo-cliente
+        const payload = { ...(op.payload as Record<string, unknown>) };
+        delete payload.last_sync_error;
+        if ("sync_status" in payload) payload.sync_status = "synced";
+
+        // Evidencia: subir blob a Storage antes del upsert
+        if (op.entity === "evidences") {
+          const blob = await getBlobForEvidence(op.entityId);
+          if (blob) {
+            const ext = (blob.type.split("/")[1] ?? "jpg");
+            const path = `${payload.project_id}/${payload.equipment_id}/${payload.test_id}/${op.entityId}.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from("evidences").upload(path, blob, { upsert: true, contentType: blob.type });
+            if (upErr) throw upErr;
+            const { data: urlData } = supabase.storage.from("evidences").getPublicUrl(path);
+            payload.storage_url = urlData.publicUrl;
+          }
+        }
+
+        const { error } = await supabase.from(op.entity).upsert(payload, { onConflict: "id" });
         if (error) throw error;
+
+        if (op.entity === "evidences") {
+          const rec = await localDB.blobStore.where("evidenceId").equals(op.entityId).first();
+          if (rec?.id != null) await localDB.blobStore.delete(rec.id);
+        }
       } else if (op.operation === "DELETE") {
-        const { error } = await supabase
-          .from(op.entity)
+        const { error } = await supabase.from(op.entity)
           .update({ deleted_at: new Date().toISOString() })
           .eq("id", (op.payload as Record<string, unknown>).id);
         if (error) throw error;
       }
+
       await localDB.syncQueue.delete(op.id!);
+      if (table) await table.update(op.entityId, { sync_status: "synced", last_sync_error: undefined });
       pushed++;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      // Supabase devuelve objetos planos con .message (no instancias de Error)
+      const msg = err instanceof Error ? err.message
+        : (err && typeof err === "object" && "message" in err)
+          ? String((err as { message: unknown }).message)
+          : String(err);
       errors.push(`${op.entity}/${op.entityId}: ${msg}`);
-      await localDB.syncQueue.update(op.id!, {
-        attempts: op.attempts + 1,
-        lastError: msg,
+      const attempts = op.attempts + 1;
+      await localDB.syncQueue.update(op.id!, { attempts, lastError: msg });
+      if (table) await table.update(op.entityId, {
+        sync_status: attempts >= 5 ? "failed" : "pending", last_sync_error: msg,
       });
     }
   }
