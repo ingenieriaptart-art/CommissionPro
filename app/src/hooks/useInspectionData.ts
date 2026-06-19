@@ -1,8 +1,9 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type { Equipment, FieldType } from "@/types";
-import type { MockInspectionTemplate, MockInspectionSection, MockInspectionField } from "@/types/inspection";
+import { assembleTemplate } from "@/lib/sync/assembleTemplate";
+import type { Equipment } from "@/types";
+import type { MockInspectionTemplate } from "@/types/inspection";
 
 // IDs mock empiezan con "eq-" / "tpl-" / "ic02-"; los reales son UUIDs de 36 chars
 const isMockId = (id: string) =>
@@ -106,80 +107,9 @@ export function useInspectionTemplate(templateId: string) {
       }
 
       const supabase = createClient();
-
-      // 1. Metadatos del template
-      const { data: ft, error: ftErr } = await supabase
-        .from("form_templates")
-        .select("id, key, name, test_type")
-        .eq("id", templateId)
-        .is("deleted_at", null)
-        .single();
-      if (ftErr || !ft) return null;
-
-      // 2. Secciones (universales + asignadas) via RPC
-      const { data: sectionRows, error: secErr } = await supabase
-        .rpc("get_template_sections", { p_template_id: templateId });
-      if (secErr || !sectionRows?.length) return null;
-
-      const sectionIds: string[] = sectionRows.map((s: any) => s.section_id as string);
-
-      // 3a. is_universal por sección (metadato global de la sección)
-      const { data: sectionMeta } = await supabase
-        .from("template_sections")
-        .select("id, is_universal")
-        .in("id", sectionIds);
-
-      const universalMap: Record<string, boolean> = {};
-      for (const s of (sectionMeta ?? [])) {
-        universalMap[s.id] = s.is_universal;
-      }
-
-      // 3b. is_active POR PLANTILLA: viene resuelto del RPC get_template_sections
-      const activeMapSec: Record<string, boolean> = {};
-      for (const s of sectionRows) {
-        activeMapSec[s.section_id as string] = (s as any).is_active ?? true;
-      }
-
-      // 4. Campos de todas las secciones
-      const { data: allFields } = await supabase
-        .from("section_fields")
-        .select("*")
-        .in("section_id", sectionIds)
-        .order("sort_order");
-
-      const fieldsBySectionId: Record<string, MockInspectionField[]> = {};
-      for (const f of (allFields ?? [])) {
-        if (!fieldsBySectionId[f.section_id]) fieldsBySectionId[f.section_id] = [];
-        fieldsBySectionId[f.section_id].push({
-          key:         f.key,
-          _db_id:      f.id,
-          label:       f.label,
-          type:        f.type as FieldType,
-          required:    f.required,
-          options:     (f.options as string[]) ?? undefined,
-          validations: (f.validations as { unit?: string; min?: number; max?: number }) ?? undefined,
-          hint:        f.hint ?? undefined,
-          is_active:   f.is_active ?? true,
-        });
-      }
-
-      // 5. Ensamblar MockInspectionTemplate
-      const sections: MockInspectionSection[] = sectionRows.map((s: any) => ({
-        id:           s.section_id as string,
-        code:         s.section_code as string,
-        name:         s.section_name as string,
-        is_universal: universalMap[s.section_id] ?? false,
-        is_active:    activeMapSec[s.section_id] ?? true,
-        fields:       fieldsBySectionId[s.section_id] ?? [],
-      }));
-
-      return {
-        id:         ft.id,
-        code:       ft.key,
-        name:       ft.name,
-        discipline: ft.test_type ?? "",
-        sections,
-      };
+      const tpl = await assembleTemplate(supabase, templateId);
+      if (tpl) tpl._source = "online";
+      return tpl;
     },
     enabled: !!templateId,
     staleTime: 10 * 60 * 1000,
