@@ -7,9 +7,8 @@ import { useSubmitInspection } from "@/hooks/useSubmitInspection";
 import { InspectionSummary } from "@/components/inspection/InspectionSummary";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
+import { getInspectionDraft, deleteInspectionDraft } from "@/lib/db/local";
 import type { InspectionState } from "@/types/inspection";
-
-const STORAGE_KEY = (eqId: string, tplId: string) => `inspection_${eqId}_${tplId}`;
 
 export default function InspectionSummaryPage() {
   const params       = useParams() as { equipmentId: string; templateId: string };
@@ -27,10 +26,10 @@ export default function InspectionSummaryPage() {
 
   useEffect(() => {
     if (!template) return;
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY(equipmentId, templateId));
-      if (stored) setState(JSON.parse(stored) as InspectionState);
-    } catch { /* ignore */ }
+    // El borrador se persiste en IndexedDB (mismo store que el formulario)
+    getInspectionDraft(equipmentId, templateId)
+      .then((saved) => { if (saved) setState(saved); })
+      .catch(() => { /* ignore */ });
   }, [equipmentId, templateId, template]);
 
   const handleSave = useCallback(async () => {
@@ -39,8 +38,8 @@ export default function InspectionSummaryPage() {
     const result = await submit(state, equipment.project_id, template);
     if (!result) return; // error shown via saveError
 
-    // Limpiar sesión y volver al plano
-    try { sessionStorage.removeItem(STORAGE_KEY(equipmentId, templateId)); } catch { /* ignore */ }
+    // Limpiar borrador y volver al plano
+    await deleteInspectionDraft(equipmentId, templateId).catch(() => { /* ignore */ });
     router.push(returnTo);
   }, [state, equipment, template, submit, equipmentId, templateId, returnTo, router]);
 
