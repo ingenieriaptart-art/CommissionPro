@@ -49,6 +49,7 @@ DECLARE
   v_level_name  text;
   v_req_role    uuid;
   v_status_on   text;
+  v_level_mandatory boolean;
   v_is_admin    boolean;
   v_has_role    boolean;
   v_seq         boolean;
@@ -74,8 +75,8 @@ BEGIN
   END IF;
 
   -- Config del nivel solicitado
-  SELECT c.level_name, c.required_role_id, c.test_status_on_approve
-    INTO v_level_name, v_req_role, v_status_on
+  SELECT c.level_name, c.required_role_id, c.test_status_on_approve, c.mandatory
+    INTO v_level_name, v_req_role, v_status_on, v_level_mandatory
     FROM public.project_approval_config c
     WHERE c.project_id = v_proj AND c.level = p_level;
   IF NOT FOUND THEN
@@ -115,9 +116,12 @@ BEGIN
           SELECT 1 FROM public.approvals a
           WHERE a.test_id = p_test_id AND a.level = c.level AND a.status = 'aprobado'
         );
-    -- Para approve, el nivel debe ser el siguiente mandatory pendiente.
-    -- Para rechazos no se exige (se puede rechazar en cualquier nivel pendiente).
-    IF p_decision = 'approve' AND (v_next_level IS NULL OR p_level <> v_next_level) THEN
+    -- Para approve, si el nivel solicitado es MANDATORY debe ser el siguiente mandatory
+    -- pendiente. Niveles opcionales (mandatory=false) y la re-aprobación idempotente
+    -- cuando ya no quedan mandatory pendientes (v_next_level IS NULL) no se bloquean.
+    -- Para rechazos no se exige orden (se puede rechazar en cualquier nivel pendiente).
+    IF p_decision = 'approve' AND v_level_mandatory
+       AND v_next_level IS NOT NULL AND p_level <> v_next_level THEN
       RETURN jsonb_build_object('ok', false, 'reason', 'level_not_next');
     END IF;
   END IF;
