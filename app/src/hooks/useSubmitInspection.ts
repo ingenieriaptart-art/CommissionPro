@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { localDB, enqueueSync, saveBlobLocally, deleteInspectionDraft } from "@/lib/db/local";
 import { runSync } from "@/lib/sync/engine";
 import { computeTemplateHash } from "@/lib/sync/hash";
 import { submitInspectionOffline } from "@/lib/sync/submitInspection";
+import { useAuthStore } from "@/stores/auth.store";
 import { APP_VERSION, SCHEMA_VERSION } from "@/lib/version";
 import { v4 as uuidv4 } from "uuid";
 import type { InspectionState, MockInspectionTemplate } from "@/types/inspection";
@@ -23,12 +23,14 @@ export function useSubmitInspection() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Sesión expirada — iniciá sesión nuevamente");
+      // executed_by/created_by/captured_by referencian public.users(id) — NO el
+      // id de auth.users. El store (zustand persist 'cp-auth') tiene la fila de
+      // public.users del usuario actual y funciona offline (sobrevive F5).
+      const appUser = useAuthStore.getState().user;
+      if (!appUser?.id) throw new Error("Sesión expirada — iniciá sesión nuevamente");
 
       const result = await submitInspectionOffline(
-        { state, projectId, userId: user.id, template },
+        { state, projectId, userId: appUser.id, template },
         {
           db: localDB, enqueueSync, saveBlobLocally, deleteInspectionDraft,
           computeTemplateHash,

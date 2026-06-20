@@ -74,6 +74,31 @@ test("guarda test local + outbox con snapshot y sync_status pending", async () =
   expect((eq?.metadata as any)?.form_pct).toBe(100);
 });
 
+test("executed_by/created_by/captured_by usan el userId provisto (public.users.id, no el auth id)", async () => {
+  const withEvidence: InspectionState = {
+    ...state,
+    evidences: {
+      it1: [{ fieldKey: "it1", url: "blob:x", caption: "", stage: "general", timestamp: "2026-06-19T00:00:00Z" }],
+    },
+  };
+  const d = deps(false);
+  const res = await submitInspectionOffline(
+    { state: withEvidence, projectId: "p1", userId: "APP-USER-13e88926", template },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    d as any,
+  );
+
+  const t = await localDB.tests.get(res.testId);
+  expect(t?.executed_by).toBe("APP-USER-13e88926");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((t as any)?.created_by).toBe("APP-USER-13e88926");
+
+  const evs = await localDB.evidences.toArray();
+  expect(evs.length).toBe(1);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((evs[0] as any).captured_by).toBe("APP-USER-13e88926");
+});
+
 test("online → dispara runSync; result_summary no_cumple si hay falla", async () => {
   const failState = { ...state, answers: { it1: "No cumple", x: "RECHAZADO" } };
   const d = deps(true);
