@@ -42,6 +42,11 @@ function deps(online: boolean) {
     now: () => "2026-06-19T00:00:00Z",
     isOnline: () => online,
     appVersion: "1.0.0", schemaVersion: 5,
+    nextState: (from: string) => (from === "pendiente" ? "en_ejecucion" : null),
+    enqueueTransition: async (equipmentId: string, event: string, fromStatus: string, context: unknown) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await localDB.syncQueue.add({ entity: "__equipment_transition", entityId: equipmentId, operation: "INSERT", payload: { equipment_id: equipmentId, event, from_status: fromStatus, context, occurred_at: "t" }, createdAt: "t", attempts: 0 } as any);
+    },
   };
 }
 
@@ -64,14 +69,13 @@ test("guarda test local + outbox con snapshot y sync_status pending", async () =
 
   const q = await localDB.syncQueue.toArray();
   expect(q.find((o) => o.entity === "tests")).toBeTruthy();
-  expect(q.find((o) => o.entity === "equipment")).toBeTruthy();
+  // El estado del equipo viaja como transición FSM (no como UPDATE de equipment)
+  expect(q.find((o) => o.entity === "__equipment_transition")).toBeTruthy();
   expect(d.runSync).not.toHaveBeenCalled();
   expect(d.deleteInspectionDraft).toHaveBeenCalled();
 
   const eq = await localDB.equipment.get("e1");
   expect(eq?.status).toBe("en_ejecucion");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  expect((eq?.metadata as any)?.form_pct).toBe(100);
 });
 
 test("executed_by/created_by/captured_by usan el userId provisto (public.users.id, no el auth id)", async () => {

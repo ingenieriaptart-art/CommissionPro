@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
-import { localDB, enqueueSync, saveBlobLocally, deleteInspectionDraft } from "@/lib/db/local";
+import { localDB, enqueueSync, saveBlobLocally, deleteInspectionDraft, enqueueTransition } from "@/lib/db/local";
 import { runSync } from "@/lib/sync/engine";
 import { computeTemplateHash } from "@/lib/sync/hash";
 import { submitInspectionOffline } from "@/lib/sync/submitInspection";
+import { nextState } from "@/lib/state/equipmentFsm";
 import { useAuthStore } from "@/stores/auth.store";
 import { APP_VERSION, SCHEMA_VERSION } from "@/lib/version";
 import { v4 as uuidv4 } from "uuid";
@@ -40,6 +41,10 @@ export function useSubmitInspection() {
           now: () => new Date().toISOString(),
           isOnline: () => typeof navigator === "undefined" ? true : navigator.onLine,
           appVersion: APP_VERSION, schemaVersion: SCHEMA_VERSION,
+          // INSPECTION_EXECUTED no depende de flags derivados; valores neutros.
+          nextState: (from, event) =>
+            nextState(from as never, event as never, { hasOpenPunch: false, approvalsComplete: false, everInspected: true }),
+          enqueueTransition,
         },
       );
       return result;
