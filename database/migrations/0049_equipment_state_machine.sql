@@ -29,6 +29,10 @@ CREATE INDEX IF NOT EXISTS idx_eq_status_hist_proj ON public.equipment_status_hi
 ALTER TABLE public.equipment_status_history ENABLE ROW LEVEL SECURITY;
 
 -- Append-only: lectura por miembros del proyecto; insert por miembros; sin update/delete.
+-- DROP IF EXISTS para que la migración sea re-ejecutable (CREATE POLICY no es idempotente).
+DROP POLICY IF EXISTS "esh_select" ON public.equipment_status_history;
+DROP POLICY IF EXISTS "esh_insert" ON public.equipment_status_history;
+
 CREATE POLICY "esh_select" ON public.equipment_status_history
   FOR SELECT USING (EXISTS (
     SELECT 1 FROM public.project_members pm
