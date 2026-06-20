@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 import { useEquipmentForInspection, useInspectionTemplate } from "@/hooks/useInspectionData";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
 import { DynamicFormSection } from "@/components/inspection/DynamicFormSection";
+import { InspectionSummary } from "@/components/inspection/InspectionSummary";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
-import type { InspectionState, SectionStatus } from "@/types/inspection";
+import { useSubmitInspection } from "@/hooks/useSubmitInspection";
+import type { InspectionState, SectionStatus, MockInspectionSection } from "@/types/inspection";
 import type { Equipment } from "@/types";
 import { syncEquipmentStatus, calcFormPct } from "@/hooks/useEquipmentStatusSync";
 import {
@@ -16,15 +18,21 @@ import {
   getInspectionDraft,
   deleteInspectionDraft,
 } from "@/lib/db/local";
+import {
+  activeRequiredFields,
+  defaultSectionStatus,
+  isInspectionComplete,
+  deriveSectionStatuses,
+} from "@/lib/inspection/completion";
 
 function buildInitialState(
   equipmentId: string,
   templateId: string,
-  sectionCodes: string[],
+  sections: MockInspectionSection[],
   equipment?: Equipment | null,
 ): InspectionState {
   const sectionStatus: Record<string, SectionStatus> = {};
-  for (const code of sectionCodes) sectionStatus[code] = "pending";
+  for (const s of sections) sectionStatus[s.code] = defaultSectionStatus(s);
 
   // Pre-llenar sección DATOS_GENERALES con datos conocidos del equipo
   const answers: Record<string, unknown> = {};
@@ -64,6 +72,8 @@ export default function InspectionPage() {
 
   const [state, setState]   = useState<InspectionState | null>(null);
   const [docsOpen, setDocsOpen] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const { submit, isSubmitting, error: saveError } = useSubmitInspection();
 
   // Sólo equipos reales de Supabase tienen UUID (36 chars); los mock empiezan con ic02-/eq-/tpl-
   const isRealEquipment = equipmentId.length === 36 && !equipmentId.startsWith("eq-");
@@ -71,30 +81,20 @@ export default function InspectionPage() {
   // Load or initialize state from IndexedDB (survives tab close / browser restart)
   useEffect(() => {
     if (!template || !equipment) return;
+    const sections = template.sections;
     getInspectionDraft(equipmentId, templateId)
       .then((saved) => {
         if (saved) {
-          setState(saved);
+          // Re-derivar el estado de cada sección desde las respuestas guardadas:
+          // los checks SIEMPRE reflejan lo respondido (evita borradores legados
+          // "completado pero sin check").
+          setState({ ...saved, sectionStatus: deriveSectionStatuses(sections, saved.answers ?? {}) });
         } else {
-          setState(
-            buildInitialState(
-              equipmentId,
-              templateId,
-              template.sections.map(s => s.code),
-              equipment,
-            )
-          );
+          setState(buildInitialState(equipmentId, templateId, sections, equipment));
         }
       })
       .catch(() => {
-        setState(
-          buildInitialState(
-            equipmentId,
-            templateId,
-            template.sections.map(s => s.code),
-            equipment,
-          )
-        );
+        setState(buildInitialState(equipmentId, templateId, sections, equipment));
       });
   }, [equipmentId, templateId, template, equipment]);
 
@@ -112,8 +112,8 @@ export default function InspectionPage() {
       const section = template?.sections[prev.activeSectionIndex];
       if (!section) return prev;
       const newAnswers = { ...prev.answers, [fieldKey]: value };
-      // Recompute section status
-      const allRequired = section.fields.filter(f => f.required);
+      // Recompute section status — solo cuentan los requeridos ACTIVOS
+      const allRequired = activeRequiredFields(section);
       const allFilled = allRequired.every(f => {
         const v = newAnswers[f.key];
         return v !== undefined && v !== null && v !== "";
@@ -191,11 +191,20 @@ export default function InspectionPage() {
     });
   }, []);
 
+  // "Revisar y Cerrar" abre el resumen INLINE (misma ruta ya cargada), sin
+  // navegar a /summary — así el guardado no depende de cargar otra ruta offline.
   const handleComplete = useCallback(() => {
-    // Borra el borrador al completar (el estado ya está en Supabase desde syncEquipmentStatus)
-    deleteInspectionDraft(equipmentId, templateId).catch(() => {});
-    router.push(`/equipment/${equipmentId}/inspection/${templateId}/summary?returnTo=${encodeURIComponent(returnTo)}`);
-  }, [router, equipmentId, templateId, returnTo]);
+    setReviewing(true);
+  }, []);
+
+  // Guardar desde el resumen inline: escribe local-first y vuelve al plano.
+  const handleSaveInline = useCallback(async () => {
+    if (!state || !equipment?.project_id || !template) return;
+    const result = await submit(state, equipment.project_id, template);
+    if (!result) return; // error mostrado vía saveError
+    await deleteInspectionDraft(equipmentId, templateId).catch(() => {});
+    router.push(returnTo);
+  }, [state, equipment, template, submit, equipmentId, templateId, returnTo, router]);
 
   if (eqLoading || tplLoading || !state) {
     return (
@@ -217,9 +226,7 @@ export default function InspectionPage() {
 
   const activeSection = template.sections[state.activeSectionIndex];
   const isLastSection = state.activeSectionIndex === template.sections.length - 1;
-  const allComplete   = template.sections.every(s =>
-    state.sectionStatus[s.code] === "complete" || state.sectionStatus[s.code] === "failed"
-  );
+  const allComplete   = isInspectionComplete(template.sections, state.sectionStatus);
 
   return (
     <>
@@ -238,6 +245,12 @@ export default function InspectionPage() {
           <span className="text-sm text-slate-300 truncate">{equipment.name}</span>
           <span className="text-slate-700 text-sm">›</span>
           <span className="text-sm text-slate-400 truncate">{template.code}</span>
+          {reviewing && (
+            <>
+              <span className="text-slate-700 text-sm">›</span>
+              <span className="text-sm text-green-400 font-semibold">Resumen de Inspección</span>
+            </>
+          )}
           <div className="ml-auto flex items-center gap-2">
             {state.savedAt && (
               <span className="text-[10px] text-slate-600">
@@ -259,7 +272,14 @@ export default function InspectionPage() {
                 {docsOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>
             )}
-            {allComplete && (
+            {reviewing ? (
+              <button
+                onClick={() => setReviewing(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                <ArrowLeft size={14} /> Volver al formulario
+              </button>
+            ) : allComplete && (
               <button
                 onClick={handleComplete}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 hover:bg-green-600 text-white text-xs font-semibold rounded-lg transition-colors"
@@ -300,14 +320,25 @@ export default function InspectionPage() {
         />
 
         <main className="flex-1 overflow-y-auto bg-slate-950">
-          <DynamicFormSection
-            section={activeSection}
-            answers={state.answers}
-            evidences={state.evidences}
-            onAnswerChange={handleAnswerChange}
-            onEvidenceAdd={handleEvidenceAdd}
-            onEvidenceRemove={handleEvidenceRemove}
-          />
+          {reviewing ? (
+            <InspectionSummary
+              template={template}
+              state={state}
+              onClose={() => setReviewing(false)}
+              onSave={handleSaveInline}
+              isSaving={isSubmitting}
+              saveError={saveError}
+            />
+          ) : (
+            <DynamicFormSection
+              section={activeSection}
+              answers={state.answers}
+              evidences={state.evidences}
+              onAnswerChange={handleAnswerChange}
+              onEvidenceAdd={handleEvidenceAdd}
+              onEvidenceRemove={handleEvidenceRemove}
+            />
+          )}
         </main>
 
         <InspectionMiniMap
@@ -317,6 +348,7 @@ export default function InspectionPage() {
       </div>
 
       {/* FOOTER */}
+      {!reviewing && (
       <footer className="h-13 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 flex-shrink-0">
         <button
           onClick={handlePrev}
@@ -348,6 +380,7 @@ export default function InspectionPage() {
           {!isLastSection ? template.sections[state.activeSectionIndex + 1].name : "Última sección"} →
         </button>
       </footer>
+      )}
     </>
   );
 }

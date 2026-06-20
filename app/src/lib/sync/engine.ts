@@ -6,7 +6,7 @@
 // ============================================================
 "use client";
 
-import { localDB, type SyncOperation } from "@/lib/db/local";
+import { localDB, getBlobForEvidence, type SyncOperation } from "@/lib/db/local";
 import { createClient } from "@/lib/supabase/client";
 
 export type SyncState = "idle" | "syncing" | "error" | "success";
@@ -72,43 +72,90 @@ function getLocalTable(entity: SyncableEntity): any {
 }
 
 // -------------------- PUSH --------------------
-async function pushPendingOps(
+// Tablas locales por entidad (para actualizar sync_status del registro)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function localTableFor(entity: string): any {
+  const map: Record<string, unknown> = {
+    tests: localDB.tests, evidences: localDB.evidences, equipment: localDB.equipment,
+    punch_items: localDB.punchItems,
+  };
+  return map[entity];
+}
+
+export async function pushPendingOps(
   supabase: ReturnType<typeof createClient>
 ): Promise<{ pushed: number; errors: string[] }> {
-  const ops = await localDB.syncQueue
-    .orderBy("createdAt")
-    .toArray() as SyncOperation[];
-
+  const ops = await localDB.syncQueue.orderBy("createdAt").toArray() as SyncOperation[];
   let pushed = 0;
   const errors: string[] = [];
 
   for (const op of ops) {
-    // Omitir operaciones con demasiados intentos fallidos (se revisarán manualmente)
     if (op.attempts >= 5) {
       errors.push(`[SKIP] ${op.entity}/${op.entityId}: excedió 5 intentos`);
       continue;
     }
+    const table = localTableFor(op.entity);
     try {
-      if (op.operation === "INSERT" || op.operation === "UPDATE") {
-        const { error } = await supabase
-          .from(op.entity)
-          .upsert(op.payload as Record<string, unknown>, { onConflict: "id" });
+      if (table) await table.update(op.entityId, { sync_status: "syncing" });
+
+      if (op.operation === "INSERT") {
+        // Copia saneada para el servidor: forzar synced y quitar campos solo-cliente
+        const payload = { ...(op.payload as Record<string, unknown>) };
+        delete payload.last_sync_error;
+        if ("sync_status" in payload) payload.sync_status = "synced";
+
+        // Evidencia: subir blob a Storage antes del upsert
+        if (op.entity === "evidences") {
+          const blob = await getBlobForEvidence(op.entityId);
+          if (blob) {
+            const ext = (blob.type.split("/")[1] ?? "jpg");
+            const path = `${payload.project_id}/${payload.equipment_id}/${payload.test_id}/${op.entityId}.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from("evidences").upload(path, blob, { upsert: true, contentType: blob.type });
+            if (upErr) throw upErr;
+            const { data: urlData } = supabase.storage.from("evidences").getPublicUrl(path);
+            payload.storage_url = urlData.publicUrl;
+          }
+        }
+
+        // INSERT de fila completa → upsert (idempotente + LWW por id en reintentos)
+        const { error } = await supabase.from(op.entity).upsert(payload, { onConflict: "id" });
+        if (error) throw error;
+
+        if (op.entity === "evidences") {
+          const rec = await localDB.blobStore.where("evidenceId").equals(op.entityId).first();
+          if (rec?.id != null) await localDB.blobStore.delete(rec.id);
+        }
+      } else if (op.operation === "UPDATE") {
+        // UPDATE parcial → update().eq(): NO usar upsert (intentaría INSERT y
+        // violaría columnas NOT NULL ausentes en el patch, p.ej. equipment.tag).
+        const payload = { ...(op.payload as Record<string, unknown>) };
+        delete payload.last_sync_error;
+        if ("sync_status" in payload) payload.sync_status = "synced";
+        const { id, ...rest } = payload; // id va en el filtro, no en el SET
+        const { error } = await supabase.from(op.entity).update(rest).eq("id", id as string);
         if (error) throw error;
       } else if (op.operation === "DELETE") {
-        const { error } = await supabase
-          .from(op.entity)
+        const { error } = await supabase.from(op.entity)
           .update({ deleted_at: new Date().toISOString() })
           .eq("id", (op.payload as Record<string, unknown>).id);
         if (error) throw error;
       }
+
       await localDB.syncQueue.delete(op.id!);
+      if (table) await table.update(op.entityId, { sync_status: "synced", last_sync_error: undefined });
       pushed++;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      // Supabase devuelve objetos planos con .message (no instancias de Error)
+      const msg = err instanceof Error ? err.message
+        : (err && typeof err === "object" && "message" in err)
+          ? String((err as { message: unknown }).message)
+          : String(err);
       errors.push(`${op.entity}/${op.entityId}: ${msg}`);
-      await localDB.syncQueue.update(op.id!, {
-        attempts: op.attempts + 1,
-        lastError: msg,
+      const attempts = op.attempts + 1;
+      await localDB.syncQueue.update(op.id!, { attempts, lastError: msg });
+      if (table) await table.update(op.entityId, {
+        sync_status: attempts >= 5 ? "failed" : "pending", last_sync_error: msg,
       });
     }
   }
@@ -118,8 +165,9 @@ async function pushPendingOps(
 // -------------------- PULL PAGINADO [A-002 FIX] --------------------
 async function pullChanges(
   supabase: ReturnType<typeof createClient>
-): Promise<{ pulled: number }> {
+): Promise<{ pulled: number; errors: string[] }> {
   let pulled = 0;
+  const errors: string[] = [];
 
   for (const entity of SYNCABLE_ENTITIES) {
     const since = await getPullCursor(entity);
@@ -137,7 +185,16 @@ async function pullChanges(
         .order("updated_at", { ascending: true })
         .range(offset, offset + PULL_PAGE_SIZE - 1);  // ← [A-002]: paginación
 
-      if (error || !data) break;
+      // Un fallo de UNA entidad (p. ej. columna ausente) NO debe abortar el
+      // sync completo: se reporta y se continúa con las demás entidades.
+      if (error) {
+        const msg = (error && typeof error === "object" && "message" in error)
+          ? String((error as { message: unknown }).message)
+          : String(error);
+        errors.push(`pull ${entity}: ${msg}`);
+        break;
+      }
+      if (!data) break;
 
       // Procesar página por página SIN acumular todo en memoria
       for (const record of data) {
@@ -156,8 +213,11 @@ async function pullChanges(
       }
     }
   }
-  return { pulled };
+  return { pulled, errors };
 }
+
+// Wrapper para tests unitarios del pull (no usar en producción).
+export const pullChangesForTest = pullChanges;
 
 // -------------------- SYNC INTERNO (sin lock) --------------------
 async function runSyncInternal(
@@ -179,8 +239,9 @@ async function runSyncInternal(
     result.pushed = pushed;
     result.errors = errors;
 
-    const { pulled } = await pullChanges(supabase);
+    const { pulled, errors: pullErrors } = await pullChanges(supabase);
     result.pulled = pulled;
+    result.errors = [...result.errors, ...pullErrors];
 
     onStateChange?.("success", result);
   } catch (err) {

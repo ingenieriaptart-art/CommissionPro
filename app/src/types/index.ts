@@ -33,7 +33,8 @@ export type EvidenceStage = "antes" | "durante" | "despues" | "general";
 export type PunchPriority = "critica" | "alta" | "media" | "baja";
 export type PunchStatus = "abierto" | "en_proceso" | "corregido" | "cerrado";
 export type ApprovalStatus = "pendiente" | "aprobado" | "rechazado";
-export type SyncStatus = "synced" | "pending" | "conflict";
+// "syncing" y "failed" son transitorios SOLO del cliente (no existen en el enum del servidor).
+export type SyncStatus = "synced" | "pending" | "syncing" | "failed" | "conflict";
 
 // -------------------- ENTIDADES --------------------
 export interface Company {
@@ -234,6 +235,13 @@ export interface Test {
   version: number;
   sync_status: SyncStatus;
   origin_device_id?: string;
+  // Snapshot de plantilla (trazabilidad de auditoría)
+  template_id?: string;
+  template_revision?: string;
+  template_hash?: string;
+  template_snapshot?: unknown;
+  // Solo cliente (se elimina antes del upsert al servidor)
+  last_sync_error?: string;
   // relaciones
   equipment?: Equipment;
   checklist_items?: ChecklistItem[];

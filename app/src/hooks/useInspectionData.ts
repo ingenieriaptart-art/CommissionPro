@@ -1,8 +1,10 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type { Equipment, FieldType } from "@/types";
-import type { MockInspectionTemplate, MockInspectionSection, MockInspectionField } from "@/types/inspection";
+import { assembleTemplate } from "@/lib/sync/assembleTemplate";
+import { localDB } from "@/lib/db/local";
+import type { Equipment } from "@/types";
+import type { MockInspectionTemplate } from "@/types/inspection";
 
 // IDs mock empiezan con "eq-" / "tpl-" / "ic02-"; los reales son UUIDs de 36 chars
 const isMockId = (id: string) =>
@@ -35,14 +37,21 @@ export function useEquipmentForInspection(equipmentId: string) {
         if (!mock) return null;
         return mock.getEquipmentById(equipmentId) ?? null;
       }
-      const supabase = createClient();
-      const { data } = await supabase
-        .from("equipment")
-        .select("*")
-        .eq("id", equipmentId)
-        .is("deleted_at", null)
-        .single();
-      return (data as Equipment) ?? null;
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (!offline) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("equipment")
+          .select("*")
+          .eq("id", equipmentId)
+          .is("deleted_at", null)
+          .single();
+        if (data) {
+          await localDB.equipment.put({ ...(data as Record<string, unknown>), sync_status: "synced" } as never);
+          return data as Equipment;
+        }
+      }
+      return (await localDB.equipment.get(equipmentId)) ?? null;
     },
     enabled: !!equipmentId,
     staleTime: 5 * 60 * 1000,
@@ -62,6 +71,11 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
           id: t.id, code: t.code, name: t.name, discipline: t.discipline,
         }));
       }
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (offline) {
+        const row = await localDB.equipmentTemplateRefs.get(equipmentId);
+        return row?.refs ?? [];
+      }
       const supabase = createClient();
 
       // Usa el RPC unificado que combina los 4 niveles:
@@ -69,7 +83,11 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
       const { data: rows, error } = await supabase
         .rpc("get_equipment_templates", { p_equipment_id: equipmentId });
 
-      if (error) throw error;
+      if (error) {
+        const row = await localDB.equipmentTemplateRefs.get(equipmentId);
+        if (row) return row.refs;
+        throw error;
+      }
 
       // Deduplicar por template_id (pueden aparecer desde varios niveles)
       const seen = new Set<string>();
@@ -86,6 +104,7 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
           });
         }
       }
+      await localDB.equipmentTemplateRefs.put({ equipmentId, refs: result, updatedAt: new Date().toISOString() });
       return result;
     },
     enabled: !!equipmentId,
@@ -105,81 +124,19 @@ export function useInspectionTemplate(templateId: string) {
         return mock.getTemplateById(templateId) ?? null;
       }
 
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (offline) {
+        const row = await localDB.offlineTemplates.get(templateId);
+        if (row) { row.template._source = "offline"; return row.template; }
+        return null;
+      }
       const supabase = createClient();
-
-      // 1. Metadatos del template
-      const { data: ft, error: ftErr } = await supabase
-        .from("form_templates")
-        .select("id, key, name, test_type")
-        .eq("id", templateId)
-        .is("deleted_at", null)
-        .single();
-      if (ftErr || !ft) return null;
-
-      // 2. Secciones (universales + asignadas) via RPC
-      const { data: sectionRows, error: secErr } = await supabase
-        .rpc("get_template_sections", { p_template_id: templateId });
-      if (secErr || !sectionRows?.length) return null;
-
-      const sectionIds: string[] = sectionRows.map((s: any) => s.section_id as string);
-
-      // 3a. is_universal por sección (metadato global de la sección)
-      const { data: sectionMeta } = await supabase
-        .from("template_sections")
-        .select("id, is_universal")
-        .in("id", sectionIds);
-
-      const universalMap: Record<string, boolean> = {};
-      for (const s of (sectionMeta ?? [])) {
-        universalMap[s.id] = s.is_universal;
+      const tpl = await assembleTemplate(supabase, templateId);
+      if (tpl) {
+        tpl._source = "online";
+        await localDB.offlineTemplates.put({ id: templateId, template: tpl, updatedAt: new Date().toISOString() });
       }
-
-      // 3b. is_active POR PLANTILLA: viene resuelto del RPC get_template_sections
-      const activeMapSec: Record<string, boolean> = {};
-      for (const s of sectionRows) {
-        activeMapSec[s.section_id as string] = (s as any).is_active ?? true;
-      }
-
-      // 4. Campos de todas las secciones
-      const { data: allFields } = await supabase
-        .from("section_fields")
-        .select("*")
-        .in("section_id", sectionIds)
-        .order("sort_order");
-
-      const fieldsBySectionId: Record<string, MockInspectionField[]> = {};
-      for (const f of (allFields ?? [])) {
-        if (!fieldsBySectionId[f.section_id]) fieldsBySectionId[f.section_id] = [];
-        fieldsBySectionId[f.section_id].push({
-          key:         f.key,
-          _db_id:      f.id,
-          label:       f.label,
-          type:        f.type as FieldType,
-          required:    f.required,
-          options:     (f.options as string[]) ?? undefined,
-          validations: (f.validations as { unit?: string; min?: number; max?: number }) ?? undefined,
-          hint:        f.hint ?? undefined,
-          is_active:   f.is_active ?? true,
-        });
-      }
-
-      // 5. Ensamblar MockInspectionTemplate
-      const sections: MockInspectionSection[] = sectionRows.map((s: any) => ({
-        id:           s.section_id as string,
-        code:         s.section_code as string,
-        name:         s.section_name as string,
-        is_universal: universalMap[s.section_id] ?? false,
-        is_active:    activeMapSec[s.section_id] ?? true,
-        fields:       fieldsBySectionId[s.section_id] ?? [],
-      }));
-
-      return {
-        id:         ft.id,
-        code:       ft.key,
-        name:       ft.name,
-        discipline: ft.test_type ?? "",
-        sections,
-      };
+      return tpl;
     },
     enabled: !!templateId,
     staleTime: 10 * 60 * 1000,

@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/auth.store";
 import { useAppUIPrefs, useSetAppUIPrefs } from "@/hooks/useAppConfig";
 import { useProject } from "@/hooks/useProject";
 import { useMyModuleAccess } from "@/hooks/useMyModuleAccess";
+import { SyncStatusBadge } from "@/components/sync/SyncStatusBadge";
 import {
   LayoutDashboard, Wrench, CheckSquare, AlertTriangle,
   FileText, Settings, ChevronLeft, ArrowLeft, Zap, Cpu, Map, ClipboardList, Activity, Home, Printer, ChevronRight, Eye, EyeOff,
@@ -231,6 +232,13 @@ export function ProjectSidebar() {
           {sidebarOpen && <span>Configuración</span>}
         </Link>
       </div>
+      )}
+
+      {/* Estado de sincronización offline (solo con sidebar abierto) */}
+      {sidebarOpen && (
+        <div className="border-t border-slate-800 px-1 py-1">
+          <SyncStatusBadge />
+        </div>
       )}
 
       {/* Biotec logo */}

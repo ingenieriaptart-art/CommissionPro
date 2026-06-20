@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { localDB, enqueueSync } from "@/lib/db/local";
 import type { EquipmentStatus } from "@/types";
 import type { SectionStatus } from "@/types/inspection";
 
@@ -40,7 +41,13 @@ export async function syncEquipmentStatus(
       };
     }
 
-    await supabase.from("equipment").update(patch).eq("id", equipmentId);
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    await localDB.equipment.update(equipmentId, patch as never);
+    if (offline) {
+      await enqueueSync("equipment", equipmentId, "UPDATE", { id: equipmentId, ...patch });
+    } else {
+      await supabase.from("equipment").update(patch).eq("id", equipmentId);
+    }
   } catch {
     // falla silenciosa — el UX no se bloquea
   }

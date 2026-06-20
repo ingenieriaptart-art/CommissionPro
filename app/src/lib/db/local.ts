@@ -7,7 +7,8 @@ import type {
   Test, ChecklistItem, Evidence, PunchItem,
   Notification, FormTemplate,
 } from "@/types";
-import type { InspectionState } from "@/types/inspection";
+import type { InspectionState, MockInspectionTemplate } from "@/types/inspection";
+import type { TemplateRef } from "@/hooks/useInspectionData";
 
 // Tipo para la cola de sincronización (outbox)
 export interface SyncOperation {
@@ -43,6 +44,18 @@ export interface InspectionDraft {
   updatedAt: string;
 }
 
+export interface OfflineTemplate {
+  id: string;                       // templateId
+  template: MockInspectionTemplate;
+  updatedAt: string;
+}
+
+export interface EquipmentTemplateRefsRow {
+  equipmentId: string;
+  refs: TemplateRef[];
+  updatedAt: string;
+}
+
 class CommissionProDB extends Dexie {
   projects!: EntityTable<Project, "id">;
   areas!: EntityTable<Area, "id">;
@@ -59,6 +72,8 @@ class CommissionProDB extends Dexie {
   blobStore!: EntityTable<LocalBlobStore, "id">;
   syncCursors!: EntityTable<SyncCursor, "entity">;
   inspectionDrafts!: EntityTable<InspectionDraft, "id">;
+  offlineTemplates!: EntityTable<OfflineTemplate, "id">;
+  equipmentTemplateRefs!: EntityTable<EquipmentTemplateRefsRow, "equipmentId">;
 
   constructor() {
     super("CommissionProDB");
@@ -92,6 +107,12 @@ class CommissionProDB extends Dexie {
     // v4: borradores de inspección (reemplaza sessionStorage — se pierde al cerrar pestaña)
     this.version(4).stores({
       inspectionDrafts: "id, updatedAt",
+    });
+
+    // v5: plantillas y resolución por equipo cacheadas para captura offline
+    this.version(5).stores({
+      offlineTemplates:      "id, updatedAt",
+      equipmentTemplateRefs: "equipmentId, updatedAt",
     });
   }
 }
