@@ -10,7 +10,7 @@ import { InspectionSummary } from "@/components/inspection/InspectionSummary";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import { useSubmitInspection } from "@/hooks/useSubmitInspection";
-import type { InspectionState, SectionStatus } from "@/types/inspection";
+import type { InspectionState, SectionStatus, MockInspectionSection } from "@/types/inspection";
 import type { Equipment } from "@/types";
 import { syncEquipmentStatus, calcFormPct } from "@/hooks/useEquipmentStatusSync";
 import {
@@ -18,22 +18,17 @@ import {
   getInspectionDraft,
   deleteInspectionDraft,
 } from "@/lib/db/local";
-
-/**
- * Estado inicial de una sección. Una sección SIN campos (p. ej. secciones
- * universales vacías como "Anclaje y Nivelación" o "Cambios de Diseño/Redline")
- * no tiene nada que responder, así que cuenta como "complete" por defecto —
- * de lo contrario quedaría "pending" para siempre y bloquearía el botón
- * "Revisar y Cerrar" en TODA inspección que la incluya.
- */
-function defaultSectionStatus(section: { fields: unknown[] }): SectionStatus {
-  return section.fields.length === 0 ? "complete" : "pending";
-}
+import {
+  activeRequiredFields,
+  defaultSectionStatus,
+  isInspectionComplete,
+  reconcileSectionStatus,
+} from "@/lib/inspection/completion";
 
 function buildInitialState(
   equipmentId: string,
   templateId: string,
-  sections: { code: string; fields: unknown[] }[],
+  sections: MockInspectionSection[],
   equipment?: Equipment | null,
 ): InspectionState {
   const sectionStatus: Record<string, SectionStatus> = {};
@@ -62,22 +57,6 @@ function buildInitialState(
     savedAt: null,
     isDirty: false,
   };
-}
-
-/**
- * Reconcilia el sectionStatus de un borrador guardado contra las secciones
- * REALES de la plantilla actual: conserva el estado de las secciones que
- * existen, descarta claves obsoletas y agrega como "pending" las faltantes.
- * Evita el desfase "% = 100% pero el botón no aparece" cuando el borrador
- * quedó con un conjunto de secciones distinto al de la plantilla.
- */
-function reconcileSectionStatus(
-  saved: Record<string, SectionStatus>,
-  sections: { code: string; fields: unknown[] }[],
-): Record<string, SectionStatus> {
-  const out: Record<string, SectionStatus> = {};
-  for (const s of sections) out[s.code] = saved[s.code] ?? defaultSectionStatus(s);
-  return out;
 }
 
 export default function InspectionPage() {
@@ -131,8 +110,8 @@ export default function InspectionPage() {
       const section = template?.sections[prev.activeSectionIndex];
       if (!section) return prev;
       const newAnswers = { ...prev.answers, [fieldKey]: value };
-      // Recompute section status
-      const allRequired = section.fields.filter(f => f.required);
+      // Recompute section status — solo cuentan los requeridos ACTIVOS
+      const allRequired = activeRequiredFields(section);
       const allFilled = allRequired.every(f => {
         const v = newAnswers[f.key];
         return v !== undefined && v !== null && v !== "";
@@ -245,9 +224,7 @@ export default function InspectionPage() {
 
   const activeSection = template.sections[state.activeSectionIndex];
   const isLastSection = state.activeSectionIndex === template.sections.length - 1;
-  const allComplete   = template.sections.every(s =>
-    state.sectionStatus[s.code] === "complete" || state.sectionStatus[s.code] === "failed"
-  );
+  const allComplete   = isInspectionComplete(template.sections, state.sectionStatus);
 
   return (
     <>
