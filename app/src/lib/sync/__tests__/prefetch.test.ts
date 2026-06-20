@@ -50,3 +50,34 @@ test("prepareProjectOffline cachea equipos, refs y plantillas", async () => {
   expect((await localDB.equipmentTemplateRefs.get("e1"))?.refs[0].id).toBe("t1");
   expect((await localDB.offlineTemplates.get("t1"))?.template.code).toBe("P_X");
 });
+
+test("prepareProjectOffline warmea la ruta de inspección por equipo+plantilla", async () => {
+  const warmed: Array<[string, string]> = [];
+  const deps = {
+    client: mockClient(),
+    db: localDB,
+    assemble: async () => ({ id: "t1", code: "P_X", name: "X", discipline: "mec", sections: [] }),
+    warmRoute: async (equipmentId: string, templateId: string) => {
+      warmed.push([equipmentId, templateId]);
+    },
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await prepareProjectOffline("p1", deps as any);
+  // e1→t1 y e2→t1 (ambos equipos comparten plantilla)
+  expect(warmed).toContainEqual(["e1", "t1"]);
+  expect(warmed).toContainEqual(["e2", "t1"]);
+  expect(warmed.length).toBe(2);
+});
+
+test("un fallo de warming NO agrega errores ni aborta la preparación", async () => {
+  const deps = {
+    client: mockClient(),
+    db: localDB,
+    assemble: async () => ({ id: "t1", code: "P_X", name: "X", discipline: "mec", sections: [] }),
+    warmRoute: async () => { throw new Error("offline cache miss"); },
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await prepareProjectOffline("p1", deps as any);
+  expect(res.errors).toEqual([]); // warming es best-effort
+  expect(res.templates).toBe(1);
+});

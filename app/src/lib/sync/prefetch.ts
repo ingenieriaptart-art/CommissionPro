@@ -10,6 +10,30 @@ export interface PrefetchDeps {
   client: SupabaseLike;
   db?: typeof localDB;
   assemble?: (client: SupabaseLike, templateId: string) => Promise<MockInspectionTemplate | null>;
+  /** Warmea (precachea) el documento/RSC de una ruta de inspección. Inyectable para test. */
+  warmRoute?: (equipmentId: string, templateId: string) => Promise<void>;
+}
+
+/**
+ * Warming por defecto: precachea la ruta de inspección en los mismos caches que
+ * sirve el service worker (sw.ts), usando el PATHNAME como clave (sin query) para
+ * que coincida con la navegación real (que lleva ?returnTo=… variable). Best-effort.
+ */
+async function defaultWarmRoute(equipmentId: string, templateId: string): Promise<void> {
+  if (typeof caches === "undefined" || typeof fetch === "undefined") return;
+  const path = `/equipment/${equipmentId}/inspection/${templateId}`;
+  // Documento HTML (carga dura / address bar / page.goto)
+  const docRes = await fetch(path, { headers: { Accept: "text/html" } });
+  if (docRes.ok) {
+    const pages = await caches.open("inspection-pages");
+    await pages.put(new Request(path), docRes.clone());
+  }
+  // Payload RSC (navegación client-side vía next/link)
+  const rscRes = await fetch(path, { headers: { RSC: "1" } });
+  if (rscRes.ok) {
+    const rsc = await caches.open("inspection-rsc");
+    await rsc.put(new Request(path), rscRes.clone());
+  }
 }
 
 /** Descarga equipos + plantillas resueltas del proyecto a IndexedDB para uso offline. */
@@ -20,8 +44,10 @@ export async function prepareProjectOffline(
 ): Promise<{ equipment: number; templates: number; errors: string[] }> {
   const db = deps.db ?? localDB;
   const assemble = deps.assemble ?? assembleTemplate;
+  const warmRoute = deps.warmRoute ?? defaultWarmRoute;
   const errors: string[] = [];
   const now = () => new Date().toISOString();
+  const warmPairs: Array<{ equipmentId: string; templateId: string }> = [];
 
   // 1. Equipos del proyecto
   const { data: equipment, error: eqErr } = await deps.client
@@ -46,6 +72,7 @@ export async function prepareProjectOffline(
         seen.add(r.template_id);
         refs.push({ id: r.template_id, code: r.template_key, name: r.template_name, discipline: r.discipline ?? "", source: r.source });
         templateIds.add(r.template_id);
+        warmPairs.push({ equipmentId: eq.id, templateId: r.template_id });
       }
       await db.equipmentTemplateRefs.put({ equipmentId: eq.id, refs, updatedAt: now() });
     } catch (err) {
@@ -69,6 +96,16 @@ export async function prepareProjectOffline(
       }
     } catch (err) {
       errors.push(`plantilla ${tid}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  // 5. Warmear rutas de inspección (precache del documento/RSC). Best-effort:
+  // un fallo aquí NO aborta la preparación ni suma a `errors`.
+  for (const { equipmentId, templateId } of warmPairs) {
+    try {
+      await warmRoute(equipmentId, templateId);
+    } catch {
+      /* best-effort: la captura offline igual funciona si la ruta ya fue visitada */
     }
   }
 
