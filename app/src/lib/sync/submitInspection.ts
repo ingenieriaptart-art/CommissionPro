@@ -21,6 +21,10 @@ export interface SubmitDeps {
   isOnline: () => boolean;
   appVersion: string;
   schemaVersion: number;
+  /** FSM: estado destino de INSPECTION_EXECUTED desde el estado actual (o null). */
+  nextState: (state: string, event: "INSPECTION_EXECUTED") => string | null;
+  /** Encola la transición de estado en el outbox (se aplica vía RPC en el push). */
+  enqueueTransition: (equipmentId: string, event: string, fromStatus: string, context?: unknown, occurredAt?: string) => Promise<void>;
 }
 
 const FAIL_VALUES = new Set(["FALLA", "NO", "RECHAZADO", "No cumple", "No conforme"]);
@@ -96,16 +100,15 @@ export async function submitInspectionOffline(
     }
   }
 
-  // Estado del equipo (local + outbox)
+  // Estado del equipo vía FSM (emite INSPECTION_EXECUTED; el servidor re-valida)
   const eq = await db.equipment.get(state.equipmentId);
-  const patch = {
-    status: "en_ejecucion",
-    metadata: { ...((eq?.metadata as Record<string, unknown>) ?? {}), form_pct: 100 },
-    updated_at: ts,
-  };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await db.equipment.update(state.equipmentId, patch as any);
-  await deps.enqueueSync("equipment", state.equipmentId, "UPDATE", { id: state.equipmentId, ...patch });
+  const fromStatus = (eq?.status as string) ?? "pendiente";
+  const target = deps.nextState(fromStatus, "INSPECTION_EXECUTED");
+  if (target && target !== fromStatus) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await db.equipment.update(state.equipmentId, { status: target, updated_at: ts } as any);
+    await deps.enqueueTransition(state.equipmentId, "INSPECTION_EXECUTED", fromStatus, { test_id: testId }, ts);
+  }
 
   await deps.deleteInspectionDraft(state.equipmentId, template.id);
 

@@ -98,6 +98,23 @@ export async function pushPendingOps(
     try {
       if (table) await table.update(op.entityId, { sync_status: "syncing" });
 
+      // Transición de estado del equipo: se aplica vía RPC autoritativo. El
+      // servidor re-valida la FSM + G-OFFLINE; una op rejected se considera
+      // RESUELTA (no se reintenta) y se reconcilia el status local al del servidor.
+      if (op.entity === "__equipment_transition") {
+        const p = op.payload as { equipment_id: string; event: string; from_status: string; context: unknown; occurred_at: string };
+        const { data, error } = await supabase.rpc("transition_equipment_state", {
+          p_equipment_id: p.equipment_id, p_event: p.event, p_from_status: p.from_status,
+          p_reason: null, p_context: p.context, p_occurred_at: p.occurred_at, p_source: "offline_sync",
+        });
+        if (error) throw error;                        // transitorio → reintento (backoff)
+        const result = data as { applied: boolean; status: string };
+        await localDB.equipment.update(p.equipment_id, { status: result.status } as never); // reconciliar
+        await localDB.syncQueue.delete(op.id!);        // resuelta (applied o rejected)
+        pushed += result.applied ? 1 : 0;
+        continue;
+      }
+
       if (op.operation === "INSERT") {
         // Copia saneada para el servidor: forzar synced y quitar campos solo-cliente
         const payload = { ...(op.payload as Record<string, unknown>) };
