@@ -4,6 +4,7 @@ import { useUIStore } from "@/stores/ui.store";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { UploadCloud, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { OfflinePrepCard } from "@/components/settings/OfflinePrepCard";
 
 interface Props { params: Promise<{ projectId: string }> }
 
@@ -129,6 +130,11 @@ export default function SettingsPage({ params }: Props) {
 
       {/* Card: Logos del informe */}
       <ClientLogoCard projectId={projectId} />
+
+      {/* Card: Preparar para offline */}
+      <div style={{ marginTop: "24px" }}>
+        <OfflinePrepCard projectId={projectId} />
+      </div>
     </div>
   );
 }
