@@ -51,6 +51,22 @@ function buildInitialState(
   };
 }
 
+/**
+ * Reconcilia el sectionStatus de un borrador guardado contra las secciones
+ * REALES de la plantilla actual: conserva el estado de las secciones que
+ * existen, descarta claves obsoletas y agrega como "pending" las faltantes.
+ * Evita el desfase "% = 100% pero el botón no aparece" cuando el borrador
+ * quedó con un conjunto de secciones distinto al de la plantilla.
+ */
+function reconcileSectionStatus(
+  saved: Record<string, SectionStatus>,
+  codes: string[],
+): Record<string, SectionStatus> {
+  const out: Record<string, SectionStatus> = {};
+  for (const code of codes) out[code] = saved[code] ?? "pending";
+  return out;
+}
+
 export default function InspectionPage() {
   const params       = useParams() as { equipmentId: string; templateId: string };
   const searchParams = useSearchParams();
@@ -71,19 +87,14 @@ export default function InspectionPage() {
   // Load or initialize state from IndexedDB (survives tab close / browser restart)
   useEffect(() => {
     if (!template || !equipment) return;
+    const codes = template.sections.map(s => s.code);
     getInspectionDraft(equipmentId, templateId)
       .then((saved) => {
         if (saved) {
-          setState(saved);
+          // Reconciliar el borrador con las secciones actuales de la plantilla
+          setState({ ...saved, sectionStatus: reconcileSectionStatus(saved.sectionStatus, codes) });
         } else {
-          setState(
-            buildInitialState(
-              equipmentId,
-              templateId,
-              template.sections.map(s => s.code),
-              equipment,
-            )
-          );
+          setState(buildInitialState(equipmentId, templateId, codes, equipment));
         }
       })
       .catch(() => {
