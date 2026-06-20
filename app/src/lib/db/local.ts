@@ -136,6 +136,23 @@ export async function enqueueSync(
   });
 }
 
+/**
+ * Encola una transición de estado del equipo en el outbox. El push la aplica vía
+ * el RPC autoritativo `transition_equipment_state` (re-valida la FSM + G-OFFLINE).
+ */
+export async function enqueueTransition(
+  equipmentId: string,
+  event: string,
+  fromStatus: string,
+  context?: unknown,
+  occurredAt?: string,
+): Promise<void> {
+  await enqueueSync("__equipment_transition", equipmentId, "INSERT", {
+    equipment_id: equipmentId, event, from_status: fromStatus,
+    context: context ?? null, occurred_at: occurredAt ?? new Date().toISOString(),
+  });
+}
+
 export async function saveBlobLocally(evidenceId: string, blob: Blob): Promise<number> {
   const id = await localDB.blobStore.add({
     evidenceId,
