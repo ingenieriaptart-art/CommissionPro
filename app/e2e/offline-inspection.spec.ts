@@ -12,12 +12,19 @@ test("captura offline → sync al reconectar", async ({ page, context }) => {
   // 2. Ir offline
   await context.setOffline(true);
 
-  // 3. Abrir inspección de un equipo preparado y guardarla
+  // 3. Abrir inspección de un equipo preparado (ruta servida por el SW offline)
   await page.goto("/equipment/EQUIPMENT_ID/inspection/TEMPLATE_ID");
   await expect(page.getByText(/Datos Generales|Check List|Verificación/i).first()).toBeVisible();
-  // (rellenar mínimos según la plantilla, luego ir a summary y guardar)
-  await page.goto("/equipment/EQUIPMENT_ID/inspection/TEMPLATE_ID/summary");
-  await page.getByRole("button", { name: /Guardar|Generar/i }).first().click();
+  // (rellenar mínimos según la plantilla hasta habilitar "Revisar y Cerrar")
+
+  // 3b. El resumen es INLINE: "Revisar y Cerrar" NO navega a /summary.
+  const urlBefore = page.url();
+  await page.getByRole("button", { name: /Revisar y Cerrar/i }).click();
+  await expect(page).toHaveURL(urlBefore); // misma ruta, sin /summary
+  await expect(page.getByText(/Resumen de Inspección/i)).toBeVisible();
+
+  // 3c. Guardar (local-first; queda en cola offline)
+  await page.getByRole("button", { name: /Guardar.*Inspección/i }).first().click();
 
   // 4. Badge muestra pendiente
   await expect(page.getByText(/pendiente/i)).toBeVisible();
