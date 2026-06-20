@@ -1,11 +1,12 @@
 import { test, expect, beforeEach } from "vitest";
-import { pushPendingOps } from "@/lib/sync/engine";
+import { pushPendingOps, pullChangesForTest } from "@/lib/sync/engine";
 import { localDB, saveBlobLocally } from "@/lib/db/local";
 
 beforeEach(async () => {
   await Promise.all([
     localDB.syncQueue.clear(), localDB.tests.clear(),
     localDB.evidences.clear(), localDB.blobStore.clear(),
+    localDB.syncCursors.clear(),
   ]);
 });
 
@@ -57,6 +58,35 @@ test("push: sube blob de evidencia, setea storage_url y marca synced (LWW por id
   expect(await localDB.blobStore.where("evidenceId").equals("ev1").count()).toBe(0);
   expect((await localDB.evidences.get("ev1"))?.sync_status).toBe("synced");
   expect(await localDB.syncQueue.count()).toBe(0);
+});
+
+// ── Pull: resiliencia por entidad ──────────────────────────────────────────────
+// Builder de pull por entidad: select/gt/order encadenan; range() resuelve.
+function mockPullSupabase(perEntity: Record<string, { data?: unknown[]; error?: unknown }>) {
+  return {
+    from(entity: string) {
+      const res = perEntity[entity] ?? { data: [] };
+      const builder: Record<string, unknown> = {};
+      builder.select = () => builder;
+      builder.gt = () => builder;
+      builder.order = () => builder;
+      builder.range = async () => res;
+      return builder as never;
+    },
+  };
+}
+
+test("pull: una entidad con error no aborta el resto; el error se reporta", async () => {
+  const sb = mockPullSupabase({
+    tests: { data: [{ id: "t1", updated_at: "2026-06-20T00:00:00Z" }] },
+    evidences: { error: { message: "column evidences.updated_at does not exist" } },
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { pulled, errors } = await pullChangesForTest(sb as any);
+
+  expect(pulled).toBeGreaterThanOrEqual(1);
+  expect(await localDB.tests.get("t1")).toBeTruthy();
+  expect(errors.some((e) => e.includes("evidences"))).toBe(true);
 });
 
 test("retry/backoff: error incrementa attempts y guarda last_sync_error; a los 5 → failed", async () => {

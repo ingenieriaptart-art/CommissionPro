@@ -155,8 +155,9 @@ export async function pushPendingOps(
 // -------------------- PULL PAGINADO [A-002 FIX] --------------------
 async function pullChanges(
   supabase: ReturnType<typeof createClient>
-): Promise<{ pulled: number }> {
+): Promise<{ pulled: number; errors: string[] }> {
   let pulled = 0;
+  const errors: string[] = [];
 
   for (const entity of SYNCABLE_ENTITIES) {
     const since = await getPullCursor(entity);
@@ -174,7 +175,16 @@ async function pullChanges(
         .order("updated_at", { ascending: true })
         .range(offset, offset + PULL_PAGE_SIZE - 1);  // ← [A-002]: paginación
 
-      if (error || !data) break;
+      // Un fallo de UNA entidad (p. ej. columna ausente) NO debe abortar el
+      // sync completo: se reporta y se continúa con las demás entidades.
+      if (error) {
+        const msg = (error && typeof error === "object" && "message" in error)
+          ? String((error as { message: unknown }).message)
+          : String(error);
+        errors.push(`pull ${entity}: ${msg}`);
+        break;
+      }
+      if (!data) break;
 
       // Procesar página por página SIN acumular todo en memoria
       for (const record of data) {
@@ -193,8 +203,11 @@ async function pullChanges(
       }
     }
   }
-  return { pulled };
+  return { pulled, errors };
 }
+
+// Wrapper para tests unitarios del pull (no usar en producción).
+export const pullChangesForTest = pullChanges;
 
 // -------------------- SYNC INTERNO (sin lock) --------------------
 async function runSyncInternal(
@@ -216,8 +229,9 @@ async function runSyncInternal(
     result.pushed = pushed;
     result.errors = errors;
 
-    const { pulled } = await pullChanges(supabase);
+    const { pulled, errors: pullErrors } = await pullChanges(supabase);
     result.pulled = pulled;
+    result.errors = [...result.errors, ...pullErrors];
 
     onStateChange?.("success", result);
   } catch (err) {
