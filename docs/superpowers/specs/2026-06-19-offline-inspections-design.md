@@ -244,3 +244,27 @@ offline → abrir inspección (render desde caché) → llenar + foto → guarda
   `template_snapshot`/`template_hash` no nulos.
 - Manual: con red apagada, abrir y guardar una inspección de un equipo previamente
   preparado; al reconectar, aparece en backend con evidencias subidas.
+
+## Cierre 2026-06-20 — Offline Usable
+
+Mini-épica que cierra las tres limitaciones que impedían capturar/guardar 100% offline
+(ver plan `docs/superpowers/plans/2026-06-20-offline-usable.md`). Decisión del usuario:
+opción **B** (cerrar la limitación antes de mergear PR #2).
+
+1. **Guardado dependiente de `/summary`** → el resumen ahora se renderiza **inline** en la
+   ruta del formulario (ya cargada) y "Revisar y Cerrar" guarda ahí mismo vía
+   `submitInspectionOffline`. `/summary` quedó como redirect legacy. El guardado ya no
+   depende de cargar otra ruta. (commit `feat(inspection): resumen inline…`)
+2. **`evidences 400`** → `evidences` era la única entidad de `SYNCABLE_ENTITIES` sin
+   `updated_at`; el pull (`.gt("updated_at", since)`) devolvía 400 en cada ciclo.
+   Migración **0048** agrega la columna + trigger `set_updated_at`. Además `pullChanges`
+   ahora aísla el fallo por entidad (no aborta el sync completo).
+3. **Navegación offline** → se reemplazó `next-pwa@5.6` (era Next 12-13, sin
+   mantenimiento) por **`@serwist/next` 9.5**. SW con precache del app-shell + `defaultCache`
+   + caching dedicado de rutas `/inspection/` (clave por pathname). `prepareProjectOffline`
+   **warmea** los documentos/RSC de las rutas de los equipos preparados → una inspección
+   nunca visitada abre sin red.
+
+**Verificación realizada:** `npm test` 16/16 verde; `npm run build` OK con `public/sw.js`
+generado; typecheck/lint limpios. Pendiente de validación manual (gated): aplicar 0048 en
+Supabase y correr el flujo offline completo contra el build de producción.
