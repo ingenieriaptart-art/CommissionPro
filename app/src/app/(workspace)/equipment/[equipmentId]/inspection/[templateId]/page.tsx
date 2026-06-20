@@ -17,14 +17,25 @@ import {
   deleteInspectionDraft,
 } from "@/lib/db/local";
 
+/**
+ * Estado inicial de una sección. Una sección SIN campos (p. ej. secciones
+ * universales vacías como "Anclaje y Nivelación" o "Cambios de Diseño/Redline")
+ * no tiene nada que responder, así que cuenta como "complete" por defecto —
+ * de lo contrario quedaría "pending" para siempre y bloquearía el botón
+ * "Revisar y Cerrar" en TODA inspección que la incluya.
+ */
+function defaultSectionStatus(section: { fields: unknown[] }): SectionStatus {
+  return section.fields.length === 0 ? "complete" : "pending";
+}
+
 function buildInitialState(
   equipmentId: string,
   templateId: string,
-  sectionCodes: string[],
+  sections: { code: string; fields: unknown[] }[],
   equipment?: Equipment | null,
 ): InspectionState {
   const sectionStatus: Record<string, SectionStatus> = {};
-  for (const code of sectionCodes) sectionStatus[code] = "pending";
+  for (const s of sections) sectionStatus[s.code] = defaultSectionStatus(s);
 
   // Pre-llenar sección DATOS_GENERALES con datos conocidos del equipo
   const answers: Record<string, unknown> = {};
@@ -60,10 +71,10 @@ function buildInitialState(
  */
 function reconcileSectionStatus(
   saved: Record<string, SectionStatus>,
-  codes: string[],
+  sections: { code: string; fields: unknown[] }[],
 ): Record<string, SectionStatus> {
   const out: Record<string, SectionStatus> = {};
-  for (const code of codes) out[code] = saved[code] ?? "pending";
+  for (const s of sections) out[s.code] = saved[s.code] ?? defaultSectionStatus(s);
   return out;
 }
 
@@ -87,25 +98,18 @@ export default function InspectionPage() {
   // Load or initialize state from IndexedDB (survives tab close / browser restart)
   useEffect(() => {
     if (!template || !equipment) return;
-    const codes = template.sections.map(s => s.code);
+    const sections = template.sections;
     getInspectionDraft(equipmentId, templateId)
       .then((saved) => {
         if (saved) {
           // Reconciliar el borrador con las secciones actuales de la plantilla
-          setState({ ...saved, sectionStatus: reconcileSectionStatus(saved.sectionStatus, codes) });
+          setState({ ...saved, sectionStatus: reconcileSectionStatus(saved.sectionStatus, sections) });
         } else {
-          setState(buildInitialState(equipmentId, templateId, codes, equipment));
+          setState(buildInitialState(equipmentId, templateId, sections, equipment));
         }
       })
       .catch(() => {
-        setState(
-          buildInitialState(
-            equipmentId,
-            templateId,
-            template.sections.map(s => s.code),
-            equipment,
-          )
-        );
+        setState(buildInitialState(equipmentId, templateId, sections, equipment));
       });
   }, [equipmentId, templateId, template, equipment]);
 
