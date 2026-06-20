@@ -51,12 +51,14 @@ BEGIN
   VALUES (gen_random_uuid(), v_proj, v_eq, 'precomisionamiento', 'ejecutado', v_tpl, 2)
   RETURNING id INTO v_test;
   v_res := public.approve_inspection(v_test, 1, 'approve', 'ok2', NULL, 'UA3');
+  IF (v_res->>'ok') <> 'true' THEN RAISE EXCEPTION 'rework approve RPC falló: %', v_res; END IF;
   IF (v_res->>'chain_complete') <> 'true' THEN RAISE EXCEPTION 'rework no completó cadena: %', v_res; END IF;
   IF (SELECT status::text FROM public.equipment WHERE id=v_eq) <> 'aprobado'
     THEN RAISE EXCEPTION 'rework no dejó equipo aprobado'; END IF;
 
   -- (D) reject_equipment → equipo rechazado
   v_res := public.approve_inspection(v_test, 1, 'reject_equipment', 'no conforme', NULL, 'UA4');
+  IF (v_res->>'ok') <> 'true' THEN RAISE EXCEPTION 'reject_equipment RPC falló: %', v_res; END IF;
   IF (SELECT status::text FROM public.equipment WHERE id=v_eq) <> 'rechazado'
     THEN RAISE EXCEPTION 'reject_equipment no dejó equipo rechazado'; END IF;
 
@@ -83,9 +85,8 @@ BEGIN
       RETURNING id INTO v_test2;
 
     -- E1: intentar aprobar L2 antes de L1 → debe bloquear
-    IF (public.approve_inspection(v_test2, 2, 'approve', NULL, NULL, 'UA') ->> 'reason') <> 'level_not_next' THEN
-      RAISE EXCEPTION 'E1: L2 antes de L1 deberia bloquear';
-    END IF;
+    v_res := public.approve_inspection(v_test2, 2, 'approve', NULL, NULL, 'UA');
+    IF (v_res ->> 'reason') <> 'level_not_next' THEN RAISE EXCEPTION 'E1: L2 antes de L1 deberia bloquear: %', v_res; END IF;
 
     -- Aprobar L1 y L2 en orden correcto
     v_res := public.approve_inspection(v_test2, 1, 'approve', NULL, NULL, 'UA');
