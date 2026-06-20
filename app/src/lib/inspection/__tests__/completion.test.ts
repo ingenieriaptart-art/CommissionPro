@@ -4,7 +4,8 @@ import {
   sectionRequiresInput,
   defaultSectionStatus,
   isInspectionComplete,
-  reconcileSectionStatus,
+  deriveSectionStatus,
+  deriveSectionStatuses,
 } from "@/lib/inspection/completion";
 import type { MockInspectionField, MockInspectionSection, SectionStatus } from "@/types/inspection";
 
@@ -63,12 +64,54 @@ describe("completion", () => {
     expect(isInspectionComplete(sections, { REQ: "failed" })).toBe(true);
   });
 
-  it("reconcile conserva estados existentes y completa faltantes por defecto", () => {
-    const sections = [
-      section("A", [field({ key: "a", required: true })]),
-      section("B", [field({ key: "b", required: false })]),
-    ];
-    const out = reconcileSectionStatus({ A: "complete" }, sections);
-    expect(out).toEqual({ A: "complete", B: "complete" }); // B opcional → complete por defecto
+  describe("deriveSectionStatus (desde respuestas)", () => {
+    it("requerido activo lleno y sin fallas → complete", () => {
+      const s = section("REQ", [field({ key: "x", required: true })]);
+      expect(deriveSectionStatus(s, { x: "OK" })).toBe("complete");
+    });
+
+    it("requerido activo SIN respuestas → pending", () => {
+      const s = section("REQ", [field({ key: "x", required: true })]);
+      expect(deriveSectionStatus(s, {})).toBe("pending");
+    });
+
+    it("requerido activo a medias (algo respondido pero falta) → in_progress", () => {
+      const s = section("REQ", [
+        field({ key: "x", required: true }),
+        field({ key: "y", required: true }),
+      ]);
+      expect(deriveSectionStatus(s, { x: "OK" })).toBe("in_progress");
+    });
+
+    it("requerido lleno pero con una FALLA → failed", () => {
+      const s = section("REQ", [
+        field({ key: "x", required: true }),
+        field({ key: "y", required: true }),
+      ]);
+      expect(deriveSectionStatus(s, { x: "OK", y: "FALLA" })).toBe("failed");
+    });
+
+    it("sección opcional sin tocar → complete; con FALLA en opcional → failed", () => {
+      const s = section("OBS", [field({ key: "obs", required: false })]);
+      expect(deriveSectionStatus(s, {})).toBe("complete");
+      expect(deriveSectionStatus(s, { obs: "RECHAZADO" })).toBe("failed");
+    });
+
+    it("sección desactivada → complete sin importar respuestas", () => {
+      const s = section("OFF", [field({ key: "x", required: true })], { is_active: false });
+      expect(deriveSectionStatus(s, {})).toBe("complete");
+    });
+
+    it("deriveSectionStatuses recupera el check de un borrador legado (bug F5)", () => {
+      // Aunque el sectionStatus guardado dijera 'pending', las respuestas mandan.
+      const sections = [
+        section("VERIF_ELEC", [field({ key: "tension", required: true })]),
+        section("OBS", [field({ key: "obs", required: false })]),
+      ];
+      const answers = { tension: "220" };
+      const derived = deriveSectionStatuses(sections, answers);
+      expect(derived).toEqual({ VERIF_ELEC: "complete", OBS: "complete" });
+      expect(isInspectionComplete(sections, derived)).toBe(true);
+    });
   });
 });

@@ -49,16 +49,47 @@ export function isInspectionComplete(
   });
 }
 
+/** Valores que marcan una sección como "failed" (mismo criterio que el formulario). */
+const FAIL_VALUES = new Set(["FALLA", "NO", "RECHAZADO"]);
+
+function isFilled(v: unknown): boolean {
+  return v !== undefined && v !== null && v !== "";
+}
+
 /**
- * Reconcilia el sectionStatus de un borrador guardado contra las secciones
- * reales de la plantilla actual: conserva el estado de las que existen, descarta
- * claves obsoletas y agrega las faltantes con su estado por defecto.
+ * Deriva el estado de una sección a partir de las respuestas actuales (misma
+ * lógica que `handleAnswerChange` en el formulario). Es la fuente de verdad: el
+ * check SIEMPRE refleja lo realmente respondido, evitando estados guardados
+ * desincronizados (p. ej. borradores legados → "completado pero sin check").
  */
-export function reconcileSectionStatus(
-  saved: Record<string, SectionStatus>,
+export function deriveSectionStatus(
+  section: MockInspectionSection,
+  answers: Record<string, unknown>,
+): SectionStatus {
+  if (section.is_active === false) return "complete"; // desactivada: no bloquea
+  const required = activeRequiredFields(section);
+  const allFilled = required.every((f) => isFilled(answers[f.key]));
+  const hasFail = section.fields.some((f) => FAIL_VALUES.has(String(answers[f.key])));
+
+  if (!allFilled) {
+    // Si la sección no tiene requeridos activos, allFilled es true y no entra acá.
+    const anyAnswered = section.fields.some((f) => isFilled(answers[f.key]));
+    return anyAnswered ? "in_progress" : "pending";
+  }
+  return hasFail ? "failed" : "complete";
+}
+
+/**
+ * Re-deriva el estado de TODAS las secciones desde las respuestas. Se usa al
+ * cargar un borrador: descarta el `sectionStatus` guardado (que puede estar
+ * desincronizado) y lo recalcula desde `answers`, garantizando que los checks
+ * coincidan con lo respondido.
+ */
+export function deriveSectionStatuses(
   sections: MockInspectionSection[],
+  answers: Record<string, unknown>,
 ): Record<string, SectionStatus> {
   const out: Record<string, SectionStatus> = {};
-  for (const s of sections) out[s.code] = saved[s.code] ?? defaultSectionStatus(s);
+  for (const s of sections) out[s.code] = deriveSectionStatus(s, answers);
   return out;
 }

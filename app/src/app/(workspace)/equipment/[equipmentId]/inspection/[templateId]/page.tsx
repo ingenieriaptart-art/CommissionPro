@@ -22,7 +22,7 @@ import {
   activeRequiredFields,
   defaultSectionStatus,
   isInspectionComplete,
-  reconcileSectionStatus,
+  deriveSectionStatuses,
 } from "@/lib/inspection/completion";
 
 function buildInitialState(
@@ -85,8 +85,10 @@ export default function InspectionPage() {
     getInspectionDraft(equipmentId, templateId)
       .then((saved) => {
         if (saved) {
-          // Reconciliar el borrador con las secciones actuales de la plantilla
-          setState({ ...saved, sectionStatus: reconcileSectionStatus(saved.sectionStatus, sections) });
+          // Re-derivar el estado de cada sección desde las respuestas guardadas:
+          // los checks SIEMPRE reflejan lo respondido (evita borradores legados
+          // "completado pero sin check").
+          setState({ ...saved, sectionStatus: deriveSectionStatuses(sections, saved.answers ?? {}) });
         } else {
           setState(buildInitialState(equipmentId, templateId, sections, equipment));
         }
