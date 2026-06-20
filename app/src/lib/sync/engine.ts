@@ -98,7 +98,7 @@ export async function pushPendingOps(
     try {
       if (table) await table.update(op.entityId, { sync_status: "syncing" });
 
-      if (op.operation === "INSERT" || op.operation === "UPDATE") {
+      if (op.operation === "INSERT") {
         // Copia saneada para el servidor: forzar synced y quitar campos solo-cliente
         const payload = { ...(op.payload as Record<string, unknown>) };
         delete payload.last_sync_error;
@@ -118,6 +118,7 @@ export async function pushPendingOps(
           }
         }
 
+        // INSERT de fila completa → upsert (idempotente + LWW por id en reintentos)
         const { error } = await supabase.from(op.entity).upsert(payload, { onConflict: "id" });
         if (error) throw error;
 
@@ -125,6 +126,15 @@ export async function pushPendingOps(
           const rec = await localDB.blobStore.where("evidenceId").equals(op.entityId).first();
           if (rec?.id != null) await localDB.blobStore.delete(rec.id);
         }
+      } else if (op.operation === "UPDATE") {
+        // UPDATE parcial → update().eq(): NO usar upsert (intentaría INSERT y
+        // violaría columnas NOT NULL ausentes en el patch, p.ej. equipment.tag).
+        const payload = { ...(op.payload as Record<string, unknown>) };
+        delete payload.last_sync_error;
+        if ("sync_status" in payload) payload.sync_status = "synced";
+        const { id, ...rest } = payload; // id va en el filtro, no en el SET
+        const { error } = await supabase.from(op.entity).update(rest).eq("id", id as string);
+        if (error) throw error;
       } else if (op.operation === "DELETE") {
         const { error } = await supabase.from(op.entity)
           .update({ deleted_at: new Date().toISOString() })

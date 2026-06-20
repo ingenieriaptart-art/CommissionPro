@@ -89,6 +89,41 @@ test("pull: una entidad con error no aborta el resto; el error se reporta", asyn
   expect(errors.some((e) => e.includes("evidences"))).toBe(true);
 });
 
+test("push UPDATE parcial de equipment usa update().eq() y NO upsert (evita 400 por NOT NULL)", async () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await localDB.equipment.add({ id: "eq1", project_id: "p1", tag: "B1", status: "pendiente", metadata: {}, sync_status: "pending" } as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await localDB.syncQueue.add({ entity: "equipment", entityId: "eq1", operation: "UPDATE", payload: { id: "eq1", status: "en_ejecucion", metadata: { form_pct: 100 }, updated_at: "t" }, createdAt: "t", attempts: 0 } as any);
+
+  const calls = { upsert: 0, update: 0, updateEqId: null as string | null };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let updatePayload: any = null;
+  const sb = {
+    from() {
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        upsert: async () => { calls.upsert++; return { error: null }; },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        update(payload: any) {
+          calls.update++; updatePayload = payload;
+          return { eq: async (_col: string, val: string) => { calls.updateEqId = val; return { error: null }; } };
+        },
+      };
+    },
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await pushPendingOps(sb as any);
+
+  expect(res.pushed).toBe(1);
+  expect(calls.upsert).toBe(0);            // UPDATE no debe usar upsert
+  expect(calls.update).toBe(1);            // sí update parcial
+  expect(calls.updateEqId).toBe("eq1");    // filtro .eq("id","eq1")
+  expect(updatePayload.id).toBeUndefined(); // el id va en el filtro, no en el SET
+  expect(updatePayload.status).toBe("en_ejecucion");
+  expect((await localDB.equipment.get("eq1"))?.sync_status).toBe("synced");
+  expect(await localDB.syncQueue.count()).toBe(0);
+});
+
 test("retry/backoff: error incrementa attempts y guarda last_sync_error; a los 5 → failed", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await localDB.tests.add({ id: "t1", project_id: "p1", status: "ejecutado", sync_status: "pending" } as any);
