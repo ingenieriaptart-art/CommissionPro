@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const withPWA = require("next-pwa") as (config: object) => (nextConfig: NextConfig) => NextConfig;
+import withSerwistInit from "@serwist/next";
 
 // Workaround: Avast intercepta SSL en desarrollo, Node.js no puede verificar
 // certificados de Supabase. Solo aplica en dev — nunca en producción (Vercel).
@@ -8,34 +7,14 @@ if (process.env.NODE_ENV === "development") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 }
 
-const pwaConfig = withPWA({
-  dest: "public",
-  disable: process.env.ENABLE_PWA !== "true",
-  register: true,
-  skipWaiting: true,
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "supabase-api",
-        expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
-      },
-    },
-    {
-      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "images",
-        expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 30 },
-      },
-    },
-    {
-      urlPattern: /\.(?:js|css|woff2)$/,
-      handler: "StaleWhileRevalidate",
-      options: { cacheName: "static-resources" },
-    },
-  ],
+const withSerwist = withSerwistInit({
+  swSrc: "src/app/sw.ts",
+  swDest: "public/sw.js",
+  // En dev el SW se desactiva para no interferir con HMR; activo en prod.
+  disable: process.env.NODE_ENV === "development",
+  // Cachea rutas al navegar con next/link (mejora cobertura offline).
+  cacheOnNavigation: true,
+  reloadOnOnline: true,
 });
 
 const nextConfig: NextConfig = {
@@ -49,4 +28,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default pwaConfig(nextConfig);
+export default withSerwist(nextConfig);
