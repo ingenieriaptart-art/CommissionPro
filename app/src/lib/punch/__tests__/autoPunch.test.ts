@@ -9,7 +9,6 @@ const template = {
     fields: [
       { key: "it1", label: "Continuidad", type: "radio", required: true },
       { key: "it2", label: "Aislamiento", type: "radio", required: true,
-        // @ts-expect-error punch_priority es metadata opcional forward-compat
         punch_priority: "critica" },
       { key: "it3", label: "Observaciones", type: "textarea", required: false },
     ],
