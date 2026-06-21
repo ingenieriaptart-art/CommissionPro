@@ -39,6 +39,13 @@ export function useSubmitInspection() {
           runSync,
           uuid: uuidv4,
           now: () => new Date().toISOString(),
+          getMaxRevision: async (equipmentId, templateId) => {
+            const rows = await localDB.tests
+              .filter((r) => (r as { equipment_id?: string }).equipment_id === equipmentId
+                && (r as { template_id?: string }).template_id === templateId)
+              .toArray();
+            return rows.reduce((m, r) => Math.max(m, (r as { revision?: number }).revision ?? 1), 0);
+          },
           isOnline: () => typeof navigator === "undefined" ? true : navigator.onLine,
           appVersion: APP_VERSION, schemaVersion: SCHEMA_VERSION,
           // INSPECTION_EXECUTED no depende de flags derivados; valores neutros.
