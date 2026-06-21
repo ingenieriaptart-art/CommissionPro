@@ -126,7 +126,10 @@ export async function pushPendingOps(
           const blob = await getBlobForEvidence(op.entityId);
           if (blob) {
             const ext = (blob.type.split("/")[1] ?? "jpg");
-            const path = `${payload.project_id}/${payload.equipment_id}/${payload.test_id}/${op.entityId}.${ext}`;
+            const p = payload as Record<string, unknown>;
+            const path = p.test_id
+              ? `${p.project_id}/${p.equipment_id}/${p.test_id}/${op.entityId}.${ext}`
+              : `${p.project_id}/${p.equipment_id}/punch/${p.punch_id}/${op.entityId}.${ext}`;
             const { error: upErr } = await supabase.storage
               .from("evidences").upload(path, blob, { upsert: true, contentType: blob.type });
             if (upErr) throw upErr;
@@ -137,7 +140,17 @@ export async function pushPendingOps(
 
         // INSERT de fila completa → upsert (idempotente + LWW por id en reintentos)
         const { error } = await supabase.from(op.entity).upsert(payload, { onConflict: "id" });
-        if (error) throw error;
+        if (error) {
+          // Idempotencia de auto-punch: el UNIQUE(source_test_id,source_item_key) ya garantiza
+          // que el punch existe → op resuelta, no reintentar.
+          if (op.entity === "punch_items" && (error as { code?: string }).code === "23505") {
+            await localDB.syncQueue.delete(op.id!);
+            if (table) await table.update(op.entityId, { sync_status: "synced", last_sync_error: undefined });
+            pushed++;
+            continue;
+          }
+          throw error;
+        }
 
         if (op.entity === "evidences") {
           const rec = await localDB.blobStore.where("evidenceId").equals(op.entityId).first();

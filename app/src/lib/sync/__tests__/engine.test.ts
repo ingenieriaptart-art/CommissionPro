@@ -124,6 +124,49 @@ test("push UPDATE parcial de equipment usa update().eq() y NO upsert (evita 400 
   expect(await localDB.syncQueue.count()).toBe(0);
 });
 
+test("punch_items: replay con UNIQUE (23505) → idempotente (op resuelta, sin retry, sin error, sin duplicado)", async () => {
+  // 1) Encolar un INSERT de punch_items (mismo source_test_id + source_item_key que ya existe en servidor).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await localDB.punchItems.add({ id: "pi1", project_id: "p1", equipment_id: "e1", source_test_id: "t1", source_item_key: "TAG-001", sync_status: "pending" } as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await localDB.syncQueue.add({ entity: "punch_items", entityId: "pi1", operation: "INSERT", payload: { id: "pi1", project_id: "p1", equipment_id: "e1", source_test_id: "t1", source_item_key: "TAG-001", sync_status: "pending" }, createdAt: "t", attempts: 0 } as any);
+
+  // 2) Mock supabase: from('punch_items').upsert → { error: { code: '23505', ... } }
+  const sb = {
+    from(table: string) {
+      return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        upsert: async (_payload: any) => {
+          if (table === "punch_items") {
+            return { error: { code: "23505", message: "duplicate key value violates unique constraint \"uq_punch_source\"" } };
+          }
+          return { error: null };
+        },
+        update() { return { eq: async () => ({ error: null }) }; },
+      };
+    },
+    storage: {
+      from() {
+        return {
+          upload: async () => ({ error: null }),
+          getPublicUrl: () => ({ data: { publicUrl: "" } }),
+        };
+      },
+    },
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await pushPendingOps(sb as any);
+
+  // (a) op resuelta: eliminada de syncQueue
+  expect((await localDB.syncQueue.toArray()).find((o) => o.entity === "punch_items")).toBeUndefined();
+  // (b) sin error visible
+  expect(res.errors.find((e) => e.includes("punch_items"))).toBeUndefined();
+  // (c) sin retry infinito: attempts no se incrementó (op fue eliminada, no actualizada)
+  // (d) tratada como éxito: pushed = 1
+  expect(res.pushed).toBe(1);
+});
+
 test("retry/backoff: error incrementa attempts y guarda last_sync_error; a los 5 → failed", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await localDB.tests.add({ id: "t1", project_id: "p1", status: "ejecutado", sync_status: "pending" } as any);
