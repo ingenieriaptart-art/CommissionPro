@@ -77,7 +77,7 @@ async function main() {
     source_test_id: test.id, source_item_key: "item1", generation_source: "auto_inspection",
     title: "dup", status: "abierto", priority: "media",
   });
-  rec("B: replay duplicado bloqueado por UNIQUE", pB.status === 409 && (pB.body?.code === "23503" ? false : true), `status=${pB.status} code=${pB.body?.code}`);
+  rec("B: replay duplicado bloqueado por UNIQUE (code === 23505)", pB.status === 409 && pB.body?.code === "23505", `status=${pB.status} code=${pB.body?.code}`);
 
   // (C) corregido sin evidencia → rechazado; con evidencia → ok + corrected_at
   const cNoEv = await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", body: { status: "corregido" }, prefer: "return=representation" });
