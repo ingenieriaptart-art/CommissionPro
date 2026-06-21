@@ -38,8 +38,7 @@ export async function capturePunchEvidence(args: {
     sync_status: "pending" as const,
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await localDB.evidences.add(row as any);
+  await localDB.evidences.add(row);
   await enqueueSync("evidences", evidenceId, "INSERT", row);
 
   return evidenceId;

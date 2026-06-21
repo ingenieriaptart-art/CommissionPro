@@ -29,7 +29,7 @@ export type FieldType =
   | "imagen" | "video" | "pdf" | "archivo" | "textarea";
 
 export type EvidenceType = "foto" | "video" | "pdf" | "archivo";
-export type EvidenceStage = "antes" | "durante" | "despues" | "general";
+export type EvidenceStage = "antes" | "durante" | "despues" | "general" | "correccion" | "verificacion";
 export type PunchPriority = "critica" | "alta" | "media" | "baja";
 export type PunchStatus = "abierto" | "en_proceso" | "corregido" | "cerrado";
 export type ApprovalStatus = "pendiente" | "aprobado" | "rechazado";
