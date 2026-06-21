@@ -311,7 +311,7 @@ export interface PunchItem {
   description?: string;
   priority: PunchPriority;
   status: PunchStatus;
-  responsible_id?: string;
+  responsible_id?: string | null;
   due_date?: string;
   closed_at?: string;
   created_at: string;
@@ -319,6 +319,20 @@ export interface PunchItem {
   version?: number;
   sync_status: SyncStatus;
   evidences?: Evidence[];
+  // Extended fields (EPIC-002 / auto-punch / lifecycle)
+  source_test_id?: string | null;
+  source_item_key?: string | null;
+  generation_source?: "auto_inspection" | "manual" | "imported";
+  commissioning_category?: string | null;
+  raised_at?: string;
+  first_raised_at?: string;
+  corrected_at?: string | null;
+  corrected_by?: string | null;
+  closed_by?: string | null;
+  reopened_at?: string | null;
+  reopened_by?: string | null;
+  verification_notes?: string | null;
+  created_by?: string | null;
 }
 
 export type DocumentProcessingStatus = "pending" | "processing" | "completed" | "failed";
