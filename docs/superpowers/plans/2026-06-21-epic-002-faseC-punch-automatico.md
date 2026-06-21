@@ -620,16 +620,21 @@ git commit -m "feat(punch): submitInspection genera auto-punch + PUNCH_RAISED co
 
 - [ ] **Step 1: Escribir el test que falla** (añadir a `engine.test.ts`)
 
+**Caso de prueba OBLIGATORIO (requisito del usuario):** un **replay de sync** del mismo auto-punch (mismo `source_test_id` + mismo `source_item_key`) cuyo `upsert` sobre `punch_items` devuelve `23505` (violación de `uq_punch_source`) debe resultar en: (a) op marcada **exitosa/idempotente**, (b) **sin retry infinito** (la op se elimina de `syncQueue`, no incrementa `attempts`), (c) **sin error visible** (no entra en `errors`), (d) **sin duplicación** de punch.
+
+El archivo ya tiene un patrón de mock de `supabase`. Replicarlo para que `from('punch_items').upsert(...)` devuelva `{ error: { code: "23505", message: "duplicate key value violates unique constraint \"uq_punch_source\"" } }`. Estructura del test (completar el mock siguiendo los casos existentes del archivo):
+
 ```ts
-test("punch_items: violación de UNIQUE (23505) se resuelve (no reintenta)", async () => {
-  // Mock supabase: upsert de punch_items devuelve error 23505
-  // (seguir el patrón de mock ya usado en este archivo para supabase.from(...).upsert)
-  // Tras runSync, la op de punch_items NO debe quedar en syncQueue y no debe contar como error fatal.
-  // Ver implementación de mock análoga a las demás pruebas del engine.
-  expect(true).toBe(true); // placeholder estructural: reemplazar por el mock real del engine de este repo
+test("punch_items: replay con UNIQUE (23505) → idempotente (op resuelta, sin retry, sin error, sin duplicado)", async () => {
+  // 1) Encolar un INSERT de punch_items en syncQueue (mismo source_test_id + source_item_key que ya existe en servidor).
+  // 2) Mock supabase: from('punch_items').upsert → { error: { code: '23505', message: '... uq_punch_source' } }.
+  // 3) const res = await runSync();
+  // Aserciones:
+  expect((await localDB.syncQueue.toArray()).find((o) => o.entity === "punch_items")).toBeUndefined(); // op resuelta
+  expect(res.errors.find((e) => e.includes("punch_items"))).toBeUndefined();                            // sin error visible
+  // y la op NO quedó con attempts incrementados / sync_status 'failed' (sin retry infinito)
 });
 ```
-> Nota al implementador: este archivo ya tiene un patrón de mock de `supabase`. Replicarlo para que `upsert` sobre `punch_items` devuelve `{ error: { code: "23505", message: "duplicate key" } }`, y aseverar que `localDB.syncQueue` queda sin esa op (resuelta) y `pushed`/`errors` reflejan que NO es error fatal. Sustituir el placeholder por ese mock concreto siguiendo los casos existentes del archivo.
 
 - [ ] **Step 2: Run para ver fallar** (tras escribir el mock real)
 
@@ -1165,14 +1170,29 @@ Expected: `OK punch lifecycle (A,B,C,D,E,F)`. Si no hay psql, dejar para Supabas
 
 - [ ] **Step 4: Gate funcional (post-aplicación de migraciones, patrón Fase B)**
 
-Crear/usar un script tipo `scripts/gate-faseC/validate.mjs` (REST/Auth admin) que: cree inspección de prueba con ítem fallido → verifique auto-punch (UNIQUE/idempotencia) → capture evidencia `correccion` → `corregido` → `cerrado` (full) → verifique materialización (`corrected_*`, `closed_*`, `first_raised_at` intacto), `v_punch_board`, y que un punch abierto bloquea MC; **limpiar** los datos de prueba. (Espejo de `scripts/gate-faseB/validate.mjs`.)
+Crear/usar `scripts/gate-faseC/validate.mjs` (REST/Auth admin, espejo de `scripts/gate-faseB/validate.mjs`) que cubra **al menos** estos escenarios (requisito del usuario) y **limpie** los datos de prueba al final:
+- **A.** Auto-punch generado por `FAIL_VALUES` (1 por ítem fallido; `generation_source='auto_inspection'`).
+- **B.** Re-sync/replay idempotente (mismo `source_test_id`+`source_item_key` → sin duplicado por `UNIQUE`).
+- **C.** Evidencia obligatoria para `corregido` (sin evidencia → rechazado; con evidencia `stage='correccion'` → ok).
+- **D.** Cierre sin `full` → rechazado.
+- **E.** Cierre con `full` → `cerrado` (+ `closed_at/by`, `verification_notes`).
+- **F.** Reapertura auditada (`reopened_at/by`, `raised_at` nuevo, `first_raised_at` intacto).
+- **G.** MC bloqueado mientras exista punch `≠ 'cerrado'` (`transition_equipment_state(MC_COMPLETED)` → no aplica / `open_punch`).
+- **H.** MC permitido cuando el último punch queda `cerrado` (con equipo `aprobado` y sin otros bloqueos) → transición a `mechanical_completion`.
 
 - [ ] **Step 5: Checklist manual post-deploy**
 - Inspección con falla → 1 punch por ítem (auto), `responsible_id` NULL, prioridad `media`, offline.
 - Reenvío no duplica (UNIQUE).
-- `corregido` exige evidencia; `cerrado` exige `full` + evidencia; reapertura exige `full`; `first_raised_at` inmutable.
+- `corregido` exige evidencia; `cerrado` exige `full` + evidencia; reapertura exige `full`.
 - Bandeja agrupa por subsistema; filtros y triage; KPIs con aging por `first_raised_at`.
 - Cualquier punch `≠ cerrado` bloquea MC (sin cambios en la FSM).
+
+**Criterio de aceptación explícito — `first_raised_at` (requisito del usuario):**
+- creación → `first_raised_at = now` (= `raised_at`).
+- `corregido` → `first_raised_at` **no cambia**.
+- `cerrado` → `first_raised_at` **no cambia**.
+- reapertura → `first_raised_at` **no cambia** (`raised_at` sí se actualiza).
+- Los KPIs de aging usan **exclusivamente** `first_raised_at` (`age_days_total`).
 
 ---
 
