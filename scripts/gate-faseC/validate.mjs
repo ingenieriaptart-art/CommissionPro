@@ -85,20 +85,20 @@ async function main() {
   const evId = randomUUID();
   await insert("evidences", { id: evId, project_id: proj.id, equipment_id: eq.id, punch_id: punchId, type: "foto", stage: "correccion", captured_at: new Date().toISOString() });
   created.evidences.push(evId);
-  const cOk = await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", body: { status: "corregido" }, prefer: "return=representation" });
+  const cOk = await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", token, body: { status: "corregido" }, prefer: "return=representation" });
   const corrected = (await api(`punch_items?id=eq.${punchId}&select=corrected_at,corrected_by`)).body?.[0];
-  rec("C: corregido exige evidencia (bloqueo sin ev) + materializa corrected_*", cBlocked && cOk.status < 300 && !!corrected?.corrected_at, `sinEv=${cNoEv.status} conEv=${cOk.status} corrected_at=${!!corrected?.corrected_at}`);
+  rec("C: corregido exige evidencia (bloqueo sin ev) + materializa corrected_at/by", cBlocked && cOk.status < 300 && !!corrected?.corrected_at && !!corrected?.corrected_by, `sinEv=${cNoEv.status} conEv=${cOk.status} corrected_at=${!!corrected?.corrected_at} corrected_by=${!!corrected?.corrected_by}`);
 
-  // (E) cierre con full (admin) → cerrado + closed_*
-  const closed = await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", body: { status: "cerrado", verification_notes: "Probado en marcha" }, prefer: "return=representation" });
+  // (E) cierre con full (admin JWT) → cerrado + closed_*
+  const closed = await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", token, body: { status: "cerrado", verification_notes: "Probado en marcha" }, prefer: "return=representation" });
   const closedRow = (await api(`punch_items?id=eq.${punchId}&select=closed_at,closed_by,verification_notes`)).body?.[0];
-  rec("E: cierre con full → cerrado + closed_* + verification_notes", closed.status < 300 && !!closedRow?.closed_at, `status=${closed.status} closed_at=${!!closedRow?.closed_at}`);
+  rec("E: cierre con full → cerrado + closed_at/by + verification_notes", closed.status < 300 && !!closedRow?.closed_at && !!closedRow?.closed_by && closedRow?.verification_notes === "Probado en marcha", `status=${closed.status} closed_at=${!!closedRow?.closed_at} closed_by=${!!closedRow?.closed_by}`);
 
   // (F) reapertura → reopened_* + first_raised_at intacto
   const before = (await api(`punch_items?id=eq.${punchId}&select=first_raised_at`)).body?.[0]?.first_raised_at;
-  await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", body: { status: "abierto" }, prefer: "return=representation" });
-  const after = (await api(`punch_items?id=eq.${punchId}&select=first_raised_at,reopened_at`)).body?.[0];
-  rec("F: reapertura auditada (reopened_at) + first_raised_at inmutable", !!after?.reopened_at && after?.first_raised_at === before, `reopened_at=${!!after?.reopened_at} firstRaised inmutable=${after?.first_raised_at === before}`);
+  await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", token, body: { status: "abierto" }, prefer: "return=representation" });
+  const after = (await api(`punch_items?id=eq.${punchId}&select=first_raised_at,reopened_at,reopened_by`)).body?.[0];
+  rec("F: reapertura auditada (reopened_at/by) + first_raised_at inmutable", !!after?.reopened_at && !!after?.reopened_by && after?.first_raised_at === before, `reopened_at=${!!after?.reopened_at} reopened_by=${!!after?.reopened_by} firstRaised_inmutable=${after?.first_raised_at === before}`);
 
   // (G) MC bloqueado con punch abierto: equipo aprobado + punch abierto → MC_COMPLETED no aplica
   await api(`equipment?id=eq.${eq.id}`, { method: "PATCH", body: { status: "aprobado" } });
@@ -106,8 +106,8 @@ async function main() {
   rec("G: MC bloqueado con punch abierto", g.body?.applied === false && g.body?.reason === "open_punch", JSON.stringify(g.body));
 
   // (H) cerrar el último punch y permitir MC. Re-corregir (ya tiene evidencia) → cerrado, luego MC_COMPLETED aplica.
-  await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", body: { status: "corregido" } });
-  await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", body: { status: "cerrado" } });
+  await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", token, body: { status: "corregido" } });
+  await api(`punch_items?id=eq.${punchId}`, { method: "PATCH", token, body: { status: "cerrado" } });
   const h = await rpc(token, "transition_equipment_state", { p_equipment_id: eq.id, p_event: "MC_COMPLETED", p_from_status: "aprobado" });
   rec("H: MC permitido al cerrar el último punch", h.body?.applied === true && h.body?.status === "mechanical_completion", JSON.stringify(h.body));
 
