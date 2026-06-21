@@ -7,6 +7,7 @@ beforeEach(async () => {
   await Promise.all([
     localDB.tests.clear(), localDB.evidences.clear(), localDB.equipment.clear(),
     localDB.syncQueue.clear(), localDB.blobStore.clear(), localDB.inspectionDrafts.clear(),
+    localDB.punchItems.clear(),
   ]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await localDB.equipment.put({ id: "e1", project_id: "p1", tag: "B1", status: "pendiente", metadata: {}, sync_status: "synced" } as any);
@@ -117,6 +118,33 @@ test("online → dispara runSync; result_summary no_cumple si hay falla", async 
   const t = await localDB.tests.get("id-1");
   expect(t?.result_summary).toBe("no_cumple");
   expect(d.runSync).toHaveBeenCalledOnce();
+});
+
+test("genera auto-punch por ítem fallido + outbox; sin falla no genera", async () => {
+  const failState = { ...state, answers: { it1: "No cumple" } };
+  const d = deps(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await submitInspectionOffline({ state: failState, projectId: "p1", userId: "u1", template }, d as any);
+
+  const punches = await localDB.punchItems.toArray();
+  expect(punches.length).toBe(1);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((punches[0] as any).source_test_id).toBe(res.testId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((punches[0] as any).source_item_key).toBe("it1");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((punches[0] as any).generation_source).toBe("auto_inspection");
+
+  const q = await localDB.syncQueue.toArray();
+  expect(q.find((o) => o.entity === "punch_items")).toBeTruthy();
+});
+
+test("inspección sin fallas no genera punch", async () => {
+  const okState = { ...state, answers: { it1: "Cumple" } };
+  const d = deps(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await submitInspectionOffline({ state: okState, projectId: "p1", userId: "u1", template }, d as any);
+  expect((await localDB.punchItems.toArray()).length).toBe(0);
 });
 
 test("revision = max(prev) + 1 por (equipment, template); 1 si no hay previa", async () => {

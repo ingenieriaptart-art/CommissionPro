@@ -1,5 +1,7 @@
 import type { localDB as LocalDB } from "@/lib/db/local";
 import type { InspectionState, MockInspectionTemplate } from "@/types/inspection";
+import { FAIL_VALUES } from "@/lib/inspection/failValues";
+import { deriveAutoPunches } from "@/lib/punch/autoPunch";
 
 export interface SubmitParams {
   state: InspectionState;
@@ -23,13 +25,11 @@ export interface SubmitDeps {
   isOnline: () => boolean;
   appVersion: string;
   schemaVersion: number;
-  /** FSM: estado destino de INSPECTION_EXECUTED desde el estado actual (o null). */
-  nextState: (state: string, event: "INSPECTION_EXECUTED") => string | null;
+  /** FSM: estado destino de un evento desde el estado actual (o null). */
+  nextState: (state: string, event: string) => string | null;
   /** Encola la transición de estado en el outbox (se aplica vía RPC en el push). */
   enqueueTransition: (equipmentId: string, event: string, fromStatus: string, context?: unknown, occurredAt?: string) => Promise<void>;
 }
-
-const FAIL_VALUES = new Set(["FALLA", "NO", "RECHAZADO", "No cumple", "No conforme"]);
 
 /** Escribe la inspección a IndexedDB + outbox (local-first). Optimista. */
 export async function submitInspectionOffline(
@@ -106,6 +106,16 @@ export async function submitInspectionOffline(
     }
   }
 
+  // Punch automático (Fase C): 1 por ítem fallido; idempotente por (source_test_id, source_item_key) en servidor.
+  const autoPunches = deriveAutoPunches(state.answers, template, {
+    projectId, equipmentId: state.equipmentId, testId, userId, now: ts,
+  });
+  for (const p of autoPunches) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await db.punchItems.add(p as any);
+    await deps.enqueueSync("punch_items", p.id, "INSERT", p);
+  }
+
   // Estado del equipo vía FSM (emite INSPECTION_EXECUTED; el servidor re-valida)
   const eq = await db.equipment.get(state.equipmentId);
   const fromStatus = (eq?.status as string) ?? "pendiente";
@@ -114,6 +124,16 @@ export async function submitInspectionOffline(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await db.equipment.update(state.equipmentId, { status: target, updated_at: ts } as any);
     await deps.enqueueTransition(state.equipmentId, "INSPECTION_EXECUTED", fromStatus, { test_id: testId }, ts);
+  }
+
+  if (autoPunches.length > 0) {
+    const afterExec = target ?? fromStatus;                 // estado tras INSPECTION_EXECUTED (o el actual)
+    const punchTarget = deps.nextState(afterExec, "PUNCH_RAISED");
+    if (punchTarget && punchTarget !== afterExec) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await db.equipment.update(state.equipmentId, { status: punchTarget, updated_at: ts } as any);
+      await deps.enqueueTransition(state.equipmentId, "PUNCH_RAISED", afterExec, { test_id: testId }, ts);
+    }
   }
 
   await deps.deleteInspectionDraft(state.equipmentId, template.id);
