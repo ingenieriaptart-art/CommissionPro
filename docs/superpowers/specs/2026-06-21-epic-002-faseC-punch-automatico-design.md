@@ -11,7 +11,7 @@ Generar **punch automáticamente** a partir de los ítems fallidos de una inspec
 
 ## Decisiones aprobadas
 
-1. **Generación en cliente, offline-first (Q1).** Al cerrar la inspección, `submitInspectionOffline` deriva los punch y los encola en el mismo pipeline IndexedDB → Outbox → Sync Engine de Fases A/B. **Idempotencia autoritativa = `UNIQUE(source_test_id, source_item_key)`** en la base. El `id` del punch se genera con `uuidv5(testId + ':' + fieldKey)` para reducir reconciliación local; el UNIQUE sigue siendo la fuente real de idempotencia. Sin duplicar `FAIL_VALUES` en SQL.
+1. **Generación en cliente, offline-first (Q1).** Al cerrar la inspección, `submitInspectionOffline` deriva los punch y los encola en el mismo pipeline IndexedDB → Outbox → Sync Engine de Fases A/B. **Idempotencia autoritativa = `UNIQUE(source_test_id, source_item_key)`** en la base. El `id` del punch se genera con `uuidv5(testId + ':' + fieldKey)` para reducir reconciliación local; el UNIQUE sigue siendo la fuente real de idempotencia. **El `UNIQUE(source_test_id, source_item_key)` es la autoridad definitiva de idempotencia; el UUID determinístico es solo una optimización local — si el algoritmo de id cambiara, la base sigue protegiendo contra duplicados.** Sin duplicar `FAIL_VALUES` en SQL.
 2. **Regla de disparo (Q2).** Por cada `(fieldKey, value)` con `value ∈ FAIL_VALUES` (match exacto) → 1 punch; `source_item_key = fieldKey`. `no_aplica` nunca dispara. Campos no-veredicto no matchean.
 3. **Prioridad inicial data-driven (Q2/P2).** `priority = field.punch_priority ?? 'media'`. Soporte cableado desde Fase C aunque ninguna plantilla traiga `punch_priority` hoy (todo cae a `media`).
 4. **`generation_source` (Q1):** `auto_inspection | manual | imported`. El flujo manual existente pasa a `'manual'` (default).
@@ -22,6 +22,7 @@ Generar **punch automáticamente** a partir de los ítems fallidos de una inspec
 9. **Evidencias (Q5).** Evidencia de **corrección obligatoria** al pasar a `corregido` (≥1, pipeline de evidencias existente, `evidences.punch_id`, `stage='correccion'`). Evidencia de **verificación opcional** (`stage='verificacion'`). `verification_notes` opcional al cerrar. Sin tabla nueva. **Path de Storage:** `project/equipment/punch/<punch_id>/<evidence_id>`.
 10. **Orden del outbox (Q5 + ajuste):** la evidencia de corrección se sincroniza **antes** de la transición a `corregido` (FIFO); el trigger valida la existencia real en servidor; el cliente replica el gate solo como UX.
 11. **Trazabilidad materializada (Q3/Q4/Q5):** `first_raised_at`, `raised_at`, `corrected_at`, `corrected_by`, `closed_at`(existente), `closed_by`, `reopened_at`, `reopened_by`, `verification_notes`; se conservan `created_by`, `responsible_id`, `source_test_id`, `source_item_key`, `generation_source`.
+    - **`first_raised_at` es inmutable:** se fija solo en la creación del punch; reaperturas, correcciones y cierres **no** lo modifican (el trigger lo fuerza a `OLD.first_raised_at` en todo UPDATE). `raised_at` sí refleja la última (re)apertura. **Los KPIs de aging histórico se basan en `first_raised_at`, no en `raised_at`**, para no perder antigüedad al reabrir.
 12. **Integración MC (Q6/G-Prep-1).** `transition_equipment_state` **sin cambios**: cualquier punch `≠ 'cerrado'` bloquea MC por igual (cualquier prioridad/origen). `commissioning_category` = **placeholder nullable sin uso**. La regla A/B/C y el cambio de guard pertenecen a Fase D.
 13. **Rework (Q3):** nueva revisión = nuevo test = nuevos punch (otro `source_test_id`). No se reabren punch históricos. Reconciliación entre revisiones diferida.
 
@@ -102,6 +103,7 @@ Notas: las dos `ALTER TYPE ADD VALUE` se ejecutan **antes** del `BEGIN` (Postgre
 CREATE OR REPLACE FUNCTION public.guard_punch_lifecycle() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
+  NEW.first_raised_at := OLD.first_raised_at;   -- inmutable: nunca cambia tras la creación
   IF NEW.status IS DISTINCT FROM OLD.status THEN
     -- → corregido: requiere ≥1 evidencia de corrección; materializa actor/timestamp
     IF NEW.status = 'corregido' THEN
@@ -163,9 +165,10 @@ SELECT
   p.source_test_id, p.source_item_key, p.responsible_id,
   p.first_raised_at, p.raised_at, p.corrected_at, p.corrected_by,
   p.closed_at, p.closed_by, p.reopened_at, p.reopened_by, p.created_by, p.verification_notes,
-  (p.status <> 'cerrado')                                   AS is_open,
-  (p.responsible_id IS NULL)                                AS unassigned,
-  GREATEST(0, EXTRACT(DAY FROM now() - p.raised_at))::int   AS age_days
+  (p.status <> 'cerrado')                                         AS is_open,
+  (p.responsible_id IS NULL)                                      AS unassigned,
+  GREATEST(0, EXTRACT(DAY FROM now() - p.raised_at))::int         AS age_days,        -- apertura actual
+  GREATEST(0, EXTRACT(DAY FROM now() - p.first_raised_at))::int   AS age_days_total   -- backlog histórico (KPIs)
 FROM public.punch_items p
 JOIN public.equipment e   ON e.id = p.equipment_id
 LEFT JOIN public.subsystems ss ON ss.id = e.subsystem_id
@@ -199,7 +202,7 @@ WHERE p.deleted_at IS NULL;
 
 - **Hook `usePunchBoard(projectId, filters)`** lee `v_punch_board` (online) con fallback IndexedDB read-only (join de jerarquía en cliente). Agrupa por Área→Sistema→Subsistema→Equipo→Punch (default subsistema, colapsable).
 - **Filtros:** `status`, `priority`, `generation_source`, **sin asignar** (`unassigned`), `aging` (buckets), sobre la página `punch` existente.
-- **KPIs (extender `useStats` offline + agregación de `v_punch_board` online):** abiertos totales; por prioridad; por estado; por origen; aging `0–7 / 8–30 / >30` (sobre `raised_at`); equipos con punch abierto; % equipos con punch abierto; top subsistemas con punch abierto; ratio auto-punch/inspección.
+- **KPIs (extender `useStats` offline + agregación de `v_punch_board` online):** abiertos totales; por prioridad; por estado; por origen; **aging `0–7 / 8–30 / >30` sobre `first_raised_at` (`age_days_total`)** — backlog histórico que sobrevive reaperturas; equipos con punch abierto; % equipos con punch abierto; top subsistemas con punch abierto; ratio auto-punch/inspección.
 - Dashboard avanzado / Digital Twin → Fase F.
 
 ### 6. FSM e integración MC
