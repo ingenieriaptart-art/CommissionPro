@@ -61,6 +61,7 @@ export function useCreatePunch() {
         ...payload,
         id,
         status: "abierto",
+        generation_source: "manual" as const,
         created_at: now,
         updated_at: now,
         sync_status: "pending",
@@ -110,8 +111,27 @@ export function useUpdatePunch() {
 export function useClosePunch() {
   const updatePunch = useUpdatePunch();
   return useMutation({
+    mutationFn: ({ id, projectId, verification_notes }: { id: string; projectId: string; verification_notes?: string }) =>
+      updatePunch.mutateAsync({ id, projectId, status: "cerrado" as PunchStatus, verification_notes }),
+  });
+}
+
+export function useMarkCorrected() {
+  const updatePunch = useUpdatePunch();
+  return useMutation({
+    // Pre-requisito de UX: la(s) evidencia(s) de corrección ya fueron capturadas
+    // (capturePunchEvidence) y encoladas ANTES de esta transición (orden FIFO del
+    // outbox). El trigger guard_punch_lifecycle valida en servidor.
     mutationFn: ({ id, projectId }: { id: string; projectId: string }) =>
-      updatePunch.mutateAsync({ id, projectId, status: "cerrado" as PunchStatus }),
+      updatePunch.mutateAsync({ id, projectId, status: "corregido" as PunchStatus }),
+  });
+}
+
+export function useReopenPunch() {
+  const updatePunch = useUpdatePunch();
+  return useMutation({
+    mutationFn: ({ id, projectId }: { id: string; projectId: string }) =>
+      updatePunch.mutateAsync({ id, projectId, status: "abierto" as PunchStatus }),
   });
 }
 
