@@ -105,9 +105,11 @@ BEGIN
     END IF;
   END IF;
 
-  -- (3) Orden secuencial (O4): salvo metadata.approval_sequential = 'false'
-  SELECT (COALESCE((SELECT metadata->>'approval_sequential' FROM public.projects WHERE id = v_proj), 'true') <> 'false')
-    INTO v_seq;
+  -- (3) Orden secuencial (O4): Fase B es SIEMPRE secuencial obligatoria.
+  -- El flag de cadenas no-secuenciales queda reservado para una fase futura
+  -- (cuando exista la pantalla de configuración); no se lee de projects.metadata
+  -- porque esa columna no existe en el esquema. Hasta entonces, v_seq := true.
+  v_seq := true;
   IF v_seq THEN
     SELECT min(c.level) INTO v_next_level
       FROM public.project_approval_config c
