@@ -24,8 +24,8 @@ const state: InspectionState = {
   savedAt: null, isDirty: true,
 };
 
-function deps(online: boolean) {
-  let n = 0;
+function deps(online: boolean, startN = 0) {
+  let n = startN;
   return {
     db: localDB,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +46,12 @@ function deps(online: boolean) {
     enqueueTransition: async (equipmentId: string, event: string, fromStatus: string, context: unknown) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await localDB.syncQueue.add({ entity: "__equipment_transition", entityId: equipmentId, operation: "INSERT", payload: { equipment_id: equipmentId, event, from_status: fromStatus, context, occurred_at: "t" }, createdAt: "t", attempts: 0 } as any);
+    },
+    getMaxRevision: async (equipmentId: string, templateId: string) => {
+      const rows = await localDB.tests
+        .filter((r: any) => r.equipment_id === equipmentId && r.template_id === templateId) // eslint-disable-line @typescript-eslint/no-explicit-any
+        .toArray();
+      return rows.reduce((m: number, r: any) => Math.max(m, r.revision ?? 1), 0); // eslint-disable-line @typescript-eslint/no-explicit-any
     },
   };
 }
@@ -111,4 +117,30 @@ test("online → dispara runSync; result_summary no_cumple si hay falla", async 
   const t = await localDB.tests.get("id-1");
   expect(t?.result_summary).toBe("no_cumple");
   expect(d.runSync).toHaveBeenCalledOnce();
+});
+
+test("revision = max(prev) + 1 por (equipment, template); 1 si no hay previa", async () => {
+  // Inspección previa rechazada del mismo equipo+template, revision 2
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await localDB.tests.put({ id: "prev", project_id: "p1", equipment_id: "e1", template_id: "t1",
+    revision: 2, status: "rechazado", sync_status: "synced" } as any);
+
+  const d = deps(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const res = await submitInspectionOffline({ state, projectId: "p1", userId: "u1", template }, d as any);
+  const t = await localDB.tests.get(res.testId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((t as any)?.revision).toBe(3);
+
+  // Otro template sin previa → revision 1
+  const d2 = deps(false, 10);
+  const res2 = await submitInspectionOffline(
+    { state: { ...state, templateId: "t9" }, projectId: "p1", userId: "u1",
+      template: { ...template, id: "t9" } },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    d2 as any,
+  );
+  const t2 = await localDB.tests.get(res2.testId);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((t2 as any)?.revision).toBe(1);
 });

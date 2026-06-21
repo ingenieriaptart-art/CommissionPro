@@ -18,6 +18,8 @@ export interface SubmitDeps {
   runSync: () => Promise<unknown>;
   uuid: () => string;
   now: () => string;
+  /** Max revisión previa de un (equipment_id, template_id) en el store local (0 si no hay). */
+  getMaxRevision: (equipmentId: string, templateId: string) => Promise<number>;
   isOnline: () => boolean;
   appVersion: string;
   schemaVersion: number;
@@ -38,6 +40,9 @@ export async function submitInspectionOffline(
   const { db } = deps;
   const testId = deps.uuid();
   const ts = deps.now();
+
+  const prevRevision = await deps.getMaxRevision(state.equipmentId, template.id);
+  const revision = prevRevision + 1;
 
   const hasFailures = Object.values(state.answers).some((v) => FAIL_VALUES.has(String(v)));
   const template_hash = await deps.computeTemplateHash(template);
@@ -61,6 +66,7 @@ export async function submitInspectionOffline(
     created_at: ts,
     updated_at: ts,
     version: 1,
+    revision,
     sync_status: "pending" as const,
     last_sync_error: undefined,
     template_id: template.id,
