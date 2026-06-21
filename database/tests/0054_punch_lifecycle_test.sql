@@ -7,6 +7,7 @@ BEGIN;
 DO $$
 DECLARE
   v_proj uuid; v_sub uuid; v_eq uuid; v_test uuid; v_punch uuid := gen_random_uuid(); v_ev uuid;
+  v_first_raised timestamptz;
 BEGIN
   -- Jerarquía mínima
   INSERT INTO public.projects(id,code,name,status) VALUES (gen_random_uuid(),'PCH-TST-'||substr(gen_random_uuid()::text,1,8),'PCH','en_ejecucion') RETURNING id INTO v_proj;
@@ -48,10 +49,10 @@ BEGIN
 
   -- (E) reapertura → raised_at nuevo, first_raised_at intacto
   PERFORM pg_sleep(0.01);
+  SELECT first_raised_at INTO v_first_raised FROM public.punch_items WHERE id=v_punch;
   UPDATE public.punch_items SET status='abierto' WHERE id=v_punch;
-  IF (SELECT first_raised_at FROM public.punch_items WHERE id=v_punch)
-     <> (SELECT created_at FROM public.punch_items WHERE id=v_punch)
-    THEN NULL; END IF; -- (first_raised_at se mantiene; no se valida igualdad estricta con created_at)
+  IF (SELECT first_raised_at FROM public.punch_items WHERE id=v_punch) IS DISTINCT FROM v_first_raised
+    THEN RAISE EXCEPTION 'E: first_raised_at fue mutado por la reapertura'; END IF;
   IF (SELECT reopened_at FROM public.punch_items WHERE id=v_punch) IS NULL
     THEN RAISE EXCEPTION 'E: reopened_at no materializado'; END IF;
 
