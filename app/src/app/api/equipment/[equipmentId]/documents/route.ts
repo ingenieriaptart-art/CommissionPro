@@ -12,6 +12,31 @@ const serviceClient = () =>
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ equipmentId: string }> }
+) {
+  const { equipmentId } = await params;
+
+  const supabase = await createServerClient();
+  const { data: { user }, error: authErr } = await supabase.auth.getUser();
+  if (authErr || !user) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
+  const sc = serviceClient();
+  const { data, error } = await sc
+    .from("equipment_documents")
+    .select("*")
+    .eq("equipment_id", equipmentId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data ?? []);
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ equipmentId: string }> }

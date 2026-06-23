@@ -1,20 +1,17 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
 import type { EquipmentDocument, EquipmentDocumentType } from "@/types";
 
 export function useEquipmentDocuments(equipmentId: string | null | undefined) {
   return useQuery({
     queryKey: ["equipment-documents", equipmentId],
     queryFn: async (): Promise<EquipmentDocument[]> => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("equipment_documents")
-        .select("*")
-        .eq("equipment_id", equipmentId!)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as EquipmentDocument[];
+      const res = await fetch(`/api/equipment/${equipmentId}/documents`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Error al cargar documentos" }));
+        throw new Error(err.error ?? "Error al cargar documentos");
+      }
+      return res.json() as Promise<EquipmentDocument[]>;
     },
     enabled: !!equipmentId,
   });
