@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client";
 import { localDB, enqueueSync, saveBlobLocally } from "@/lib/db/local";
 import { v4 as uuidv4 } from "uuid";
 import type { PunchItem, PunchPriority, PunchStatus } from "@/types";
+import { useAuthStore } from "@/stores/auth.store";
 
 export const PUNCH_PAGE_SIZE = 30;
 
@@ -77,7 +78,10 @@ export function useCreatePunch() {
       }
       return item;
     },
-    onSuccess: (item) => qc.invalidateQueries({ queryKey: ["punch", item.project_id] }),
+    onSuccess: (item) => {
+      qc.invalidateQueries({ queryKey: ["punch", item.project_id] });
+      qc.invalidateQueries({ queryKey: ["punch-paged", item.project_id] });
+    },
   });
 }
 
@@ -100,8 +104,10 @@ export function useUpdatePunch() {
         if (!error) await localDB.punchItems.update(id, { sync_status: "synced" });
       }
     },
-    onSuccess: (_, { projectId }) =>
-      qc.invalidateQueries({ queryKey: ["punch", projectId] }),
+    onSuccess: (_, { projectId }) => {
+      qc.invalidateQueries({ queryKey: ["punch", projectId] });
+      qc.invalidateQueries({ queryKey: ["punch-paged", projectId] });
+    },
   });
 }
 
@@ -153,6 +159,7 @@ export function useCreatePunchWithEvidence() {
         id,
         status: "abierto",
         generation_source: "manual" as const,
+        created_by: capturedBy || null,
         created_at: now,
         updated_at: now,
         sync_status: "pending",
@@ -213,7 +220,10 @@ export function useCreatePunchWithEvidence() {
       void evidenceSynced;
       return item;
     },
-    onSuccess: (item) => qc.invalidateQueries({ queryKey: ["punch", item.project_id] }),
+    onSuccess: (item) => {
+      qc.invalidateQueries({ queryKey: ["punch", item.project_id] });
+      qc.invalidateQueries({ queryKey: ["punch-paged", item.project_id] });
+    },
   });
 }
 
@@ -253,4 +263,89 @@ export function usePunchPaged(projectId: string, filters: PunchFilters) {
     enabled: !!projectId,
     placeholderData: keepPreviousData,
   });
+}
+
+export function usePunchDetail(punchId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["punch-detail", punchId],
+    queryFn: async () => {
+      const supabase = createClient();
+
+      const { data: punch, error } = await supabase
+        .from("punch_items")
+        .select("*")
+        .eq("id", punchId!)
+        .single();
+      if (error) throw error;
+
+      const { data: evidences } = await supabase
+        .from("evidences")
+        .select("*")
+        .eq("punch_id", punchId!)
+        .order("captured_at", { ascending: true });
+
+      // Resolver jerarquía de ubicación nivel por nivel
+      let location = { area: "", system: "", subsystem: "", equipment: "" };
+      if (punch?.equipment_id) {
+        const { data: eq } = await supabase
+          .from("equipment")
+          .select("tag, name, subsystem_id")
+          .eq("id", punch.equipment_id)
+          .single();
+        if (eq) {
+          location.equipment = `${eq.tag} — ${eq.name}`;
+          const { data: sub } = await supabase
+            .from("subsystems")
+            .select("name, system_id")
+            .eq("id", eq.subsystem_id)
+            .single();
+          if (sub) {
+            location.subsystem = sub.name;
+            const { data: sys } = await supabase
+              .from("systems")
+              .select("name, area_id")
+              .eq("id", sub.system_id)
+              .single();
+            if (sys) {
+              location.system = sys.name;
+              const { data: area } = await supabase
+                .from("areas")
+                .select("name")
+                .eq("id", sys.area_id)
+                .single();
+              if (area) location.area = area.name;
+            }
+          }
+        }
+      }
+
+      return { punch, evidences: evidences ?? [], location };
+    },
+    enabled: !!punchId,
+  });
+}
+
+export function useUserName(userId: string | null | undefined): string | null {
+  const currentUser = useAuthStore((s) => s.user);
+
+  const isCurrentUser = !!userId && !!currentUser && userId === currentUser.id;
+
+  const { data } = useQuery({
+    queryKey: ["user-name", userId],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("users")
+        .select("full_name")
+        .eq("id", userId!)
+        .single();
+      return data?.full_name ?? null;
+    },
+    enabled: !!userId && !isCurrentUser && navigator.onLine,
+    staleTime: 1000 * 60 * 10,
+  });
+
+  if (!userId) return null;
+  if (isCurrentUser) return currentUser!.full_name;
+  return data ?? null;
 }
