@@ -1,7 +1,7 @@
 "use client";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { localDB, enqueueSync } from "@/lib/db/local";
+import { localDB, enqueueSync, saveBlobLocally } from "@/lib/db/local";
 import { v4 as uuidv4 } from "uuid";
 import type { PunchItem, PunchPriority, PunchStatus } from "@/types";
 
@@ -132,6 +132,91 @@ export function useReopenPunch() {
   return useMutation({
     mutationFn: ({ id, projectId }: { id: string; projectId: string }) =>
       updatePunch.mutateAsync({ id, projectId, status: "abierto" as PunchStatus }),
+  });
+}
+
+export function useCreatePunchWithEvidence() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      project_id: string;
+      title: string;
+      description?: string;
+      priority: PunchPriority;
+      equipment_id?: string;
+      test_id?: string;
+      evidenceBlob: Blob;
+      capturedBy: string;
+    }) => {
+      const { evidenceBlob, capturedBy, ...punchPayload } = payload;
+      const id = uuidv4();
+      const now = new Date().toISOString();
+      const item: PunchItem = {
+        ...punchPayload,
+        id,
+        status: "abierto",
+        generation_source: "manual" as const,
+        created_at: now,
+        updated_at: now,
+        sync_status: "pending",
+        version: 1,
+      };
+
+      // Punch to localDB + outbox first (FIFO guarantees punch before evidence on server)
+      await localDB.punchItems.add(item);
+      await enqueueSync("punch_items", id, "INSERT", item);
+
+      // Evidence linked to the punch — saved second so outbox order is correct
+      const evidenceId = uuidv4();
+      let evidenceSynced = false;
+      try {
+        const blobRef = String(await saveBlobLocally(evidenceId, evidenceBlob));
+        const evidence = {
+          id: evidenceId,
+          project_id: payload.project_id,
+          equipment_id: payload.equipment_id,
+          punch_id: id,
+          type: "foto" as const,
+          stage: "general" as const,
+          storage_url: undefined,
+          local_blob_ref: blobRef,
+          captured_by: capturedBy,
+          captured_at: now,
+          sync_status: "pending" as const,
+        };
+        await localDB.evidences.add(evidence);
+        await enqueueSync("evidences", evidenceId, "INSERT", evidence);
+
+        if (navigator.onLine) {
+          const supabase = createClient();
+          const { error: punchErr } = await supabase.from("punch_items").insert(item);
+          if (!punchErr) {
+            await localDB.punchItems.update(id, { sync_status: "synced" });
+            const ext = evidenceBlob.type.split("/")[1] ?? "jpg";
+            const path = `evidences/${evidenceId}.${ext}`;
+            const { error: uploadErr } = await supabase.storage
+              .from("evidences")
+              .upload(path, evidenceBlob, { contentType: evidenceBlob.type });
+            if (!uploadErr) {
+              const { data: { publicUrl } } = supabase.storage.from("evidences").getPublicUrl(path);
+              await supabase.from("evidences").insert({ ...evidence, storage_url: publicUrl, local_blob_ref: null });
+              await localDB.evidences.update(evidenceId, { storage_url: publicUrl, sync_status: "synced" });
+              evidenceSynced = true;
+            }
+          }
+        }
+      } catch (err) {
+        // Punch is saved; evidence failed — outbox will retry. Surface error to UI.
+        console.error("[punch] evidence save failed for punch", id, err);
+        throw new Error(
+          "Punch creado pero la evidencia no pudo guardarse. Reintente desde la app cuando haya conexión."
+        );
+      }
+
+      void evidenceSynced;
+      return item;
+    },
+    onSuccess: (item) => qc.invalidateQueries({ queryKey: ["punch", item.project_id] }),
   });
 }
 
