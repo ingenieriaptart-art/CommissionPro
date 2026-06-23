@@ -28,7 +28,25 @@ export async function PATCH(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (serviceClient as any)
+  const sc = serviceClient as any;
+
+  // Si cambia el status, sincronizar con Supabase Auth
+  if ("status" in body) {
+    // Necesitamos auth_user_id para la Admin API
+    const { data: existing } = await sc
+      .from("users")
+      .select("auth_user_id")
+      .eq("id", id)
+      .single();
+
+    if (existing?.auth_user_id) {
+      const newStatus = body.status as string;
+      const banDuration = newStatus === "active" ? "none" : "876000h";
+      await sc.auth.admin.updateUserById(existing.auth_user_id, { ban_duration: banDuration });
+    }
+  }
+
+  const { data, error } = await sc
     .from("users")
     .update(patch)
     .eq("id", id)
