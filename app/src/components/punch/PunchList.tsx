@@ -5,8 +5,10 @@ import {
   useCreatePunchWithEvidence,
   useMarkCorrected,
   useClosePunch,
+  useUserName,
   PUNCH_PAGE_SIZE,
 } from "@/hooks/usePunch";
+import { useEquipment } from "@/hooks/useEquipment";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -16,7 +18,8 @@ import { PunchImagePicker } from "@/components/punch/PunchImagePicker";
 import { PunchTransitionModal } from "@/components/punch/PunchTransitionModal";
 import { useAuthStore } from "@/stores/auth.store";
 import { fmtDate } from "@/lib/utils";
-import { Plus, AlertTriangle, ChevronLeft, ChevronRight, CheckCircle, Lock } from "lucide-react";
+import Link from "next/link";
+import { Plus, AlertTriangle, ChevronLeft, ChevronRight, CheckCircle, Lock, FileText } from "lucide-react";
 import type { PunchPriority, PunchStatus, PunchItem, EvidenceStage } from "@/types";
 
 interface PunchListProps { projectId: string; }
@@ -148,6 +151,7 @@ export function PunchList({ projectId }: PunchListProps) {
               <PunchCard
                 key={item.id}
                 item={item}
+                projectId={projectId}
                 onMarkCorrected={() =>
                   setModal({
                     punch: item,
@@ -214,13 +218,19 @@ export function PunchList({ projectId }: PunchListProps) {
 
 function PunchCard({
   item,
+  projectId,
   onMarkCorrected,
   onClose,
 }: {
   item: PunchItem;
+  projectId: string;
   onMarkCorrected: () => void;
   onClose: () => void;
 }) {
+  const createdBy = useUserName(item.created_by);
+  const correctedBy = useUserName(item.corrected_by);
+  const closedBy = useUserName(item.closed_by);
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-3">
@@ -233,7 +243,30 @@ function PunchCard({
           {item.description && (
             <p className="text-sm text-slate-500 mt-1 line-clamp-2">{item.description}</p>
           )}
-          <p className="text-xs text-slate-400 mt-2">Creado {fmtDate(item.created_at)}</p>
+          <div className="mt-2 space-y-0.5">
+            <p className="text-xs text-slate-400">
+              Registrado {fmtDate(item.created_at)}
+              {createdBy && <span className="font-medium text-slate-500"> · {createdBy}</span>}
+            </p>
+            {item.corrected_at && (
+              <p className="text-xs text-emerald-500">
+                Corregido {fmtDate(item.corrected_at)}
+                {correctedBy && <span className="font-medium"> · {correctedBy}</span>}
+              </p>
+            )}
+            {item.closed_at && (
+              <p className="text-xs text-blue-500">
+                Cerrado {fmtDate(item.closed_at)}
+                {closedBy && <span className="font-medium"> · {closedBy}</span>}
+              </p>
+            )}
+          </div>
+          <Link
+            href={`/projects/${projectId}/punch/${item.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline mt-3"
+          >
+            <FileText size={13} /> Ver informe completo
+          </Link>
         </div>
         <div className="flex flex-col gap-2 items-end shrink-0">
           {(item.status === "abierto" || item.status === "en_proceso") && (
@@ -277,6 +310,7 @@ function NewPunchForm({
     title: string;
     description: string;
     priority: PunchPriority;
+    equipment_id?: string;
     evidenceBlob: Blob;
     capturedBy: string;
   }) => void;
@@ -287,9 +321,11 @@ function NewPunchForm({
   const [title,       setTitle]       = useState("");
   const [description, setDescription] = useState("");
   const [priority,    setPriority]    = useState<PunchPriority>("media");
+  const [equipmentId, setEquipmentId] = useState("");
   const [blob,        setBlob]        = useState<Blob | null>(null);
   const [preview,     setPreview]     = useState<string | null>(null);
 
+  const { data: equipmentList = [] } = useEquipment(projectId);
   const canSubmit = !!title.trim() && !!blob;
 
   return (
@@ -320,6 +356,15 @@ function NewPunchForm({
           value={priority}
           onChange={(e) => setPriority(e.target.value as PunchPriority)}
         />
+        <Select
+          label="Equipo (opcional)"
+          options={[
+            { value: "", label: "— Sin equipo —" },
+            ...equipmentList.map((eq) => ({ value: eq.id, label: `${eq.tag} — ${eq.name}` })),
+          ]}
+          value={equipmentId}
+          onChange={(e) => setEquipmentId(e.target.value)}
+        />
         <PunchImagePicker
           preview={preview}
           onCapture={(b, p) => { setBlob(b); setPreview(p); }}
@@ -342,6 +387,7 @@ function NewPunchForm({
                 title: title.trim(),
                 description,
                 priority,
+                equipment_id: equipmentId || undefined,
                 evidenceBlob: blob,
                 capturedBy: userId,
               })
