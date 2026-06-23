@@ -5,6 +5,7 @@ import { useEquipment } from "@/hooks/useEquipment";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
+import { EquipmentDocuments } from "@/components/equipment/EquipmentDocuments";
 import type { Equipment } from "@/types";
 
 interface EquipmentDetailContentProps {
@@ -73,6 +74,7 @@ export function EquipmentDetailContent({ projectId, equipmentId }: EquipmentDeta
         <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
           Documentos técnicos
         </p>
+        <EquipmentDocuments equipmentId={eq.id} projectId={projectId} />
         <EquipmentPdfUpload
           equipmentId={eq.id}
           field="catalog_url"

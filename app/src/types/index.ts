@@ -5,6 +5,7 @@
 // -------------------- ENUMS --------------------
 export type CompanyType = "cliente" | "contratista" | "integrador" | "epc" | "otro";
 export type UserStatus = "active" | "inactive" | "blocked";
+export type EquipmentDocumentType = "unifilar" | "catalogo" | "fat" | "manual" | "otro";
 export type ProjectStatus = "planificacion" | "en_ejecucion" | "suspendido" | "cerrado";
 export type Criticality = "alta" | "media" | "baja";
 
@@ -299,6 +300,18 @@ export interface Approval {
   approver_id?: string;
   approved_at?: string;
   observations?: string;
+}
+
+export interface EquipmentDocument {
+  id: string;
+  equipment_id: string;
+  project_id: string;
+  name: string;
+  document_type: EquipmentDocumentType;
+  storage_url: string;
+  file_size_bytes?: number;
+  created_at: string;
+  created_by?: string;
 }
 
 export interface PunchItem {
