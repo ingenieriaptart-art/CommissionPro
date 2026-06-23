@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Plus, Wrench, Search, ScanSearch, FileOutput, FileText, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { TagSearchModal } from "@/components/shared/TagSearchModal";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
+import { EquipmentDocuments } from "@/components/equipment/EquipmentDocuments";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Equipment, Criticality } from "@/types";
 
@@ -208,6 +209,7 @@ export default function EquipmentPage({ params }: Props) {
               </button>
             </div>
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Documentos técnicos</p>
+            <EquipmentDocuments equipmentId={docsEquipment.id} projectId={projectId} />
             <EquipmentPdfUpload
               equipmentId={docsEquipment.id}
               field="catalog_url"
