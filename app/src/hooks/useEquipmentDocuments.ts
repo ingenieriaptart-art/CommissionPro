@@ -69,6 +69,9 @@ export function useUploadEquipmentDocument() {
     onSuccess: (doc) => {
       qc.invalidateQueries({ queryKey: ["equipment-documents", doc.equipment_id] });
     },
+    onError: (err) => {
+      console.error("[EquipmentDocuments] upload error:", err);
+    },
   });
 }
 

@@ -71,7 +71,8 @@ export function EquipmentDocuments({ equipmentId, projectId }: Props) {
       setDocName(""); setDocType("unifilar"); setFile(null);
       if (inputRef.current) inputRef.current.value = "";
     } catch (err) {
-      setFormErr(err instanceof Error ? err.message : "Error al subir el documento");
+      const e = err as { message?: string; error?: string; statusCode?: string };
+      setFormErr(e?.message ?? e?.error ?? "Error al subir el documento");
     }
   };
 
