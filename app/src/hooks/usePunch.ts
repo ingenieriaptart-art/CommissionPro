@@ -84,11 +84,8 @@ export function useCreatePunch() {
 export function useUpdatePunch() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      projectId,
-      ...updates
-    }: Partial<PunchItem> & { id: string; projectId: string }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    mutationFn: async ({ id, projectId, ...updates }: Partial<PunchItem> & { id: string; projectId: string }) => {
       const now = new Date().toISOString();
       const patch = { ...updates, updated_at: now, sync_status: "pending" as const };
       await localDB.punchItems.update(id, patch);

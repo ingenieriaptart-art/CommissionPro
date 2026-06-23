@@ -26,6 +26,7 @@ export function PunchImagePicker({ preview, onCapture, onRemove }: PunchImagePic
   if (preview) {
     return (
       <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={preview} alt="Evidencia de novedad" className="w-full rounded-xl object-cover max-h-48" />
         <button
           type="button"
