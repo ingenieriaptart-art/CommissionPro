@@ -1,11 +1,12 @@
 "use client";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, Clock, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEquipment } from "@/hooks/useEquipment";
+import { useEquipment, useUpdateEquipment } from "@/hooks/useEquipment";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import { EquipmentDocuments } from "@/components/equipment/EquipmentDocuments";
+import { useAuthStore } from "@/stores/auth.store";
 import type { Equipment } from "@/types";
 
 interface EquipmentDetailContentProps {
@@ -16,6 +17,8 @@ interface EquipmentDetailContentProps {
 export function EquipmentDetailContent({ projectId, equipmentId }: EquipmentDetailContentProps) {
   const router = useRouter();
   const { data: allEquipment = [], isLoading } = useEquipment(projectId);
+  const updateEquipment = useUpdateEquipment();
+  const isAdminOrDirector = useAuthStore((s) => s.isRole("admin", "director"));
   const eq = allEquipment.find((e: Equipment) => e.id === equipmentId);
 
   if (isLoading) {
@@ -32,6 +35,23 @@ export function EquipmentDetailContent({ projectId, equipmentId }: EquipmentDeta
         <p className="text-slate-500 text-sm">Equipo no encontrado</p>
       </div>
     );
+  }
+
+  const equipment = eq;
+  const isFuturo = equipment.status === "futuro";
+
+  function handleToggleFuturo() {
+    const nextStatus = isFuturo ? "pendiente" : "futuro";
+    const label = isFuturo
+      ? "¿Restaurar equipo a estado Pendiente?"
+      : "¿Marcar equipo como Futuro? Quedará excluido de ejecución activa.";
+    if (!confirm(label)) return;
+    updateEquipment.mutate({ id: equipment.id, status: nextStatus });
+  }
+
+  function handleDelete() {
+    if (!confirm(`¿Eliminar el equipo ${equipment.tag}? Esta acción no se puede deshacer fácilmente.`)) return;
+    updateEquipment.mutate({ id: equipment.id, deleted_at: new Date().toISOString() });
   }
 
   const fields = [
@@ -89,13 +109,33 @@ export function EquipmentDetailContent({ projectId, equipmentId }: EquipmentDeta
         />
       </div>
 
-      <div className="p-3">
+      <div className="p-3 space-y-2">
         <button
           onClick={() => router.push(`/projects/${projectId}/equipment`)}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium rounded-lg border border-slate-600 transition-colors"
         >
           <ExternalLink size={12} /> Ver ficha completa en Equipos
         </button>
+
+        {isAdminOrDirector && (
+          <>
+            <button
+              onClick={handleToggleFuturo}
+              disabled={updateEquipment.isPending}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-900/40 hover:bg-amber-900/60 text-amber-300 text-xs font-medium rounded-lg border border-amber-800/50 transition-colors disabled:opacity-50"
+            >
+              <Clock size={12} />
+              {isFuturo ? "Restaurar a Pendiente" : "Marcar como Futuro"}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={updateEquipment.isPending}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-900/40 hover:bg-red-900/60 text-red-300 text-xs font-medium rounded-lg border border-red-800/50 transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={12} /> Eliminar equipo
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
