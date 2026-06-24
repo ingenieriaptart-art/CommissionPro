@@ -69,5 +69,29 @@ No tengo navegador automatizable ni capturas. Pendiente smoke funcional UI:
 3. Asignar a Brasil **solo tras PASS completo**, y preferiblemente vía nivel **equipo o subsistema** (no a todo el tipo BOMBA_CENTRIFUGA de golpe) para un rollout controlado.
 4. Solo entonces: PR (`feat/brasil-motobomba`, rebasada sobre `master`), merge y deploy.
 
+## 7. Gate funcional (FASE 1 hecha · FASE 2 pendiente)
+
+### FASE 1 — Equipo de prueba (HECHO)
+- Creado **MB-TEST-001 · "Motobomba Prueba Brasil"** (`0e1d976c-873d-450d-81d7-e1653557d999`) en proyecto ANAEROBICO DE BIOGAS LDC, subsistema SERVICIOS-GENERALES, **sin tipo de equipo**.
+- Asignado **únicamente** P_MEC_010 (asignación directa).
+- Resolución actual: **2 templates** → "Motobomba (Motor + Bomba)" (source=equipment) + "Motor Eléctrico" (source=default del proyecto). Ver R3.
+
+### FASE 2 — Smoke UI (PENDIENTE — requiere navegador del usuario)
+Runbook (yo no puedo ejecutar UI ni tomar capturas):
+1. Entrar como admin/director.
+2. Abrir directamente: `/equipment/0e1d976c-873d-450d-81d7-e1653557d999/inspection/7a2b7f17-b6dd-4da4-b1a7-ab58f6b9321e` → garantiza abrir P_MEC_010 para el smoke.
+3. (Para validar R3 visual) Abrir MB-TEST-001 desde el mapa de planta → panel "Plantillas (2)" → elegir "Motobomba (Motor + Bomba)" → debe abrir el mismo formato.
+4. Confirmar 10 secciones / 31 campos dedicados / 4 fotos.
+5. Llenar, Guardar, recargar, reabrir → persistencia.
+6. Aprobar inspección.
+7. Offline → llenar → reconectar → sync.
+8. Capturas de cada etapa.
+
+## 8. Estado de riesgos (actualizado)
+
+- **R1 — Visual universal (CONFIRMADO por código, MEDIO).** `INSPECCION_VISUAL` universal tiene 5 campos **requeridos**; según `lib/inspection/completion.ts`, una sección activa con requeridos sin llenar deja la inspección incompleta ⇒ **bloquea "Revisar y Cerrar"** hasta llenarla. No bloquea abrir ni guardar borrador, pero **obliga a llenar inspección visual genérica + Bomba + Motor** (triplicada). *Decisión pendiente del usuario:* aceptar la triplicidad o aplicar 0038 + override para ocultar la universal. (No aplicar 0038 aún, por instrucción.)
+
+- **R3 — Resolución de template (MITIGADO por diseño, confirmar en smoke).** El camino real para una motobomba es `FloatingEquipmentPanel` (mapa de planta), que **muestra un selector de plantillas y el técnico elige** — no auto-abre. El auto-pick está solo en `InstrumentDrawer` (instrumentos IC02 del P&ID), que **no aplica** a motobombas. MB-TEST-001 resuelve 2 plantillas (Motobomba + Motor default): el selector mostrará ambas y el técnico debe elegir "Motobomba". **Cierre formal de R3 = confirmar en el smoke** que el selector aparece y abre P_MEC_010.
+
 ## 6. Rollback
 Disponible al final de `0057_motobomba_template.sql` (borra enlaces, campos, secciones y el template). El template está sin asignar, así que el rollback no afecta inspecciones existentes.
