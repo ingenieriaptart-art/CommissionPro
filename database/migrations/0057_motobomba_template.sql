@@ -9,16 +9,20 @@
 --   DATOS_BOMBA, DATOS_MOTOR, FOTOS_MOTOBOMBA,
 --   INSP_VISUAL_BOMBA, INSP_VISUAL_MOTOR
 --
--- Universales que se reusan: DATOS_GENERALES (activa, datos del conjunto),
---   ANCLAJE_NIVELACION (activa), CAMBIOS_DISENO_REDLINE (activa),
---   FIRMAS (activa). INSPECCION_VISUAL se DESACTIVA para este template
---   (reemplazada por las versiones Bomba/Motor).
+-- Universales que aparecen automáticamente (is_universal=TRUE):
+--   DATOS_GENERALES, INSPECCION_VISUAL, ANCLAJE_NIVELACION,
+--   CAMBIOS_DISENO_REDLINE, FIRMAS.
 --
--- Secciones de prueba enlazadas pero APAGADAS (is_active=false) para
---   prenderlas en comisionamiento: ALINEAMIENTO, PRUEBA_OPERATIVA,
---   PRUEBA_AISLAMIENTO, PRUEBA_CONTINUIDAD, PUESTA_TIERRA.
+-- NOTA IMPORTANTE (dependencia 0038):
+--   El apagado de secciones POR PLANTILLA (form_template_sections.is_active)
+--   requiere la migración 0038. Si 0038 NO está aplicada, esta migración
+--   NO usa is_active (todas las secciones enlazadas quedan activas) y las
+--   secciones de prueba (Alineamiento/Operativa/Aislamiento/Continuidad/
+--   Tierra) NO se enlazan (se agregan luego, cuando se quiera comisionar).
+--   Para ocultar la INSPECCION_VISUAL universal (redundante con las
+--   versiones Bomba/Motor): aplicar 0038 y luego un override is_active=false.
 --
--- Idempotente: ON CONFLICT DO NOTHING + chequeos NOT EXISTS.
+-- Idempotente: ON CONFLICT DO NOTHING.
 -- ============================================================
 BEGIN;
 
@@ -50,26 +54,26 @@ BEGIN
   -- ── 2. Campos: DATOS BOMBA ─────────────────────────────────
   INSERT INTO public.section_fields (section_id, key, label, type, required, validations, sort_order)
   VALUES
-    (v_s_bomba, 'tipo_bomba',      'Tipo de bomba',                'texto',  false, NULL,                 10),
-    (v_s_bomba, 'fabricante_bomba','Fabricante (bomba)',           'texto',  false, NULL,                 20),
-    (v_s_bomba, 'modelo_bomba',    'Modelo (bomba)',               'texto',  false, NULL,                 30),
-    (v_s_bomba, 'no_serie_bomba',  'No. de serie (bomba)',         'texto',  false, NULL,                 40),
+    (v_s_bomba, 'tipo_bomba',      'Tipo de bomba',                 'texto',  false, NULL,                  10),
+    (v_s_bomba, 'fabricante_bomba','Fabricante (bomba)',            'texto',  false, NULL,                  20),
+    (v_s_bomba, 'modelo_bomba',    'Modelo (bomba)',                'texto',  false, NULL,                  30),
+    (v_s_bomba, 'no_serie_bomba',  'No. de serie (bomba)',          'texto',  false, NULL,                  40),
     (v_s_bomba, 'npshr',           'NPSHr — Altura neta aspiración','numero', false, '{"unit":"m"}'::jsonb, 50),
-    (v_s_bomba, 'altura_h',        'Altura manométrica H',         'numero', false, '{"unit":"m"}'::jsonb, 60)
+    (v_s_bomba, 'altura_h',        'Altura manométrica H',          'numero', false, '{"unit":"m"}'::jsonb, 60)
   ON CONFLICT (section_id, key) DO NOTHING;
 
   -- ── 3. Campos: DATOS MOTOR ─────────────────────────────────
   INSERT INTO public.section_fields (section_id, key, label, type, required, validations, sort_order)
   VALUES
-    (v_s_motor, 'fabricante_motor','Fabricante (motor)',  'texto',  false, NULL,                  10),
-    (v_s_motor, 'modelo_motor',    'Modelo (motor)',      'texto',  false, NULL,                  20),
-    (v_s_motor, 'no_serie_motor',  'No. de serie (motor)','texto',  false, NULL,                  30),
+    (v_s_motor, 'fabricante_motor','Fabricante (motor)',  'texto',  false, NULL,                    10),
+    (v_s_motor, 'modelo_motor',    'Modelo (motor)',      'texto',  false, NULL,                    20),
+    (v_s_motor, 'no_serie_motor',  'No. de serie (motor)','texto',  false, NULL,                    30),
     (v_s_motor, 'potencia_kw',     'Potencia',            'numero', false, '{"unit":"kW"}'::jsonb,  40),
     (v_s_motor, 'potencia_hp',     'Potencia',            'numero', false, '{"unit":"HP"}'::jsonb,  50),
     (v_s_motor, 'velocidad_rpm',   'Velocidad nominal',   'numero', false, '{"unit":"RPM"}'::jsonb, 60),
     (v_s_motor, 'voltaje',         'Voltaje',             'numero', false, '{"unit":"V"}'::jsonb,   70),
     (v_s_motor, 'frecuencia',      'Frecuencia',          'numero', false, '{"unit":"Hz"}'::jsonb,  80),
-    (v_s_motor, 'lubricacion',     'Lubricación',         'texto',  false, NULL,                  90)
+    (v_s_motor, 'lubricacion',     'Lubricación',         'texto',  false, NULL,                    90)
   ON CONFLICT (section_id, key) DO NOTHING;
 
   -- ── 4. Campos: FOTOGRAFÍAS ─────────────────────────────────
@@ -84,23 +88,23 @@ BEGIN
   -- ── 5. Campos: INSPECCIÓN VISUAL BOMBA ─────────────────────
   INSERT INTO public.section_fields (section_id, key, label, type, required, options, sort_order)
   VALUES
-    (v_s_vis_bom, 'limpieza_bomba',       'Limpieza general',           'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        10),
-    (v_s_vis_bom, 'pintura_bomba',        'Estado de pintura',          'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        20),
-    (v_s_vis_bom, 'identificacion_bomba', 'Placa de identificación',    'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        30),
-    (v_s_vis_bom, 'danos_bomba',          'Sin daños físicos visibles', 'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        40),
-    (v_s_vis_bom, 'resultado_visual_bomba','Resultado Inspección Bomba','select',   true,  '["APROBADO","RECHAZADO"]'::jsonb, 90),
-    (v_s_vis_bom, 'obs_bomba',            'Observaciones',              'textarea', false, NULL,                              100)
+    (v_s_vis_bom, 'limpieza_bomba',        'Limpieza general',           'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        10),
+    (v_s_vis_bom, 'pintura_bomba',         'Estado de pintura',          'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        20),
+    (v_s_vis_bom, 'identificacion_bomba',  'Placa de identificación',    'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        30),
+    (v_s_vis_bom, 'danos_bomba',           'Sin daños físicos visibles', 'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        40),
+    (v_s_vis_bom, 'resultado_visual_bomba','Resultado Inspección Bomba', 'select',   true,  '["APROBADO","RECHAZADO"]'::jsonb, 90),
+    (v_s_vis_bom, 'obs_bomba',             'Observaciones',              'textarea', false, NULL,                              100)
   ON CONFLICT (section_id, key) DO NOTHING;
 
   -- ── 6. Campos: INSPECCIÓN VISUAL MOTOR ─────────────────────
   INSERT INTO public.section_fields (section_id, key, label, type, required, options, sort_order)
   VALUES
-    (v_s_vis_mot, 'limpieza_motor',       'Limpieza general',           'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        10),
-    (v_s_vis_mot, 'pintura_motor',        'Estado de pintura',          'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        20),
-    (v_s_vis_mot, 'identificacion_motor', 'Placa de identificación',    'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        30),
-    (v_s_vis_mot, 'danos_motor',          'Sin daños físicos visibles', 'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        40),
-    (v_s_vis_mot, 'resultado_visual_motor','Resultado Inspección Motor','select',   true,  '["APROBADO","RECHAZADO"]'::jsonb, 90),
-    (v_s_vis_mot, 'obs_motor',            'Observaciones',              'textarea', false, NULL,                              100)
+    (v_s_vis_mot, 'limpieza_motor',        'Limpieza general',           'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        10),
+    (v_s_vis_mot, 'pintura_motor',         'Estado de pintura',          'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        20),
+    (v_s_vis_mot, 'identificacion_motor',  'Placa de identificación',    'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        30),
+    (v_s_vis_mot, 'danos_motor',           'Sin daños físicos visibles', 'checkbox', true,  '["SI","NO","N/A"]'::jsonb,        40),
+    (v_s_vis_mot, 'resultado_visual_motor','Resultado Inspección Motor', 'select',   true,  '["APROBADO","RECHAZADO"]'::jsonb, 90),
+    (v_s_vis_mot, 'obs_motor',             'Observaciones',              'textarea', false, NULL,                              100)
   ON CONFLICT (section_id, key) DO NOTHING;
 
   -- ── 7. Template MOTOBOMBA (global, sin asignar) ────────────
@@ -115,27 +119,18 @@ BEGIN
     RETURNING id INTO v_template_id;
   END IF;
 
-  -- ── 8. Enlace de secciones a la plantilla + orden + on/off ─
-  -- Universales reusadas: orden explícito; INSPECCION_VISUAL apagada.
-  INSERT INTO public.form_template_sections (template_id, section_id, sort_order, is_active)
-  SELECT v_template_id, ts.id, v.ord, v.active
+  -- ── 8. Enlace SOLO de las secciones dedicadas ──────────────
+  -- (Universales aparecen solas. Sin is_active porque 0038 puede no estar
+  --  aplicada. Las secciones de prueba se omiten a propósito.)
+  INSERT INTO public.form_template_sections (template_id, section_id, sort_order, is_required)
+  SELECT v_template_id, ts.id, v.ord, true
   FROM (VALUES
-    ('DATOS_GENERALES',        10,  true),   -- universal: datos del conjunto (TAG, ubicación, fechas)
-    ('DATOS_BOMBA',            12,  true),
-    ('DATOS_MOTOR',            14,  true),
-    ('FOTOS_MOTOBOMBA',        16,  true),
-    ('INSPECCION_VISUAL',      20,  false),  -- universal: apagada (reemplazada por Bomba/Motor)
-    ('INSP_VISUAL_BOMBA',      22,  true),
-    ('INSP_VISUAL_MOTOR',      24,  true),
-    ('ANCLAJE_NIVELACION',     30,  true),   -- universal
-    ('CAMBIOS_DISENO_REDLINE', 40,  true),   -- universal
-    ('ALINEAMIENTO',           50,  false),  -- prueba: apagada (comisionamiento)
-    ('PRUEBA_OPERATIVA',       60,  false),
-    ('PRUEBA_AISLAMIENTO',     70,  false),
-    ('PRUEBA_CONTINUIDAD',     80,  false),
-    ('PUESTA_TIERRA',          90,  false),
-    ('FIRMAS',                 999, true)    -- universal
-  ) AS v(sec_code, ord, active)
+    ('DATOS_BOMBA',       12),
+    ('DATOS_MOTOR',       14),
+    ('FOTOS_MOTOBOMBA',   16),
+    ('INSP_VISUAL_BOMBA', 22),
+    ('INSP_VISUAL_MOTOR', 24)
+  ) AS v(sec_code, ord)
   JOIN public.template_sections ts ON ts.code = v.sec_code
   ON CONFLICT (template_id, section_id) DO NOTHING;
 
@@ -146,11 +141,13 @@ $$;
 COMMIT;
 
 -- ============================================================
--- VERIFICACIÓN (manual en Supabase SQL Editor)
+-- (OPCIONAL, requiere 0038) Apagar INSPECCION_VISUAL universal
+-- y enlazar pruebas de comisionamiento apagadas, para este template:
+--
+-- UPDATE public.form_template_sections SET is_active = false
+-- WHERE template_id = (SELECT id FROM public.form_templates WHERE key='P_MEC_010' AND project_id IS NULL)
+--   AND section_id  = (SELECT id FROM public.template_sections WHERE code='INSPECCION_VISUAL');
 -- ============================================================
--- SELECT * FROM public.get_template_sections(
---   (SELECT id FROM public.form_templates WHERE key='P_MEC_010' AND project_id IS NULL)
--- ) ORDER BY sort_order;
 
 -- ============================================================
 -- ROLLBACK:
