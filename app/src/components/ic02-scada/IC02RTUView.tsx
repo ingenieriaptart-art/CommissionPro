@@ -260,7 +260,13 @@ export function IC02RTUView() {
     }}>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
 
-      <ScadaHeader projectId={params?.projectId} />
+      <ScadaHeader
+        projectId={params?.projectId}
+        pidLinks={[
+          { label: 'P&ID Lodos',  url: 'https://nkjunkolsmjledzwuxgn.supabase.co/storage/v1/object/public/documents/pid/lodos-efluente-ic01.pdf' },
+          { label: 'P&ID Biogás', url: 'https://nkjunkolsmjledzwuxgn.supabase.co/storage/v1/object/public/documents/pid/biogas-aire-ic02.pdf' },
+        ]}
+      />
 
       {/* ── Controller tabs + search ── */}
       <div style={{

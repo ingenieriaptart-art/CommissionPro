@@ -2,15 +2,21 @@
 
 import Image from 'next/image';
 
+interface PidLink {
+  label: string;
+  url: string;
+}
+
 interface Props {
   projectId?: string;
   hint?: string;
   title?: string;
   subtitle?: string;
   icon?: string;
+  pidLinks?: PidLink[];
 }
 
-export function ScadaHeader({ hint, title, subtitle, icon }: Props) {
+export function ScadaHeader({ hint, title, subtitle, icon, pidLinks }: Props) {
 
   return (
     <header
@@ -51,6 +57,39 @@ export function ScadaHeader({ hint, title, subtitle, icon }: Props) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+        {/* ── Botones P&ID ── */}
+        {pidLinks && pidLinks.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            {pidLinks.map((pid) => (
+              <button
+                key={pid.label}
+                onClick={() => window.open(pid.url, '_blank', 'noopener,noreferrer')}
+                title={`Abrir ${pid.label}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  background: 'rgba(56,189,248,0.12)',
+                  border: '1px solid rgba(56,189,248,0.4)',
+                  borderRadius: '6px', padding: '5px 10px',
+                  fontSize: '11px', fontWeight: '700', color: '#7DD3FC',
+                  cursor: 'pointer', letterSpacing: '0.3px',
+                  outline: 'none', transition: 'all 150ms', whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(56,189,248,0.22)';
+                  e.currentTarget.style.borderColor = 'rgba(56,189,248,0.7)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(56,189,248,0.12)';
+                  e.currentTarget.style.borderColor = 'rgba(56,189,248,0.4)';
+                }}
+              >
+                <span style={{ fontSize: '12px', lineHeight: 1 }}>📄</span>
+                {pid.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div
           className="hidden md:block"
           style={{
