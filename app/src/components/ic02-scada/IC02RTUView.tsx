@@ -263,8 +263,8 @@ export function IC02RTUView() {
       <ScadaHeader
         projectId={params?.projectId}
         pidLinks={[
-          { label: 'P&ID Lodos',  url: 'https://nkjunkolsmjledzwuxgn.supabase.co/storage/v1/object/public/documents/pid/lodos-efluente-ic01.pdf' },
-          { label: 'P&ID Biogás', url: 'https://nkjunkolsmjledzwuxgn.supabase.co/storage/v1/object/public/documents/pid/biogas-aire-ic02.pdf' },
+          { label: 'P&ID Lodos',  url: '/pid/pid-lodos-ic01.pdf' },
+          { label: 'P&ID Biogás', url: '/pid/pid-biogas-ic02.pdf' },
         ]}
       />
 
