@@ -3,9 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { Equipment, Project, Company } from "@/types";
 
+export type InspeccionDiscipline = "proceso" | "electrico" | "ic";
+
 export interface EquipmentWithArea extends Equipment {
   area_name?: string;
-  subsystem?: { system?: { area?: { name: string } } };
+  system_name?: string;
+  subsystem?: { system?: { area?: { name: string }; name?: string } };
 }
 
 export interface Evidence {
@@ -30,9 +33,27 @@ export interface InspeccionReportData {
   fatTests: FatTest[];
 }
 
-export function useInspeccionReport(projectId: string) {
+function filterByDiscipline(
+  equipment: EquipmentWithArea[],
+  discipline?: InspeccionDiscipline
+): EquipmentWithArea[] {
+  if (!discipline) return equipment;
+  return equipment.filter((eq) => {
+    const area = eq.area_name ?? "";
+    const sys  = eq.system_name ?? "";
+    if (discipline === "ic")       return area === "INSTRUMENTOS";
+    if (discipline === "proceso")  return area === "EQUIPOS" && sys === "PROCESOS";
+    if (discipline === "electrico") return area === "EQUIPOS" && sys === "ELECTRICOS";
+    return false;
+  });
+}
+
+export function useInspeccionReport(
+  projectId: string,
+  discipline?: InspeccionDiscipline
+) {
   return useQuery<InspeccionReportData | null>({
-    queryKey: ["inspeccion-report", projectId],
+    queryKey: ["inspeccion-report", projectId, discipline ?? "all"],
     queryFn: async () => {
       if (!navigator.onLine) return null;
       const supabase = createClient();
@@ -85,13 +106,16 @@ export function useInspeccionReport(projectId: string) {
 
       const equipmentList = (equipmentRes.data ?? []) as EquipmentWithArea[];
       equipmentList.forEach((eq) => {
-        eq.area_name = eq.subsystem?.system?.area?.name ?? "";
+        eq.area_name   = eq.subsystem?.system?.area?.name ?? "";
+        eq.system_name = eq.subsystem?.system?.name ?? "";
       });
+
+      const filtered = filterByDiscipline(equipmentList, discipline);
 
       return {
         project: projectRes.data as InspeccionReportData["project"],
         contractorCompany,
-        equipment: equipmentList,
+        equipment: filtered,
         evidences: (evidencesRes.data ?? []) as unknown as Evidence[],
         fatTests: (fatTestsRes.data ?? []) as unknown as FatTest[],
       };
