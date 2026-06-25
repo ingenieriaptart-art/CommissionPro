@@ -30,7 +30,7 @@ export interface ModuleDef {
 export const MODULES: ModuleDef[] = [
   { key: "dashboard",   label: "Dashboard",          icon: LayoutDashboard, adminOnly: false },
   { key: "equipment",   label: "Equipos",            icon: Wrench,          adminOnly: false },
-  { key: "plant-map",   label: "Mapa de Planta",     icon: Map,             adminOnly: false },
+  { key: "plant-map",   label: "Diagrama Unifilar de Planta", icon: Map,     adminOnly: false },
   { key: "ic02-rtu",    label: "Instrumentos IC02",  icon: Activity,        adminOnly: false },
   { key: "tests",       label: "Pruebas",            icon: CheckSquare,     adminOnly: false },
   { key: "punch",       label: "Punch List",         icon: AlertTriangle,   adminOnly: false },

@@ -62,7 +62,7 @@ export default function SettingsPage({ params }: Props) {
             Auto-cierre del menú lateral
           </div>
           <div style={{ fontSize: "11px", color: "#4B5563", lineHeight: "1.5" }}>
-            En módulos de pantalla completa (Mapa de Planta, Instrumentos IC02), el menú lateral
+            En módulos de pantalla completa (Diagrama Unifilar de Planta, Instrumentos IC02), el menú lateral
             se abre al tocar la flecha ▶ y se cierra automáticamente pasado este tiempo.
             Elegí <strong style={{ color: "#94A3B8" }}>Nunca</strong> para mantenerlo abierto.
           </div>

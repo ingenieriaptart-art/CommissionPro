@@ -18,7 +18,7 @@ import {
 const navItems = [
   { segment: "dashboard",   icon: LayoutDashboard, label: "Dashboard LDC"    },
   { segment: "equipment",   icon: Wrench,          label: "Equipos", toggleable: true },
-  { segment: "plant-map",   icon: Map,             label: "Mapa de Planta"    },
+  { segment: "plant-map",   icon: Map,             label: "Diagrama Unifilar de Planta" },
   { segment: "ic02-rtu",    icon: Activity,        label: "Instrumentos IC02" },
   { segment: "tests",       icon: CheckSquare,     label: "Pruebas"           },
   { segment: "punch",       icon: AlertTriangle,   label: "Punch List"        },
