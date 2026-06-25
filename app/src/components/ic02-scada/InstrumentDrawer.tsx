@@ -4,7 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { EquipmentPdfUpload } from '@/components/equipment/EquipmentPdfUpload';
+import { ReclasificarForm } from '@/components/equipment/ReclasificarForm';
 import { useEquipmentInspectionTemplates } from '@/hooks/useInspectionData';
+import { useUpdateEquipment } from '@/hooks/useEquipment';
+import { useAuthStore } from '@/stores/auth.store';
 import type { SelectionCardData } from './SelectionCard';
 
 interface Props {
@@ -66,6 +69,10 @@ function templateForBadge(badge: string, tag?: string): string {
 export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp, onClose }: Props) {
   const router   = useRouter();
   const pathname = usePathname();
+  const updateEquipment = useUpdateEquipment();
+  const authUser = useAuthStore((s) => s.user);
+  const userRoleKey = authUser?.role?.key ?? '';
+  const isAdminOrDirector = userRoleKey === 'admin' || userRoleKey === 'director';
   const { tag, description, signalBadge, signalColor, accentColor, subTags, isFuture, precomStatus = 'pending' } = card;
 
   // Busca el equipo real en Supabase por tag (necesario para subir PDFs)
@@ -76,11 +83,11 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
       const supabase = createClient();
       const { data } = await supabase
         .from('equipment')
-        .select('id, catalog_url, fat_protocol_url')
+        .select('id, catalog_url, fat_protocol_url, status, subsystem_id')
         .eq('project_id', projectId)
         .ilike('tag', tag)
         .maybeSingle();
-      return data as { id: string; catalog_url?: string; fat_protocol_url?: string } | null;
+      return data as { id: string; catalog_url?: string; fat_protocol_url?: string; status?: string; subsystem_id?: string } | null;
     },
     enabled: !!projectId && !!tag,
     staleTime: 60_000,
@@ -121,6 +128,27 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
       router.push(`/equipment/${eqId}/inspection/${templateId}?returnTo=${returnTo}`);
     }
     onClose();
+  }
+
+  const isFuturoStatus = realEquipment?.status === 'futuro';
+
+  function handleToggleFuturo() {
+    if (!realEquipmentId) return;
+    const nextStatus = isFuturoStatus ? 'pendiente' : 'futuro';
+    const label = isFuturoStatus
+      ? '¿Restaurar equipo a estado Pendiente?'
+      : '¿Marcar equipo como Futuro? Quedará excluido de ejecución activa.';
+    if (!confirm(label)) return;
+    updateEquipment.mutate({ id: realEquipmentId, status: nextStatus });
+  }
+
+  function handleDelete() {
+    if (!realEquipmentId) return;
+    if (!confirm(`¿Eliminar el equipo ${tag}? Esta acción no se puede deshacer fácilmente.`)) return;
+    updateEquipment.mutate(
+      { id: realEquipmentId, deleted_at: new Date().toISOString() },
+      { onSuccess: () => onClose() }
+    );
   }
 
   return (
@@ -339,6 +367,45 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
             </div>
             <span style={{ marginLeft: 'auto', fontSize: '16px', color: '#38BDF8', opacity: 0.7 }}>›</span>
           </button>
+
+          {/* Administración — solo admin/director y equipo real */}
+          {isAdminOrDirector && realEquipmentId && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: '#FCA5A5', letterSpacing: '1.5px' }}>
+                ADMINISTRACIÓN
+              </div>
+
+              <ReclasificarForm projectId={projectId} equipmentId={realEquipmentId} />
+
+              <button
+                onClick={handleToggleFuturo}
+                disabled={updateEquipment.isPending}
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
+                  background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.45)',
+                  color: '#FCD34D', fontSize: '12px', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  opacity: updateEquipment.isPending ? 0.5 : 1,
+                }}
+              >
+                ⏱ {isFuturoStatus ? 'Restaurar a Pendiente' : 'Marcar como Futuro'}
+              </button>
+
+              <button
+                onClick={handleDelete}
+                disabled={updateEquipment.isPending}
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
+                  background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.45)',
+                  color: '#FCA5A5', fontSize: '12px', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  opacity: updateEquipment.isPending ? 0.5 : 1,
+                }}
+              >
+                🗑 Eliminar equipo
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

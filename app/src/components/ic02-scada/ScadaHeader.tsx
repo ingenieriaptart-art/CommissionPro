@@ -72,7 +72,7 @@ export function ScadaHeader({ hint, title, subtitle, icon }: Props) {
             alt="Biotec"
             width={72}
             height={32}
-            style={{ objectFit: 'contain', display: 'block' }}
+            className="object-contain block"
           />
         </div>
       </div>

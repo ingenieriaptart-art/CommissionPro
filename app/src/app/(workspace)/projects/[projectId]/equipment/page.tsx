@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
-import { Plus, Wrench, Search, ScanSearch, FileOutput, FileText, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Wrench, Search, ScanSearch, FileOutput, FileText, FolderTree, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { TagSearchModal } from "@/components/shared/TagSearchModal";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import { EquipmentDocuments } from "@/components/equipment/EquipmentDocuments";
+import { ReclasificarForm } from "@/components/equipment/ReclasificarForm";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Equipment, Criticality } from "@/types";
 
@@ -22,13 +23,17 @@ export default function EquipmentPage({ params }: Props) {
   const searchParams    = useSearchParams();
   const router          = useRouter();
   const canEditEquipment = useAuthStore((s) => s.canWrite(projectId, "equipment"));
+  const authUser = useAuthStore((s) => s.user);
+  const userRoleKey = authUser?.role?.key ?? "";
+  const isAdminOrDirector = userRoleKey === "admin" || userRoleKey === "director";
 
   const [inputValue, setInputValue]       = useState(searchParams.get("tag") ?? "");
   const [search, setSearch]               = useState(searchParams.get("tag") ?? "");
   const [page, setPage]                   = useState(1);
-  const [showForm, setShowForm]           = useState(false);
-  const [tagSearchOpen, setTagSearchOpen] = useState(false);
-  const [docsEquipment, setDocsEquipment] = useState<Equipment | null>(null);
+  const [showForm, setShowForm]               = useState(false);
+  const [tagSearchOpen, setTagSearchOpen]     = useState(false);
+  const [docsEquipment, setDocsEquipment]     = useState<Equipment | null>(null);
+  const [reclasEquipment, setReclasEquipment] = useState<Equipment | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce: aplica el search 350ms después de que el usuario deja de escribir
@@ -128,6 +133,15 @@ export default function EquipmentPage({ params }: Props) {
                   <p className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{eq.name}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
+                  {isAdminOrDirector && (
+                    <button
+                      onClick={() => setReclasEquipment(eq)}
+                      title="Reclasificar equipo"
+                      className="p-1 rounded text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    >
+                      <FolderTree size={14} />
+                    </button>
+                  )}
                   <button
                     onClick={() => setDocsEquipment(eq)}
                     title="Documentos técnicos (manual / FAT)"
@@ -193,6 +207,29 @@ export default function EquipmentPage({ params }: Props) {
         isOpen={tagSearchOpen}
         onClose={() => setTagSearchOpen(false)}
       />
+
+      {/* Modal reclasificar */}
+      {reclasEquipment && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setReclasEquipment(null)} />
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-mono text-xs text-blue-600 font-bold">{reclasEquipment.tag}</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{reclasEquipment.name}</p>
+              </div>
+              <button onClick={() => setReclasEquipment(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <X size={18} />
+              </button>
+            </div>
+            <ReclasificarForm
+              projectId={projectId}
+              equipmentId={reclasEquipment.id}
+              onSuccess={() => setReclasEquipment(null)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Panel documentos técnicos */}
       {docsEquipment && (

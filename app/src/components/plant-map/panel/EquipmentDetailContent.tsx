@@ -6,6 +6,7 @@ import { EquipmentStatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import { EquipmentDocuments } from "@/components/equipment/EquipmentDocuments";
+import { ReclasificarForm } from "@/components/equipment/ReclasificarForm";
 import { useAuthStore } from "@/stores/auth.store";
 import type { Equipment } from "@/types";
 
@@ -18,7 +19,9 @@ export function EquipmentDetailContent({ projectId, equipmentId }: EquipmentDeta
   const router = useRouter();
   const { data: allEquipment = [], isLoading } = useEquipment(projectId);
   const updateEquipment = useUpdateEquipment();
-  const isAdminOrDirector = useAuthStore((s) => s.isRole("admin", "director"));
+  const authUser = useAuthStore((s) => s.user);
+  const userRoleKey = authUser?.role?.key ?? "";
+  const isAdminOrDirector = userRoleKey === "admin" || userRoleKey === "director";
   const eq = allEquipment.find((e: Equipment) => e.id === equipmentId);
 
   if (isLoading) {
@@ -119,6 +122,7 @@ export function EquipmentDetailContent({ projectId, equipmentId }: EquipmentDeta
 
         {isAdminOrDirector && (
           <>
+            <ReclasificarForm projectId={projectId} equipmentId={equipment.id} />
             <button
               onClick={handleToggleFuturo}
               disabled={updateEquipment.isPending}

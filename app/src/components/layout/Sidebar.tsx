@@ -64,15 +64,15 @@ export function Sidebar() {
       <div className={cn("flex items-center h-16 px-3 border-b border-slate-700",
         sidebarOpen ? "gap-2" : "justify-center px-0")}>
         <div className={cn(
-          "bg-white rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden",
+          "relative bg-white rounded-lg overflow-hidden flex-shrink-0",
           sidebarOpen ? "w-8 h-8" : "w-9 h-9"
         )}>
           <Image
             src="/logo-biotec.png"
             alt="Biotec"
-            width={sidebarOpen ? 28 : 34}
-            height={sidebarOpen ? 28 : 34}
+            fill
             className="object-contain"
+            sizes="36px"
           />
         </div>
         {sidebarOpen && (

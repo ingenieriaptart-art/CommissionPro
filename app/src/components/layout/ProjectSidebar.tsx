@@ -247,15 +247,15 @@ export function ProjectSidebar() {
         !sidebarOpen && "px-0"
       )}>
         <div className={cn(
-          "bg-white rounded-lg overflow-hidden flex items-center justify-center",
-          sidebarOpen ? "w-32 h-8 px-2" : "w-9 h-9"
+          "relative bg-white rounded-lg overflow-hidden flex-shrink-0",
+          sidebarOpen ? "w-32 h-8" : "w-9 h-9"
         )}>
           <Image
             src="/logo-biotec.png"
             alt="Biotec"
-            width={sidebarOpen ? 112 : 32}
-            height={sidebarOpen ? 28 : 32}
+            fill
             className="object-contain"
+            sizes={sidebarOpen ? "128px" : "36px"}
           />
         </div>
       </div>

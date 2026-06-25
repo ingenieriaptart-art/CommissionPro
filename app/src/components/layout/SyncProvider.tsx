@@ -3,9 +3,11 @@ import { useEffect } from "react";
 import { setupAutoSync } from "@/lib/sync/engine";
 import { useSyncStore } from "@/stores/sync.store";
 import { localDB } from "@/lib/db/local";
+import { useRestoreUserProfile } from "@/hooks/useRestoreUserProfile";
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const { setState, setResult, setPending } = useSyncStore();
+  useRestoreUserProfile();
 
   useEffect(() => {
     // Contar pendientes periódicamente
