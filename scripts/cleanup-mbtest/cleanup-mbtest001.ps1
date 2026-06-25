@@ -71,6 +71,14 @@ $tests  = Get- "tests?select=id,code,revision,equipment_id&equipment_id=in.($eqF
 $evs    = Get- "evidences?select=id,test_id,stage,storage_url,equipment_id&equipment_id=in.($eqFilter)"
 $punch  = Get- "punch_items?select=id,equipment_id&equipment_id=in.($eqFilter)"
 
+# Certificados: certificates.test_id es RESTRICT (no cascada) -> hay que borrarlos
+# ANTES que los tests o el DELETE de tests fallaria.
+$testIds = @($tests | ForEach-Object { $_.id })
+$certs = @()
+if ($testIds.Count -gt 0) {
+  $certs = Get- ("certificates?select=id,certificate_number,test_id&test_id=in.({0})" -f ($testIds -join ","))
+}
+
 # Rutas de storage a partir de storage_url (.../object/public/evidences/<path>)
 $paths = @()
 foreach ($e in $evs) {
@@ -88,6 +96,8 @@ $tests | ForEach-Object { "        - $($_.code) (rev $($_.revision)) $($_.id)" }
 Write-Host ("   evidences (filas)   : {0}" -f $evs.Count)
 Write-Host ("   storage (archivos)  : {0}" -f $paths.Count)
 $paths | ForEach-Object { "        - evidences/$_" }
+Write-Host ("   certificates        : {0}" -f $certs.Count)
+$certs | ForEach-Object { "        - $($_.certificate_number) $($_.id)" }
 Write-Host ("   punch_items         : {0}" -f $punch.Count)
 Write-Host ("   equipment           : {0}" -f $eq.Count)
 
@@ -101,7 +111,7 @@ if (-not (Test-Path $BackupDir)) { New-Item -ItemType Directory -Force -Path $Ba
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $backup = @{
   generated_at = (Get-Date).ToString("o")
-  equipment = $eq; equipment_templates = $tpls; tests = $tests; evidences = $evs; punch_items = $punch; storage_paths = $paths
+  equipment = $eq; equipment_templates = $tpls; tests = $tests; evidences = $evs; punch_items = $punch; certificates = $certs; storage_paths = $paths
 }
 $backupFile = Join-Path $BackupDir "mbtest-backup-$stamp.json"
 $backup | ConvertTo-Json -Depth 8 | Out-File -FilePath $backupFile -Encoding utf8
@@ -115,6 +125,7 @@ foreach ($p in $paths) {
   try { Invoke-RestMethod -Uri "$SupabaseUrl/storage/v1/object/evidences/$p" -Method Delete -Headers $h | Out-Null; "   storage borrado: $p" }
   catch { "   storage ERROR $p : $($_.Exception.Message)" }
 }
+if ($certs.Count -gt 0) { Del- ("certificates?test_id=in.({0})" -f ($testIds -join ",")) | Out-Null; "   certificates borrados: $($certs.Count)" }
 if ($evs.Count   -gt 0) { Del- "evidences?equipment_id=in.($eqFilter)"          | Out-Null; "   evidences borradas: $($evs.Count)" }
 if ($punch.Count -gt 0) { Del- "punch_items?equipment_id=in.($eqFilter)"        | Out-Null; "   punch_items borrados: $($punch.Count)" }
 if ($tests.Count -gt 0) { Del- "tests?equipment_id=in.($eqFilter)"              | Out-Null; "   tests borrados: $($tests.Count)" }
