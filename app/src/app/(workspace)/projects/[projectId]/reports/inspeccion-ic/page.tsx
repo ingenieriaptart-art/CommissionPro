@@ -55,7 +55,7 @@ export default function InspeccionICPage({ params }: Props) {
       {isLoading && <div className="py-12 text-center text-slate-500 text-sm">Cargando informe…</div>}
       {isError && <div className="py-12 text-center text-red-500 text-sm">Error al cargar los datos.</div>}
       {!isLoading && !data && !isError && <div className="py-12 text-center text-slate-400 text-sm">Sin conexión — datos no disponibles.</div>}
-      {data && <InspeccionPrintView data={data} />}
+      {data && <InspeccionPrintView data={data} title="LISTADO DE INSPECCIÓN INSTRUMENTACIÓN Y CONTROL" />}
     </>
   );
 }

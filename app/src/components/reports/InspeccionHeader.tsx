@@ -7,9 +7,10 @@ function getLogoUrl(company?: { logo_url?: string }): string | null {
 
 interface Props {
   data: InspeccionReportData;
+  title?: string;
 }
 
-export function InspeccionHeader({ data }: Props) {
+export function InspeccionHeader({ data, title = "LISTADO DE INSPECCIÓN DE EQUIPOS ELECTROMECÁNICOS" }: Props) {
   const { project, contractorCompany } = data;
   const clientCompany = project.client_company;
 
@@ -79,7 +80,7 @@ export function InspeccionHeader({ data }: Props) {
               letterSpacing: "0.3px",
             }}
           >
-            LISTADO DE INSPECCIÓN DE EQUIPOS ELECTROMECÁNICOS
+            {title}
           </td>
           <td />
           <td

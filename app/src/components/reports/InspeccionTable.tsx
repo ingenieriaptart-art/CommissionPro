@@ -1,3 +1,4 @@
+import React from "react";
 import type { EquipmentWithArea, Evidence, FatTest } from "@/hooks/useInspeccionReport";
 import type { EquipmentStatus } from "@/types";
 
@@ -46,9 +47,10 @@ interface Props {
   equipment: EquipmentWithArea[];
   evidences: Evidence[];
   fatTests: FatTest[];
+  repeatableHeader?: React.ReactNode;
 }
 
-export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
+export function InspeccionTable({ equipment, evidences, fatTests, repeatableHeader }: Props) {
   const byArea: Record<string, EquipmentWithArea[]> = {};
   for (const eq of equipment) {
     const key = eq.area_name ?? "Sin área";
@@ -89,25 +91,29 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
         <col style={{ width: "52px" }} />
         <col style={{ width: "110px" }} />
         <col style={{ width: "32px" }} />
-        <col style={{ width: "32px" }} />
         <col style={{ width: "38px" }} />
-        <col style={{ width: "38px" }} />
-        <col style={{ width: "38px" }} />
-        <col style={{ width: "38px" }} />
-        <col style={{ width: "30px" }} />
-        <col style={{ width: "30px" }} />
+        <col style={{ width: "152px" }} />
+        <col style={{ width: "152px" }} />
+        <col style={{ width: "40px" }} />
+        <col style={{ width: "40px" }} />
         <col style={{ width: "22px" }} />
         <col style={{ width: "22px" }} />
         <col />
       </colgroup>
       <thead>
+        {repeatableHeader && (
+          <tr>
+            <td colSpan={14} style={{ padding: 0, border: "none" }}>
+              {repeatableHeader}
+            </td>
+          </tr>
+        )}
         <tr>
           <th style={thStyle} rowSpan={2}>Est.</th>
           <th style={thStyle} rowSpan={2}>ITEM</th>
           <th style={thStyle} rowSpan={2}>TAG</th>
           <th style={thStyle} rowSpan={2}>ÁREA</th>
           <th style={thStyle} rowSpan={2} colSpan={2}>APLICACIÓN</th>
-          <th style={thStyle} colSpan={2}>POTENCIA DEMANDADA</th>
           <th style={thStyle} rowSpan={2}>Pot. Inst.<br />kW</th>
           <th style={thStyle} rowSpan={2}>FOTO<br />EQUIPO</th>
           <th style={thStyle} rowSpan={2}>FOTO<br />PLACA</th>
@@ -117,8 +123,6 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
           <th style={thStyle} rowSpan={2}>OBSERVACIONES</th>
         </tr>
         <tr>
-          <th style={thStyle}>kW</th>
-          <th style={thStyle}>HP</th>
           <th style={thStyle}>SI</th>
           <th style={thStyle}>NO</th>
         </tr>
@@ -128,7 +132,7 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
           <>
             <tr key={`area-${areaName}`}>
               <td
-                colSpan={16}
+                colSpan={14}
                 style={{
                   background: "#1e3a5f",
                   color: "#93c5fd",
@@ -147,61 +151,74 @@ export function InspeccionTable({ equipment, evidences, fatTests }: Props) {
               const fotoEquipo = eqEvidences.find((e) => e.stage === "durante");
               const fotoPlaca = eqEvidences.find((e) => e.stage === "antes");
               const fats = fatByEquipment[eq.id] ?? [];
-              const hpVal = eq.power_kw ? (eq.power_kw * 1.341022).toFixed(1) : "";
               const obs = fats[0]?.data?.observations ?? "";
 
+              const needsPageBreak = seqNum % 15 === 0;
+              const pageNum = Math.ceil(seqNum / 15);
+
               return (
-                <tr key={eq.id} style={{ background: bg }}>
-                  <td style={{ ...cell, textAlign: "center", fontWeight: 700 }}>
-                    {STATUS_LABEL[eq.status] ?? eq.status}
-                  </td>
-                  <td style={{ ...cell, textAlign: "center" }}>{seqNum}</td>
-                  <td style={cell}>{eq.tag}</td>
-                  <td style={cellWrap}>{eq.area_name ?? ""}</td>
-                  <td style={{ ...cellWrap, whiteSpace: "normal" }} colSpan={2}>
-                    {eq.name}
-                  </td>
-                  <td style={{ ...cell, textAlign: "right" }}>{eq.power_kw ?? ""}</td>
-                  <td style={{ ...cell, textAlign: "right" }}>{hpVal}</td>
-                  <td style={{ ...cell, textAlign: "right" }}>{eq.power_installed_kw ?? ""}</td>
-                  <td style={{ ...cell, textAlign: "center" }}>
-                    {fotoEquipo?.storage_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={fotoEquipo.storage_url} alt="foto" style={{ maxWidth: "32px", maxHeight: "24px", objectFit: "cover" }} />
-                    ) : (
-                      <span style={{ color: "#94a3b8" }}>📷</span>
-                    )}
-                  </td>
-                  <td style={{ ...cell, textAlign: "center" }}>
-                    {fotoPlaca?.storage_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={fotoPlaca.storage_url} alt="placa" style={{ maxWidth: "32px", maxHeight: "24px", objectFit: "cover" }} />
-                    ) : (
-                      <span style={{ color: "#94a3b8" }}>📷</span>
-                    )}
-                  </td>
-                  <td style={{ ...cell, textAlign: "center" }}>
-                    {eq.catalog_url ? (
-                      <a href={eq.catalog_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontSize: "11px", textDecoration: "none" }}>📄</a>
-                    ) : (
-                      <span style={{ color: "#cbd5e1" }}>—</span>
-                    )}
-                  </td>
-                  <td style={{ ...cell, textAlign: "center" }}>
-                    {eq.fat_protocol_url ? (
-                      <a href={eq.fat_protocol_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontSize: "11px", textDecoration: "none" }}>📄</a>
-                    ) : (
-                      <span style={{ color: "#cbd5e1" }}>—</span>
-                    )}
-                  </td>
-                  <td style={{ ...cell, textAlign: "center", color: "#16a34a", fontWeight: 700 }}>
-                    {eq.status === "aprobado" ? "✓" : ""}
-                  </td>
-                  <td style={{ ...cell, textAlign: "center", color: "#dc2626", fontWeight: 700 }}>
-                    {eq.status === "rechazado" ? "✓" : ""}
-                  </td>
-                  <td style={cellWrap}>{obs}</td>
-                </tr>
+                <React.Fragment key={eq.id}>
+                  <tr style={{ background: bg, ...(needsPageBreak ? { breakAfter: "page" } : {}) }}>
+                    <td style={{ ...cell, textAlign: "center", fontWeight: 700 }}>
+                      {STATUS_LABEL[eq.status] ?? eq.status}
+                    </td>
+                    <td style={{ ...cell, textAlign: "center" }}>{seqNum}</td>
+                    <td style={cell}>{eq.tag}</td>
+                    <td style={cellWrap}>{eq.area_name ?? ""}</td>
+                    <td style={{ ...cellWrap, whiteSpace: "normal" }} colSpan={2}>
+                      {eq.name}
+                    </td>
+                    <td style={{ ...cell, textAlign: "right" }}>{eq.power_installed_kw ?? ""}</td>
+                    <td style={{ ...cell, textAlign: "center", padding: "1px", height: "36px" }}>
+                      {fotoEquipo?.storage_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={fotoEquipo.storage_url} alt="foto" style={{ width: "150px", height: "34px", objectFit: "cover", display: "block" }} />
+                      ) : (
+                        <div style={{ width: "150px", height: "34px", background: "#e2e8f0", border: "1px dashed #94a3b8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "6px", color: "#94a3b8", lineHeight: 1 }}>
+                          FOTO<br />EQ
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ ...cell, textAlign: "center", padding: "1px", height: "36px" }}>
+                      {fotoPlaca?.storage_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={fotoPlaca.storage_url} alt="placa" style={{ width: "150px", height: "34px", objectFit: "cover", display: "block" }} />
+                      ) : (
+                        <div style={{ width: "150px", height: "34px", background: "#e2e8f0", border: "1px dashed #94a3b8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "6px", color: "#94a3b8", lineHeight: 1 }}>
+                          FOTO<br />PLACA
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ ...cell, textAlign: "center" }}>
+                      {eq.catalog_url ? (
+                        <a href={eq.catalog_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontSize: "11px", textDecoration: "none" }}>📄</a>
+                      ) : (
+                        <span style={{ color: "#cbd5e1" }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ ...cell, textAlign: "center" }}>
+                      {eq.fat_protocol_url ? (
+                        <a href={eq.fat_protocol_url} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontSize: "11px", textDecoration: "none" }}>📄</a>
+                      ) : (
+                        <span style={{ color: "#cbd5e1" }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ ...cell, textAlign: "center", color: "#16a34a", fontWeight: 700 }}>
+                      {eq.status === "aprobado" ? "✓" : ""}
+                    </td>
+                    <td style={{ ...cell, textAlign: "center", color: "#dc2626", fontWeight: 700 }}>
+                      {eq.status === "rechazado" ? "✓" : ""}
+                    </td>
+                    <td style={cellWrap}>{obs}</td>
+                  </tr>
+                  {needsPageBreak && (
+                    <tr className="inspeccion-page-break-marker">
+                      <td colSpan={14}>
+                        FIN HOJA {pageNum} &nbsp;·&nbsp; INICIO HOJA {pageNum + 1}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               );
             })}
           </>
