@@ -121,9 +121,18 @@ Write-Host "(Rollback de filas: re-insertar desde el JSON. Los binarios de Stora
 # ---- 4. Borrado en orden de dependencias ----
 Write-Host "`n----- ELIMINANDO -----" -ForegroundColor White
 
-foreach ($p in $paths) {
-  try { Invoke-RestMethod -Uri "$SupabaseUrl/storage/v1/object/evidences/$p" -Method Delete -Headers $h | Out-Null; "   storage borrado: $p" }
-  catch { "   storage ERROR $p : $($_.Exception.Message)" }
+# Borrado de Storage vía remove() — DELETE /storage/v1/object/evidences con body {prefixes:[...]}.
+# (El DELETE por ruta `/storage/v1/object/evidences/<path>` devuelve HTTP 400; este método es el correcto.)
+if ($paths.Count -gt 0) {
+  try {
+    $delBody = @{ prefixes = @($paths) } | ConvertTo-Json
+    $removed = Invoke-RestMethod -Uri "$SupabaseUrl/storage/v1/object/evidences" -Method Delete -Headers $h -Body $delBody
+    "   storage borrado: $($removed.Count) archivo(s)"
+  } catch {
+    $rsp = $_.Exception.Response
+    if ($rsp) { $sr = New-Object System.IO.StreamReader($rsp.GetResponseStream()); "   storage ERROR: " + $sr.ReadToEnd() }
+    else { "   storage ERROR: $($_.Exception.Message)" }
+  }
 }
 if ($certs.Count -gt 0) { Del- ("certificates?test_id=in.({0})" -f ($testIds -join ",")) | Out-Null; "   certificates borrados: $($certs.Count)" }
 if ($evs.Count   -gt 0) { Del- "evidences?equipment_id=in.($eqFilter)"          | Out-Null; "   evidences borradas: $($evs.Count)" }
