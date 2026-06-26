@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEquipmentForInspection, useInspectionTemplate } from "@/hooks/useInspectionData";
+import { useEquipmentForInspection, useInspectionTemplate, useLatestTestForInspection } from "@/hooks/useInspectionData";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
 import { DynamicFormSection } from "@/components/inspection/DynamicFormSection";
 import { InspectionSummary } from "@/components/inspection/InspectionSummary";
@@ -73,30 +73,60 @@ export default function InspectionPage() {
   const [state, setState]   = useState<InspectionState | null>(null);
   const [docsOpen, setDocsOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
-  const { submit, isSubmitting, error: saveError } = useSubmitInspection();
+  const { startDraft, saveSection, close, submit, isSubmitting, error: saveError } = useSubmitInspection();
+
+  const { data: latestTest } = useLatestTestForInspection(equipmentId, templateId);
 
   // Sólo equipos reales de Supabase tienen UUID (36 chars); los mock empiezan con ic02-/eq-/tpl-
   const isRealEquipment = equipmentId.length === 36 && !equipmentId.startsWith("eq-");
 
-  // Load or initialize state from IndexedDB (survives tab close / browser restart)
+  // Load or initialize state from IndexedDB (survives tab close / browser restart).
+  // También crea un borrador en BD (startDraft) si no existe ninguno, y precarga
+  // respuestas desde la BD si hay un borrador existente sin draft local.
   useEffect(() => {
     if (!template || !equipment) return;
+    // Esperar a que la consulta de BD resuelva (undefined = aún cargando)
+    if (latestTest === undefined) return;
     const sections = template.sections;
+    // Solo crear borrador en BD para equipos reales (UUIDs de Supabase)
+    const isReal = equipmentId.length === 36 && !equipmentId.startsWith("eq-");
+
     getInspectionDraft(equipmentId, templateId)
       .then((saved) => {
         if (saved) {
-          // Re-derivar el estado de cada sección desde las respuestas guardadas:
-          // los checks SIEMPRE reflejan lo respondido (evita borradores legados
-          // "completado pero sin check").
-          setState({ ...saved, sectionStatus: deriveSectionStatuses(sections, saved.answers ?? {}) });
+          // Restaurar borrador local — enriquecer con testId de BD si falta
+          const testId = saved.testId ?? (latestTest?.status === "borrador" ? latestTest.id : undefined);
+          setState({ ...saved, testId, sectionStatus: deriveSectionStatuses(sections, saved.answers ?? {}) });
+        } else if (latestTest?.status === "borrador") {
+          // Sin draft local pero BD tiene un borrador → precargar respuestas
+          const answers = { ...(latestTest.data ?? {}) };
+          setState({
+            ...buildInitialState(equipmentId, templateId, sections, equipment),
+            answers,
+            testId: latestTest.id,
+            sectionStatus: deriveSectionStatuses(sections, answers),
+          });
         } else {
-          setState(buildInitialState(equipmentId, templateId, sections, equipment));
+          // Sin draft ni borrador → estado fresco + crear fila en BD
+          const initialState = buildInitialState(equipmentId, templateId, sections, equipment);
+          if (isReal && equipment.project_id) {
+            startDraft(initialState, equipment.project_id, template)
+              .then((result) => {
+                setState({ ...initialState, testId: result?.testId });
+              })
+              .catch(() => {
+                setState(initialState);
+              });
+          } else {
+            setState(initialState);
+          }
         }
       })
       .catch(() => {
         setState(buildInitialState(equipmentId, templateId, sections, equipment));
       });
-  }, [equipmentId, templateId, template, equipment]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [equipmentId, templateId, template, equipment, latestTest]);
 
   // Persist state on every change to IndexedDB
   useEffect(() => {
@@ -169,7 +199,9 @@ export default function InspectionPage() {
       const pct = calcFormPct(state.sectionStatus);
       if (pct > 0) syncEquipmentStatus(equipment.id, "en_ejecucion", pct);
     }
-  }, [state, equipment]);
+    // Autosave respuestas a BD vía outbox al cambiar sección
+    if (state?.testId) saveSection(state.testId, state.answers);
+  }, [state, equipment, saveSection]);
 
   const handleNext = useCallback(() => {
     setState(prev => {
@@ -182,7 +214,9 @@ export default function InspectionPage() {
       const pct = calcFormPct(state.sectionStatus);
       if (pct > 0) syncEquipmentStatus(equipment.id, "en_ejecucion", pct);
     }
-  }, [template, state, equipment]);
+    // Autosave respuestas a BD vía outbox al avanzar sección
+    if (state?.testId) saveSection(state.testId, state.answers);
+  }, [template, state, equipment, saveSection]);
 
   const handlePrev = useCallback(() => {
     setState(prev => {
@@ -200,11 +234,11 @@ export default function InspectionPage() {
   // Guardar desde el resumen inline: escribe local-first y vuelve al plano.
   const handleSaveInline = useCallback(async () => {
     if (!state || !equipment?.project_id || !template) return;
-    const result = await submit(state, equipment.project_id, template);
+    const result = await close(state, equipment.project_id, template);
     if (!result) return; // error mostrado vía saveError
     await deleteInspectionDraft(equipmentId, templateId).catch(() => {});
     router.push(returnTo);
-  }, [state, equipment, template, submit, equipmentId, templateId, returnTo, router]);
+  }, [state, equipment, template, close, equipmentId, templateId, returnTo, router]);
 
   if (eqLoading || tplLoading || !state) {
     return (
