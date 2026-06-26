@@ -64,6 +64,10 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
   const data = test.data ?? {};
   const approved = test.result_summary === "cumple" || (test.result_summary !== "no_cumple" && failures.length === 0);
   const data_ = data as Record<string, unknown>;
+  // El título usa el snapshot del equipo si existe; si no (inspecciones enviadas
+  // por el formulario no guardan equipment_snapshot), cae a los datos generales.
+  const eqTag = test.equipment_snapshot?.tag ?? (typeof data_.tag === "string" ? data_.tag : "");
+  const eqName = test.equipment_snapshot?.name ?? (typeof data_.nombre_equipo === "string" ? data_.nombre_equipo : "");
 
   return (
     <>
@@ -113,7 +117,7 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
           <div className="mb-5">
             <p className="font-mono text-xs text-blue-400 font-bold">{test.code ?? "—"}</p>
             <h1 className="text-xl font-bold text-white mt-0.5">
-              {(test.equipment_snapshot?.tag ?? "") + (test.equipment_snapshot?.name ? ` — ${test.equipment_snapshot?.name}` : "")}
+              {eqTag}{eqName ? ` — ${eqName}` : ""}
             </h1>
             <p className="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
               {meta.templateName && <span>Plantilla: {meta.templateName}</span>}
@@ -164,10 +168,12 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
           <div className="space-y-4">
             {sections.map((section) => {
               const fields = section.fields ?? [];
-              if (fields.length === 0) return null;
               return (
                 <div key={section.code} className="bg-slate-900 rounded-xl p-4 border border-slate-800">
                   <p className="text-sm font-semibold text-slate-200 mb-3">{section.name}</p>
+                  {fields.length === 0 && (
+                    <p className="text-[11px] text-slate-600 italic">Sin campos registrados en esta sección.</p>
+                  )}
                   <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
                     {fields.map((field) => {
                       const raw = data_[field.key];
