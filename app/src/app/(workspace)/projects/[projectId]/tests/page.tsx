@@ -1,5 +1,6 @@
 "use client";
 import { use, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTestsPaged, useCreateTest, TESTS_PAGE_SIZE } from "@/hooks/useTests";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +33,7 @@ const typeColor: Record<TestType, string> = {
 
 export default function TestsPage({ params }: Props) {
   const { projectId } = use(params);
+  const router        = useRouter();
   const createTest    = useCreateTest();
 
   const [showForm,    setShowForm]    = useState(false);
@@ -118,6 +120,14 @@ export default function TestsPage({ params }: Props) {
                     </p>
                     <p className="text-xs text-slate-400 mt-1">{fmtDate(t.created_at)}</p>
                   </div>
+                  {t.equipment_id && (
+                    <button
+                      onClick={() => router.push(`/equipment/${t.equipment_id}/review/${t.id}?returnTo=${encodeURIComponent(`/projects/${projectId}/tests`)}`)}
+                      className="flex-shrink-0 self-center flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                    >
+                      Ver inspección
+                    </button>
+                  )}
                 </div>
               </Card>
             ))}
