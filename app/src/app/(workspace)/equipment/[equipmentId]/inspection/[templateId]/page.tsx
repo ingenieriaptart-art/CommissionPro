@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -77,6 +77,9 @@ export default function InspectionPage() {
 
   const { data: latestTest } = useLatestTestForInspection(equipmentId, templateId);
 
+  // Guard: the init effect must only run once — prevents re-initialization from background refetches
+  const initialized = useRef(false);
+
   // Sólo equipos reales de Supabase tienen UUID (36 chars); los mock empiezan con ic02-/eq-/tpl-
   const isRealEquipment = equipmentId.length === 36 && !equipmentId.startsWith("eq-");
 
@@ -84,9 +87,12 @@ export default function InspectionPage() {
   // También crea un borrador en BD (startDraft) si no existe ninguno, y precarga
   // respuestas desde la BD si hay un borrador existente sin draft local.
   useEffect(() => {
+    if (initialized.current) return;
     if (!template || !equipment) return;
     // Esperar a que la consulta de BD resuelva (undefined = aún cargando)
     if (latestTest === undefined) return;
+    // All data is ready — mark as initialized so background refetches don't re-run this body
+    initialized.current = true;
     const sections = template.sections;
     // Solo crear borrador en BD para equipos reales (UUIDs de Supabase)
     const isReal = equipmentId.length === 36 && !equipmentId.startsWith("eq-");
