@@ -29,6 +29,9 @@ desktop.ini
 # Node (scripts raíz o herramientas auxiliares)
 node_modules/
 
+# Backups de limpieza de datos de prueba (dumps con datos, no versionar)
+scripts/cleanup-mbtest/backups/
+
 # Logs
 *.log
 npm-debug.log*
