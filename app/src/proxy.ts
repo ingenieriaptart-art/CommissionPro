@@ -41,5 +41,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|api|.*\\.html|.*\\.png|.*\\.svg).*)"],
+  // Excluye también el service worker (sw.js) y el worker de serwist para que se
+  // sirvan directos desde public/ sin pasar por el redirect de sesión del proxy.
+  // (No toca la lógica de sesión; solo evita que el registro/actualización del SW
+  //  caiga en un redirect a /login para usuarios no autenticados.)
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|api|sw\\.js|swe-worker-.*\\.js|.*\\.html|.*\\.png|.*\\.svg).*)"],
 };
