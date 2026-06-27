@@ -45,8 +45,9 @@ graphify-out/.graphify_uncached.txt
 # Vercel — link local del proyecto (el deploy usa la integración de GitHub)
 .vercel/
 
-# Artefactos de sesiones de brainstorming (locales)
+# Artefactos de sesiones de brainstorming/SDD (locales)
 .superpowers/brainstorm/
+.superpowers/sdd/
 
 # Capturas de pantalla en la raíz de app/ (NO afecta assets de app/public/)
 app/*.png
