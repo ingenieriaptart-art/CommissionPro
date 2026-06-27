@@ -11,11 +11,14 @@ interface DynamicFormSectionProps {
   onAnswerChange: (fieldKey: string, value: unknown) => void;
   onEvidenceAdd: (fieldKey: string, url: string) => void;
   onEvidenceRemove: (fieldKey: string, index: number) => void;
+  /** Opcional: si retorna true para un campo, ese campo se muestra solo-lectura (corrección admin). */
+  readOnlyField?: (field: import("@/types/inspection").MockInspectionField) => boolean;
 }
 
 export function DynamicFormSection({
   section, answers, evidences,
   onAnswerChange, onEvidenceAdd, onEvidenceRemove,
+  readOnlyField,
 }: DynamicFormSectionProps) {
   const sectionInactive = section.is_active === false;
 
@@ -24,7 +27,7 @@ export function DynamicFormSection({
       {/* Section header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <h2 className={`text-lg font-semibold ${sectionInactive ? "text-slate-600" : "text-slate-100"}`}>
+          <h2 className={`text-lg font-semibold ${sectionInactive ? "text-slate-500 dark:text-slate-600" : "text-slate-800 dark:text-slate-100"}`}>
             {section.name}
           </h2>
           {section.is_universal && !sectionInactive && (
@@ -33,7 +36,7 @@ export function DynamicFormSection({
             </span>
           )}
           {sectionInactive && (
-            <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 bg-slate-800/60 border border-slate-700 rounded-full text-slate-500 uppercase tracking-wider">
+            <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 bg-slate-200 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-full text-slate-500 uppercase tracking-wider">
               <PowerOff size={9} />
               Desactivada
             </span>
@@ -44,10 +47,10 @@ export function DynamicFormSection({
 
       {/* Inactive section placeholder */}
       {sectionInactive ? (
-        <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-6 py-10 text-center">
-          <PowerOff size={28} className="mx-auto mb-3 text-slate-700" />
+        <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-6 py-10 text-center">
+          <PowerOff size={28} className="mx-auto mb-3 text-slate-500 dark:text-slate-700" />
           <p className="text-sm text-slate-600 font-medium">Sección desactivada</p>
-          <p className="text-xs text-slate-700 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-700 mt-1">
             Esta sección no aplica para precomisionamiento.<br />
             Un administrador puede activarla desde la configuración de plantillas.
           </p>
@@ -58,6 +61,7 @@ export function DynamicFormSection({
           <div className="space-y-5">
             {section.fields.map((field, idx) => {
               const fieldInactive = field.is_active === false;
+              const fieldReadOnly = !fieldInactive && (readOnlyField?.(field) ?? false);
               const prevField = idx > 0 ? section.fields[idx - 1] : null;
               const prevValue = prevField ? answers[prevField.key] : undefined;
               const forceRequired =
@@ -67,10 +71,12 @@ export function DynamicFormSection({
               return (
                 <div
                   key={field.key}
-                  className={`bg-slate-900 rounded-xl p-4 border transition-opacity ${
+                  className={`bg-white dark:bg-slate-900 rounded-xl p-4 border transition-opacity ${
                     fieldInactive
-                      ? "border-slate-800/40 opacity-40 pointer-events-none select-none"
-                      : "border-slate-800"
+                      ? "border-slate-200/40 dark:border-slate-800/40 opacity-40 pointer-events-none select-none"
+                      : fieldReadOnly
+                      ? "border-slate-300/60 dark:border-slate-700/60 opacity-50 pointer-events-none select-none"
+                      : "border-slate-200 dark:border-slate-800"
                   }`}
                 >
                   {fieldInactive && (
@@ -86,6 +92,7 @@ export function DynamicFormSection({
                     onEvidenceAdd={onEvidenceAdd}
                     onEvidenceRemove={onEvidenceRemove}
                     forceRequired={forceRequired}
+                    disabled={fieldReadOnly}
                   />
                 </div>
               );
@@ -93,8 +100,8 @@ export function DynamicFormSection({
           </div>
 
           {/* Section-level evidence capture */}
-          <div className="mt-6 pt-4 border-t border-slate-800">
-            <p className="text-[10px] text-slate-600 uppercase tracking-wider mb-2">
+          <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+            <p className="text-[10px] text-slate-500 dark:text-slate-600 uppercase tracking-wider mb-2">
               Evidencias de la sección
             </p>
             <EvidenceCapture

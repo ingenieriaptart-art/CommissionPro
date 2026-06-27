@@ -50,6 +50,8 @@ export interface InspectionState {
   sectionStatus: Record<string, SectionStatus>;
   savedAt: string | null;   // ISO date string
   isDirty: boolean;
+  /** BD row id (tests table) — set on startDraft or preload from DB. */
+  testId?: string;
 }
 
 // N:M assignment: which templates apply to which equipment IDs

@@ -1,12 +1,14 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { X, ExternalLink, Play, Loader2, Activity, FileText } from "lucide-react";
+import { X, ExternalLink, Play, Loader2, Activity, FileText, Eye, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { equipmentStatusColor } from "@/components/plant-map/visual/EquipmentOverlay";
 import { useEquipmentInspectionTemplates } from "@/hooks/useInspectionData";
+import { useEquipmentInspections } from "@/hooks/useInspectionReview";
+import { useAuthStore } from "@/stores/auth.store";
 
 import { createClient } from "@/lib/supabase/client";
 import type { Equipment } from "@/types";
@@ -74,6 +76,20 @@ export function FloatingEquipmentPanel({
   const { data: templates = [], isLoading: templatesLoading } =
     useEquipmentInspectionTemplates(equipmentId);
 
+  const isAdminOrDirector = useAuthStore((s) => s.isRole("admin", "director"));
+  const { data: inspections = [] } = useEquipmentInspections(isTag ? undefined : equipmentId);
+
+  // template_id → latest inspection row (list already ordered revision desc)
+  const latestByTemplate = useMemo(() => {
+    const map = new Map<string, typeof inspections[0]>();
+    for (const row of inspections) {
+      if (row.template_id && !map.has(row.template_id)) {
+        map.set(row.template_id, row);
+      }
+    }
+    return map;
+  }, [inspections]);
+
   const [showUnifilar, setShowUnifilar] = useState(false);
   const showUnifilarRef = useRef(false);
 
@@ -129,7 +145,7 @@ export function FloatingEquipmentPanel({
 
   const color = equipmentStatusColor(equipment.status);
 
-  function handleStartInspection(templateId: string) {
+  function handleStartInspection(templateId: string, correctTestId?: string) {
     try {
       sessionStorage.setItem("plantmap_inspection_context", JSON.stringify({
         imageUrl: imageUrl ?? "",
@@ -138,8 +154,14 @@ export function FloatingEquipmentPanel({
       }));
     } catch { /* ignore */ }
     onClose();
+    const base = `/equipment/${equipmentId}/inspection/${templateId}?returnTo=${encodeURIComponent(returnTo)}`;
+    router.push(correctTestId ? `${base}&correct=${correctTestId}` : base);
+  }
+
+  function handleViewInspection(testId: string) {
+    onClose();
     router.push(
-      `/equipment/${equipmentId}/inspection/${templateId}?returnTo=${encodeURIComponent(returnTo)}`
+      `/equipment/${equipmentId}/review/${testId}?returnTo=${encodeURIComponent(returnTo)}`
     );
   }
 
@@ -230,28 +252,56 @@ export function FloatingEquipmentPanel({
           <p className="text-[10px] text-slate-600 italic">Sin plantillas asignadas</p>
         ) : (
           <div className="space-y-1.5">
-            {templates.map(tpl => (
-              <button
-                key={tpl.id}
-                onClick={() => handleStartInspection(tpl.id)}
-                className="w-full flex items-center justify-between gap-2 px-2.5 py-2 bg-slate-900 hover:bg-blue-900/30 border border-slate-700 hover:border-blue-700 rounded-lg text-left transition-colors group"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-[10px] font-medium text-slate-200 group-hover:text-blue-300 truncate font-mono">
-                      {tpl.code}
-                    </p>
-                    {tpl.source && tpl.source !== "equipment" && (
-                      <span className={cn("text-[8px] shrink-0", SOURCE_COLOR[tpl.source])}>
-                        {SOURCE_LABELS[tpl.source]}
-                      </span>
-                    )}
+            {templates.map(tpl => {
+              const latest = latestByTemplate.get(tpl.id);
+              let label: string;
+              let actionIcon: React.ReactNode;
+              let onClick: () => void;
+
+              if (!latest) {
+                label = "Iniciar";
+                actionIcon = <Play size={11} className="text-slate-600 group-hover:text-blue-400 flex-shrink-0" />;
+                onClick = () => handleStartInspection(tpl.id);
+              } else if (latest.status === "borrador") {
+                label = "Continuar";
+                actionIcon = <Play size={11} className="text-slate-600 group-hover:text-blue-400 flex-shrink-0" />;
+                onClick = () => handleStartInspection(tpl.id);
+              } else if (latest.status === "ejecutado" && isAdminOrDirector) {
+                label = "Corregir";
+                actionIcon = <Pencil size={11} className="text-slate-600 group-hover:text-amber-400 flex-shrink-0" />;
+                onClick = () => handleStartInspection(tpl.id, latest.id);
+              } else {
+                label = "Ver inspección";
+                actionIcon = <Eye size={11} className="text-slate-600 group-hover:text-blue-400 flex-shrink-0" />;
+                onClick = () => handleViewInspection(latest.id);
+              }
+
+              return (
+                <button
+                  key={tpl.id}
+                  onClick={onClick}
+                  className="w-full flex items-center justify-between gap-2 px-2.5 py-2 bg-slate-900 hover:bg-blue-900/30 border border-slate-700 hover:border-blue-700 rounded-lg text-left transition-colors group"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[10px] font-medium text-slate-200 group-hover:text-blue-300 truncate font-mono">
+                        {tpl.code}
+                      </p>
+                      {tpl.source && tpl.source !== "equipment" && (
+                        <span className={cn("text-[8px] shrink-0", SOURCE_COLOR[tpl.source])}>
+                          {SOURCE_LABELS[tpl.source]}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[9px] text-slate-500 truncate">{tpl.name}</p>
                   </div>
-                  <p className="text-[9px] text-slate-500 truncate">{tpl.name}</p>
-                </div>
-                <Play size={11} className="text-slate-600 group-hover:text-blue-400 flex-shrink-0" />
-              </button>
-            ))}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <span className="text-[9px] text-slate-500 group-hover:text-blue-400">{label}</span>
+                    {actionIcon}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

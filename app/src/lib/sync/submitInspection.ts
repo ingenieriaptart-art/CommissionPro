@@ -1,7 +1,7 @@
 import type { localDB as LocalDB } from "@/lib/db/local";
 import type { InspectionState, MockInspectionTemplate } from "@/types/inspection";
-import { FAIL_VALUES } from "@/lib/inspection/failValues";
 import { deriveAutoPunches } from "@/lib/punch/autoPunch";
+import { recomputeResultSummary } from "@/lib/inspection/correction";
 
 export interface SubmitParams {
   state: InspectionState;
@@ -31,63 +31,97 @@ export interface SubmitDeps {
   enqueueTransition: (equipmentId: string, event: string, fromStatus: string, context?: unknown, occurredAt?: string) => Promise<void>;
 }
 
-/** Escribe la inspección a IndexedDB + outbox (local-first). Optimista. */
-export async function submitInspectionOffline(
+export interface TestRow {
+  id: string; project_id: string; equipment_id: string; type: string;
+  code: string; status: "borrador" | "ejecutado"; executed_by?: string; executed_at?: string;
+  data: Record<string, unknown>; result_summary?: "cumple" | "no_cumple";
+  created_by: string; created_at: string; updated_at: string; version: number; revision: number;
+  sync_status: "pending"; last_sync_error?: string;
+  template_id: string; template_revision?: string; template_hash: string; template_snapshot: unknown;
+}
+
+export async function buildDraftTestRow(
   params: SubmitParams,
-  deps: SubmitDeps,
-): Promise<{ testId: string }> {
+  deps: Pick<SubmitDeps, "uuid" | "now" | "computeTemplateHash" | "appVersion" | "schemaVersion" | "getMaxRevision">,
+): Promise<TestRow> {
   const { state, projectId, userId, template } = params;
-  const { db } = deps;
   const testId = deps.uuid();
   const ts = deps.now();
-
-  const prevRevision = await deps.getMaxRevision(state.equipmentId, template.id);
-  const revision = prevRevision + 1;
-
-  const hasFailures = Object.values(state.answers).some((v) => FAIL_VALUES.has(String(v)));
+  const revision = (await deps.getMaxRevision(state.equipmentId, template.id)) + 1;
   const template_hash = await deps.computeTemplateHash(template);
-  const definition = {
-    id: template.id, code: template.code, name: template.name,
-    discipline: template.discipline, sections: template.sections,
+  const definition = { id: template.id, code: template.code, name: template.name, discipline: template.discipline, sections: template.sections };
+  return {
+    id: testId, project_id: projectId, equipment_id: state.equipmentId, type: "precomisionamiento",
+    code: `PRE-${template.code}-${ts.slice(0, 10)}`, status: "borrador",
+    data: state.answers ?? {}, created_by: userId, created_at: ts, updated_at: ts,
+    version: 1, revision, sync_status: "pending", template_id: template.id,
+    template_revision: template.revision, template_hash,
+    template_snapshot: { template: definition, meta: { template_source: template._source ?? "online", app_version: deps.appVersion, schema_version: deps.schemaVersion, captured_at: ts } },
   };
+}
 
-  const test = {
-    id: testId,
-    project_id: projectId,
-    equipment_id: state.equipmentId,
-    type: "precomisionamiento",
-    code: `PRE-${template.code}-${ts.slice(0, 10)}`,
-    status: "ejecutado",
-    executed_by: userId,
-    executed_at: ts,
-    data: state.answers,
-    result_summary: hasFailures ? "no_cumple" : "cumple",
-    created_by: userId,
-    created_at: ts,
-    updated_at: ts,
-    version: 1,
-    revision,
-    sync_status: "pending" as const,
-    last_sync_error: undefined,
-    template_id: template.id,
-    template_revision: template.revision,
-    template_hash,
-    template_snapshot: {
-      template: definition,
-      meta: {
-        template_source: template._source ?? "online",
-        app_version: deps.appVersion,
-        schema_version: deps.schemaVersion,
-        captured_at: ts,
-      },
-    },
-  };
-
+export async function startDraftOffline(params: SubmitParams, deps: SubmitDeps): Promise<{ testId: string }> {
+  const row = await buildDraftTestRow(params, deps);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await db.tests.add(test as any);
-  await deps.enqueueSync("tests", testId, "INSERT", test);
+  await deps.db.tests.add(row as any);
+  await deps.enqueueSync("tests", row.id, "INSERT", row);
+  if (deps.isOnline()) void deps.runSync();
+  return { testId: row.id };
+}
 
-  // Evidencias: blob local + fila evidences (sin storage_url) + outbox
+export async function saveSectionOffline(
+  testId: string,
+  data: Record<string, unknown>,
+  deps: Pick<SubmitDeps, "db" | "enqueueSync" | "now" | "isOnline" | "runSync">,
+): Promise<void> {
+  const ts = deps.now();
+  const patch = { data, updated_at: ts, sync_status: "pending" as const };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await deps.db.tests.update(testId, patch as any);
+  await deps.enqueueSync("tests", testId, "UPDATE", { id: testId, data, updated_at: ts });
+  if (deps.isOnline()) void deps.runSync();
+}
+
+/** Cierra una inspección: UPDATE a ejecutado + evidencias + auto-punch + FSM. */
+export async function closeInspectionOffline(params: SubmitParams, deps: SubmitDeps): Promise<{ testId: string }> {
+  const { state, projectId, userId, template } = params;
+  const { db } = deps;
+  const ts = deps.now();
+
+  // Asegurar fila (borrador) — soporta cerrar sin haber llamado startDraft antes.
+  // Si state.testId está disponible (caso multi-dispositivo incluido), se usa directamente
+  // sin crear una fila nueva — el UPDATE al id correcto llega al servidor vía outbox.
+  let testId: string;
+  if (state.testId) {
+    // Caso multi-dispositivo: device B tiene testId en estado pero puede NO tenerlo
+    // en su IndexedDB local. db.tests.update(testId, …) con 0 filas locales es innocuo;
+    // el outbox UPDATE llega al servidor y actualiza la fila correcta sin generar duplicados.
+    testId = state.testId;
+  } else {
+    // Fallback: buscar borrador local por (equipment_id, template_id, status)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = (await (db.tests as any)
+      .filter((r: any) => r.equipment_id === state.equipmentId && r.template_id === template.id && r.status === "borrador")
+      .first()) ?? null;
+    if (existing) {
+      testId = existing.id;
+    } else {
+      // Red de seguridad: cerrar sin startDraft previo — crear fila nueva
+      const row = await buildDraftTestRow(params, deps);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await db.tests.add(row as any);
+      await deps.enqueueSync("tests", row.id, "INSERT", row);
+      testId = row.id;
+    }
+  }
+
+  const result_summary = recomputeResultSummary(state.answers);
+  const closePatch = { status: "ejecutado" as const, data: state.answers, result_summary, executed_by: userId, executed_at: ts, updated_at: ts, sync_status: "pending" as const };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await db.tests.update(testId, closePatch as any);
+  await deps.enqueueSync("tests", testId, "UPDATE", { id: testId, ...closePatch });
+
+  // ── Evidencias: blob local + fila evidences (sin storage_url) + outbox ──
   for (const [, items] of Object.entries(state.evidences)) {
     for (const item of items) {
       const evidenceId = deps.uuid();
@@ -106,7 +140,7 @@ export async function submitInspectionOffline(
     }
   }
 
-  // Punch automático (Fase C): 1 por ítem fallido; idempotente por (source_test_id, source_item_key) en servidor.
+  // ── Punch automático (Fase C): 1 por ítem fallido; idempotente por (source_test_id, source_item_key) en servidor ──
   const autoPunches = deriveAutoPunches(state.answers, template, {
     projectId, equipmentId: state.equipmentId, testId, userId, now: ts,
   });
@@ -116,7 +150,7 @@ export async function submitInspectionOffline(
     await deps.enqueueSync("punch_items", p.id, "INSERT", p);
   }
 
-  // Estado del equipo vía FSM (emite INSPECTION_EXECUTED; el servidor re-valida)
+  // ── Estado del equipo vía FSM (emite INSPECTION_EXECUTED; el servidor re-valida) ──
   const eq = await db.equipment.get(state.equipmentId);
   const fromStatus = (eq?.status as string) ?? "pendiente";
   const target = deps.nextState(fromStatus, "INSPECTION_EXECUTED");
@@ -141,4 +175,26 @@ export async function submitInspectionOffline(
   if (deps.isOnline()) void deps.runSync();
 
   return { testId };
+}
+
+// Compat: mantener el nombre anterior como alias.
+export const submitInspectionOffline = closeInspectionOffline;
+
+/**
+ * Corrección interina (admin/director): sobrescribe data + result_summary del test
+ * ya ejecutado sin alterar executed_by / executed_at / status ni disparar auto-punch
+ * ni transición de FSM.  Solo toca data + result_summary + updated_at.
+ */
+export async function correctInspectionOffline(
+  testId: string,
+  answers: Record<string, unknown>,
+  deps: Pick<SubmitDeps, "db" | "enqueueSync" | "now" | "isOnline" | "runSync">,
+): Promise<void> {
+  const ts = deps.now();
+  const result_summary = recomputeResultSummary(answers);
+  const patch = { data: answers, result_summary, updated_at: ts, sync_status: "pending" as const };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await deps.db.tests.update(testId, patch as any);
+  await deps.enqueueSync("tests", testId, "UPDATE", { id: testId, data: answers, result_summary, updated_at: ts });
+  if (deps.isOnline()) void deps.runSync();
 }

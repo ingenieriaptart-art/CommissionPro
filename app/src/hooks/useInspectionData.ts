@@ -114,6 +114,7 @@ export function useEquipmentInspectionTemplates(equipmentId: string) {
 
 // ── 3. Template completo con secciones + campos ───────────────────────────────
 
+
 export function useInspectionTemplate(templateId: string) {
   return useQuery({
     queryKey: ["inspection-template", templateId],
@@ -140,5 +141,72 @@ export function useInspectionTemplate(templateId: string) {
     },
     enabled: !!templateId,
     staleTime: 10 * 60 * 1000,
+  });
+}
+
+// ── 4. Latest tests row for a given (equipment, template) ─────────────────────
+
+export interface LatestTestRow {
+  id: string;
+  status: string;
+  data: Record<string, unknown> | null;
+  template_snapshot: unknown;
+}
+
+/**
+ * Devuelve la fila `tests` más reciente (revision desc) para el par
+ * (equipmentId, templateId). Alimenta la precarga de borradores y la lógica
+ * de Continuar/Corregir en la página de formulario.
+ * Online: Supabase. Offline: localDB.tests.
+ */
+export function useLatestTestForInspection(equipmentId: string, templateId: string) {
+  return useQuery({
+    queryKey: ["latest-test-for-inspection", equipmentId, templateId],
+    queryFn: async (): Promise<LatestTestRow | null> => {
+      // Mock IDs no tienen filas reales en la BD
+      if (isMockId(equipmentId) || isMockId(templateId)) return null;
+      const offline = typeof navigator !== "undefined" && !navigator.onLine;
+      if (!offline) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("tests")
+          .select("id, status, data, template_snapshot")
+          .eq("equipment_id", equipmentId)
+          .eq("template_id", templateId)
+          .is("deleted_at", null)
+          .order("revision", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        return data ? (data as unknown as LatestTestRow) : null;
+      }
+      // Offline: localDB
+      const rows = await localDB.tests
+        .filter(
+          (r) =>
+            (r as { equipment_id?: string }).equipment_id === equipmentId &&
+            (r as { template_id?: string }).template_id === templateId,
+        )
+        .toArray();
+      if (rows.length === 0) return null;
+      const sorted = [...rows].sort(
+        (a, b) =>
+          ((b as { revision?: number }).revision ?? 0) -
+          ((a as { revision?: number }).revision ?? 0),
+      );
+      const row = sorted[0] as {
+        id: string;
+        status: string;
+        data?: Record<string, unknown>;
+        template_snapshot?: unknown;
+      };
+      return {
+        id: row.id,
+        status: row.status,
+        data: row.data ?? null,
+        template_snapshot: row.template_snapshot ?? null,
+      };
+    },
+    enabled: !!equipmentId && !!templateId,
+    staleTime: 60_000,
   });
 }
