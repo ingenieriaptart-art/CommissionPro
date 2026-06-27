@@ -46,14 +46,14 @@ export function InspectionSummary({ template, state, onClose, onSave, isSaving, 
           : "bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-800"
       )}>
         {isApproved
-          ? <CheckCircle size={24} className="text-green-400 flex-shrink-0" />
-          : <XCircle    size={24} className="text-red-400   flex-shrink-0" />
+          ? <CheckCircle size={24} className="text-green-500 dark:text-green-400 flex-shrink-0" />
+          : <XCircle    size={24} className="text-red-500 dark:text-red-400 flex-shrink-0" />
         }
         <div>
           <p className={cn("font-bold", isApproved ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300")}>
             {isApproved ? "INSPECCIÓN APROBADA" : "INSPECCIÓN CON OBSERVACIONES"}
           </p>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {answered}/{totalFields} campos respondidos · {totalEvidences} evidencias · {failures.length} fallas
           </p>
         </div>
@@ -74,7 +74,7 @@ export function InspectionSummary({ template, state, onClose, onSave, isSaving, 
                     <p className="text-xs text-red-600 dark:text-red-300 font-medium">{f.fieldLabel}</p>
                     <p className="text-[10px] text-slate-500">{f.sectionName}</p>
                     {f.observation && (
-                      <p className="text-xs text-slate-400 mt-1 italic">&quot;{f.observation}&quot;</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">&quot;{f.observation}&quot;</p>
                     )}
                   </div>
                 </div>
@@ -134,7 +134,7 @@ export function InspectionSummary({ template, state, onClose, onSave, isSaving, 
       {/* CTA */}
       <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
         {saveError && (
-          <p className="text-xs text-red-400 text-center mb-3 bg-red-950/30 border border-red-800 rounded-lg px-3 py-2">
+          <p className="text-xs text-red-600 dark:text-red-400 text-center mb-3 bg-red-100 dark:bg-red-950/30 border border-red-300 dark:border-red-800 rounded-lg px-3 py-2">
             {saveError}
           </p>
         )}
