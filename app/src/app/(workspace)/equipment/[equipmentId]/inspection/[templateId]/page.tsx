@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp, Pencil, Sun, Moon } from "lucide-react";
+import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp, Pencil, Sun, Moon, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEquipmentForInspection, useInspectionTemplate, useLatestTestForInspection } from "@/hooks/useInspectionData";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
@@ -447,15 +447,44 @@ export default function InspectionPage() {
               saveError={saveError}
             />
           ) : (
-            <DynamicFormSection
-              section={activeSection}
-              answers={state.answers}
-              evidences={state.evidences}
-              onAnswerChange={handleAnswerChange}
-              onEvidenceAdd={handleEvidenceAdd}
-              onEvidenceRemove={handleEvidenceRemove}
-              readOnlyField={correctionMode ? (field) => !isEditableField(field) : undefined}
-            />
+            <>
+              {/* En corrección: galería solo-lectura de las fotos ya cargadas.
+                  Las evidencias en BD no guardan el campo de origen, así que se
+                  muestran como galería (no re-editables por campo). */}
+              {correctionMode && (correctionDetail?.evidences?.length ?? 0) > 0 && (
+                <div className="px-5 pt-4">
+                  <div className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/10 p-3">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-1.5">
+                      <Camera size={13} /> Fotos ya cargadas ({correctionDetail!.evidences.length}) — solo lectura
+                    </p>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {correctionDetail!.evidences.map((ev) => ev.storage_url && (
+                        <a
+                          key={ev.id}
+                          href={ev.storage_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block w-20 h-20 rounded-md overflow-hidden border border-amber-200 dark:border-amber-800 flex-shrink-0"
+                          title="Abrir foto"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={ev.storage_url} alt="evidencia" className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <DynamicFormSection
+                section={activeSection}
+                answers={state.answers}
+                evidences={state.evidences}
+                onAnswerChange={handleAnswerChange}
+                onEvidenceAdd={handleEvidenceAdd}
+                onEvidenceRemove={handleEvidenceRemove}
+                readOnlyField={correctionMode ? (field) => !isEditableField(field) : undefined}
+              />
+            </>
           )}
         </main>
 
