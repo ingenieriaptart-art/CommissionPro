@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp, Pencil, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEquipmentForInspection, useInspectionTemplate, useLatestTestForInspection } from "@/hooks/useInspectionData";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
@@ -12,6 +12,7 @@ import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import { useSubmitInspection } from "@/hooks/useSubmitInspection";
 import { useInspectionDetail } from "@/hooks/useInspectionReview";
 import { useAuthStore } from "@/stores/auth.store";
+import { useUIStore } from "@/stores/ui.store";
 import { isEditableField } from "@/lib/inspection/correction";
 import type { InspectionState, SectionStatus, MockInspectionSection } from "@/types/inspection";
 import type { Equipment } from "@/types";
@@ -74,6 +75,8 @@ export default function InspectionPage() {
   const correctId = searchParams.get("correct") ?? undefined;
   const isAdminOrDirector = useAuthStore((s) => s.isRole("admin", "director"));
   const correctionMode = !!correctId && isAdminOrDirector;
+
+  const { theme, setTheme } = useUIStore();
 
   const { data: equipment, isLoading: eqLoading }  = useEquipmentForInspection(equipmentId);
   const { data: template,  isLoading: tplLoading } = useInspectionTemplate(templateId);
@@ -316,29 +319,29 @@ export default function InspectionPage() {
   return (
     <>
       {/* HEADER */}
-      <header className="bg-slate-900 border-b border-slate-800 flex-shrink-0">
+      <header className="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex-shrink-0">
         <div className="h-14 flex items-center px-4 gap-3">
           <button
             onClick={() => router.push(returnTo)}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors"
+            className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm transition-colors"
           >
             <ArrowLeft size={16} /> Plano
           </button>
-          <span className="text-slate-700">|</span>
+          <span className="text-slate-400 dark:text-slate-700">|</span>
           <span className="text-sm font-mono font-bold text-blue-400">{equipment.tag}</span>
-          <span className="text-slate-600 text-sm">—</span>
-          <span className="text-sm text-slate-300 truncate">{equipment.name}</span>
-          <span className="text-slate-700 text-sm">›</span>
-          <span className="text-sm text-slate-400 truncate">{template.code}</span>
+          <span className="text-slate-400 dark:text-slate-600 text-sm">—</span>
+          <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{equipment.name}</span>
+          <span className="text-slate-400 dark:text-slate-700 text-sm">›</span>
+          <span className="text-sm text-slate-600 dark:text-slate-400 truncate">{template.code}</span>
           {reviewing && (
             <>
-              <span className="text-slate-700 text-sm">›</span>
-              <span className="text-sm text-green-400 font-semibold">Resumen de Inspección</span>
+              <span className="text-slate-400 dark:text-slate-700 text-sm">›</span>
+              <span className="text-sm text-green-600 dark:text-green-400 font-semibold">Resumen de Inspección</span>
             </>
           )}
           <div className="ml-auto flex items-center gap-2">
             {state.savedAt && (
-              <span className="text-[10px] text-slate-600">
+              <span className="text-[10px] text-slate-500 dark:text-slate-600">
                 Guardado {new Date(state.savedAt).toLocaleTimeString("es-CO")}
               </span>
             )}
@@ -348,8 +351,8 @@ export default function InspectionPage() {
                 className={cn(
                   "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors",
                   docsOpen
-                    ? "bg-blue-900/60 text-blue-300 border border-blue-700"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                    ? "bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
                 )}
               >
                 <FileText size={13} />
@@ -357,10 +360,17 @@ export default function InspectionPage() {
                 {docsOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>
             )}
+            {/* Theme toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
+            >
+              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
             {reviewing ? (
               <button
                 onClick={() => setReviewing(false)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-slate-300 hover:text-white text-xs font-semibold rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold rounded-lg transition-colors"
               >
                 <ArrowLeft size={14} /> Volver al formulario
               </button>
@@ -385,7 +395,7 @@ export default function InspectionPage() {
 
         {/* Panel documentos desplegable */}
         {isRealEquipment && docsOpen && (
-          <div className="px-4 pb-3 flex gap-6 border-t border-slate-800 pt-3">
+          <div className="px-4 pb-3 flex gap-6 border-t border-slate-200 dark:border-slate-800 pt-3">
             <EquipmentPdfUpload
               equipmentId={equipmentId}
               field="catalog_url"
@@ -412,7 +422,7 @@ export default function InspectionPage() {
           onSectionSelect={handleSectionSelect}
         />
 
-        <main className="flex-1 overflow-y-auto bg-slate-950">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate-950">
           {reviewing ? (
             <InspectionSummary
               template={template}
@@ -443,21 +453,21 @@ export default function InspectionPage() {
 
       {/* FOOTER */}
       {!reviewing && (
-      <footer className="h-13 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 flex-shrink-0">
+      <footer className="h-13 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 flex-shrink-0">
         <button
           onClick={handlePrev}
           disabled={state.activeSectionIndex === 0}
           className={cn(
             "flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors",
             state.activeSectionIndex === 0
-              ? "text-slate-700 cursor-not-allowed"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+              ? "text-slate-400 dark:text-slate-700 cursor-not-allowed"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800"
           )}
         >
           ← {state.activeSectionIndex > 0 ? template.sections[state.activeSectionIndex - 1].name : ""}
         </button>
 
-        <span className="text-[10px] text-slate-600">
+        <span className="text-[10px] text-slate-500 dark:text-slate-600">
           Sección {state.activeSectionIndex + 1} de {template.sections.length}
         </span>
 
@@ -467,7 +477,7 @@ export default function InspectionPage() {
           className={cn(
             "flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg transition-colors",
             isLastSection
-              ? "text-slate-700 cursor-not-allowed"
+              ? "text-slate-400 dark:text-slate-700 cursor-not-allowed"
               : "text-white bg-blue-700 hover:bg-blue-600"
           )}
         >

@@ -19,7 +19,7 @@ interface FieldRendererProps {
 }
 
 const inputClass =
-  "w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors";
+  "w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-colors";
 
 export function FieldRenderer({
   field, value, evidences,
@@ -32,7 +32,7 @@ export function FieldRenderer({
   const isRequired = field.required || forceRequired;
 
   const label = (
-    <label className="block text-xs text-slate-400 mb-1.5">
+    <label className="block text-xs text-slate-600 dark:text-slate-400 mb-1.5">
       {field.label}
       {isRequired && <span className="text-red-500 ml-1">*</span>}
       {field.hint && <span className="text-slate-600 ml-1">— {field.hint}</span>}
@@ -135,7 +135,7 @@ export function FieldRenderer({
             className={cn(
               inputClass,
               "resize-y",
-              forceRequired && !strValue ? "border-red-600 bg-red-950/10" : ""
+              forceRequired && !strValue ? "border-red-600 bg-red-100 dark:bg-red-950/10" : ""
             )}
             placeholder={forceRequired ? "Requerido cuando hay FALLA" : field.label}
           />

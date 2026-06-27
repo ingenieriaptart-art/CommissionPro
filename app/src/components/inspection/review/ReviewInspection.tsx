@@ -3,11 +3,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, CheckCircle, XCircle, AlertTriangle, Printer, PenLine,
-  History, Camera, Loader2, FileText,
+  History, Camera, Loader2, FileText, Sun, Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fmtDate } from "@/lib/utils";
 import { useInspectionDetail, useEquipmentInspections } from "@/hooks/useInspectionReview";
+import { useUIStore } from "@/stores/ui.store";
 import {
   extractSnapshotSections, snapshotMeta, collectFailures,
   isFailValue, isPassValue, isSignatureField, formatFieldValue,
@@ -33,6 +34,7 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
   const { data: detail, isLoading, isError } = useInspectionDetail(testId);
   const { data: history = [] } = useEquipmentInspections(equipmentId);
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const { theme, setTheme } = useUIStore();
 
   const sections = useMemo(
     () => (detail ? extractSnapshotSections(detail.test) : []),
@@ -45,16 +47,16 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-400">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400">
         <Loader2 size={20} className="animate-spin mr-2" /> Cargando inspección…
       </div>
     );
   }
   if (isError || !detail) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-slate-400 gap-3">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 gap-3">
         <p>No se pudo cargar la inspección.</p>
-        <button onClick={() => router.push(returnTo ?? "/")} className="text-blue-400 text-sm">← Volver</button>
+        <button onClick={() => router.push(returnTo ?? "/")} className="text-blue-500 dark:text-blue-400 text-sm">← Volver</button>
       </div>
     );
   }
@@ -72,17 +74,17 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
   return (
     <>
       <style>{PRINT_CSS}</style>
-      <div className="min-h-screen bg-slate-950 text-slate-200">
+      <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200">
         {/* Top bar — no imprime */}
-        <header className="review-no-print sticky top-0 z-10 bg-slate-900 border-b border-slate-800 h-14 flex items-center px-4 gap-3">
+        <header className="review-no-print sticky top-0 z-10 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-14 flex items-center px-4 gap-3">
           <button
             onClick={() => router.push(returnTo ?? `/projects`)}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors"
+            className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm transition-colors"
           >
             <ArrowLeft size={16} /> Volver
           </button>
-          <span className="text-slate-700">|</span>
-          <span className="text-sm font-semibold text-slate-200">Revisión de inspección</span>
+          <span className="text-slate-400 dark:text-slate-700">|</span>
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Revisión de inspección</span>
 
           <div className="ml-auto flex items-center gap-2">
             {/* Selector de revisiones (Task 4) */}
@@ -92,7 +94,7 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
                 <select
                   value={testId}
                   onChange={(e) => router.push(`/equipment/${equipmentId}/review/${e.target.value}${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`)}
-                  className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:border-blue-500"
+                  className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-blue-500"
                 >
                   {history.map((h) => (
                     <option key={h.id} value={h.id}>
@@ -104,9 +106,16 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
             )}
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 transition-colors"
             >
               <Printer size={13} /> Exportar / Imprimir
+            </button>
+            {/* Theme toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
+            >
+              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
             </button>
           </div>
         </header>
@@ -115,8 +124,8 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
         <div className="review-print-root max-w-3xl mx-auto px-4 md:px-6 py-6">
           {/* Encabezado */}
           <div className="mb-5">
-            <p className="font-mono text-xs text-blue-400 font-bold">{test.code ?? "—"}</p>
-            <h1 className="text-xl font-bold text-white mt-0.5">
+            <p className="font-mono text-xs text-blue-500 dark:text-blue-400 font-bold">{test.code ?? "—"}</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
               {eqTag}{eqName ? ` — ${eqName}` : ""}
             </h1>
             <p className="text-xs text-slate-500 mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
@@ -130,16 +139,18 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
           {/* Banner resultado */}
           <div className={cn(
             "rounded-xl p-4 mb-6 flex items-center gap-3",
-            approved ? "bg-green-900/30 border border-green-800" : "bg-red-900/30 border border-red-800",
+            approved
+              ? "bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-800"
+              : "bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-800",
           )}>
             {approved
-              ? <CheckCircle size={22} className="text-green-400 flex-shrink-0" />
-              : <XCircle size={22} className="text-red-400 flex-shrink-0" />}
+              ? <CheckCircle size={22} className="text-green-500 dark:text-green-400 flex-shrink-0" />
+              : <XCircle size={22} className="text-red-500 dark:text-red-400 flex-shrink-0" />}
             <div>
-              <p className={cn("font-bold", approved ? "text-green-300" : "text-red-300")}>
+              <p className={cn("font-bold", approved ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300")}>
                 {approved ? "INSPECCIÓN CUMPLE" : "INSPECCIÓN NO CUMPLE"}
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {failures.length} {failures.length === 1 ? "ítem en falla" : "ítems en falla"} · {evidences.length} fotos · {punches.length} punch
               </p>
             </div>
@@ -151,12 +162,12 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
               <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Fallas detectadas</p>
               <div className="space-y-2">
                 {failures.map((f) => (
-                  <div key={f.fieldKey} className="bg-red-950/20 border border-red-900/40 rounded-lg p-3 flex items-start gap-2">
-                    <AlertTriangle size={12} className="text-red-400 flex-shrink-0 mt-0.5" />
+                  <div key={f.fieldKey} className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-lg p-3 flex items-start gap-2">
+                    <AlertTriangle size={12} className="text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-red-300 font-medium">{f.fieldLabel} = {f.value}</p>
+                      <p className="text-xs text-red-600 dark:text-red-300 font-medium">{f.fieldLabel} = {f.value}</p>
                       <p className="text-[10px] text-slate-500">{f.sectionName}</p>
-                      {f.observation && <p className="text-xs text-slate-400 mt-1 italic">&quot;{f.observation}&quot;</p>}
+                      {f.observation && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">&quot;{f.observation}&quot;</p>}
                     </div>
                   </div>
                 ))}
@@ -169,10 +180,10 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
             {sections.map((section) => {
               const fields = section.fields ?? [];
               return (
-                <div key={section.code} className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-                  <p className="text-sm font-semibold text-slate-200 mb-3">{section.name}</p>
+                <div key={section.code} className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800">
+                  <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">{section.name}</p>
                   {fields.length === 0 && (
-                    <p className="text-[11px] text-slate-600 italic">Sin campos registrados en esta sección.</p>
+                    <p className="text-[11px] text-slate-500 italic">Sin campos registrados en esta sección.</p>
                   )}
                   <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
                     {fields.map((field) => {
@@ -181,14 +192,14 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
                       const pass = isPassValue(raw);
                       const signed = isSignatureField(field.type) && !!raw;
                       return (
-                        <div key={field.key} className="flex justify-between gap-3 border-b border-slate-800/60 pb-1.5">
+                        <div key={field.key} className="flex justify-between gap-3 border-b border-slate-200 dark:border-slate-800/60 pb-1.5">
                           <dt className="text-[11px] text-slate-500 flex-shrink-0">{field.label}</dt>
                           <dd className={cn(
                             "text-[11px] font-medium text-right",
-                            fail ? "text-red-400" : pass ? "text-green-400" : "text-slate-300",
+                            fail ? "text-red-600 dark:text-red-400" : pass ? "text-green-600 dark:text-green-400" : "text-slate-700 dark:text-slate-300",
                           )}>
                             {isSignatureField(field.type)
-                              ? (signed ? <span className="inline-flex items-center gap-1 text-green-400"><PenLine size={11} /> Firmada</span> : "—")
+                              ? (signed ? <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400"><PenLine size={11} /> Firmada</span> : "—")
                               : formatFieldValue(raw, field.validations?.unit)}
                           </dd>
                         </div>
@@ -206,14 +217,14 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
               <Camera size={13} /> Fotografías ({evidences.length})
             </p>
             {evidences.length === 0 ? (
-              <p className="text-xs text-slate-600 italic">Sin evidencias fotográficas.</p>
+              <p className="text-xs text-slate-500 italic">Sin evidencias fotográficas.</p>
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {evidences.map((ev) => ev.storage_url && (
                   <button
                     key={ev.id}
                     onClick={() => setLightbox(ev.storage_url ?? null)}
-                    className="block aspect-square rounded-lg overflow-hidden border border-slate-700 hover:border-blue-500 transition-colors"
+                    className="block aspect-square rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 hover:border-blue-500 transition-colors"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={ev.storage_url} alt="evidencia" className="w-full h-full object-cover" />
@@ -231,10 +242,10 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
               </p>
               <div className="space-y-1.5">
                 {punches.map((p) => (
-                  <div key={p.id} className="flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2">
-                    <span className="text-xs text-slate-200 flex-1">{p.title}</span>
+                  <div key={p.id} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2">
+                    <span className="text-xs text-slate-800 dark:text-slate-200 flex-1">{p.title}</span>
                     <span className="text-[10px] text-slate-500">{p.priority}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">{p.status}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">{p.status}</span>
                   </div>
                 ))}
               </div>
@@ -252,7 +263,9 @@ export function ReviewInspection({ equipmentId, testId, returnTo }: Props) {
                 return (
                   <div key={f.key} className={cn(
                     "rounded-lg border px-3 py-2 text-xs flex items-center gap-2",
-                    signed ? "bg-slate-800 border-green-700 text-green-300" : "bg-slate-900 border-slate-700 text-slate-600",
+                    signed
+                      ? "bg-slate-100 dark:bg-slate-800 border-green-500 dark:border-green-700 text-green-700 dark:text-green-300"
+                      : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-600",
                   )}>
                     <PenLine size={13} /> {f.label}: {signed ? "Firmada" : "Sin firmar"}
                   </div>

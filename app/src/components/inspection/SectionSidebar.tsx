@@ -23,11 +23,11 @@ function SectionIcon({ status, active, inactive }: { status: SectionStatus; acti
 
 function statusBg(status: SectionStatus, active: boolean, inactive: boolean): string {
   if (inactive)                  return "opacity-50 cursor-default";
-  if (active)                    return "bg-blue-900/40 border-l-2 border-blue-500";
-  if (status === "complete")     return "hover:bg-slate-800/60";
-  if (status === "failed")       return "hover:bg-slate-800/60";
-  if (status === "in_progress")  return "hover:bg-slate-800/60";
-  return "hover:bg-slate-800/40";
+  if (active)                    return "bg-blue-100 dark:bg-blue-900/40 border-l-2 border-blue-500";
+  if (status === "complete")     return "hover:bg-slate-200/60 dark:hover:bg-slate-800/60";
+  if (status === "failed")       return "hover:bg-slate-200/60 dark:hover:bg-slate-800/60";
+  if (status === "in_progress")  return "hover:bg-slate-200/60 dark:hover:bg-slate-800/60";
+  return "hover:bg-slate-200/40 dark:hover:bg-slate-800/40";
 }
 
 export function SectionSidebar({
@@ -56,8 +56,8 @@ export function SectionSidebar({
   const pct = totalRequired > 0 ? Math.round((totalFilled / totalRequired) * 100) : 0;
 
   return (
-    <aside className="w-52 flex-shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col overflow-hidden">
-      <div className="px-3 py-3 border-b border-slate-800">
+    <aside className="w-52 flex-shrink-0 bg-slate-100 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden">
+      <div className="px-3 py-3 border-b border-slate-200 dark:border-slate-800">
         <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
           Secciones
         </p>
@@ -83,9 +83,9 @@ export function SectionSidebar({
               <div className="min-w-0">
                 <p className={cn(
                   "text-xs leading-tight",
-                  inactive       ? "text-slate-600 line-through" :
-                  active         ? "text-blue-300 font-semibold" :
-                                   "text-slate-300"
+                  inactive       ? "text-slate-500 dark:text-slate-600 line-through" :
+                  active         ? "text-blue-600 dark:text-blue-300 font-semibold" :
+                                   "text-slate-700 dark:text-slate-300"
                 )}>
                   {section.name}
                 </p>
@@ -101,12 +101,12 @@ export function SectionSidebar({
       </nav>
 
       {/* Progress footer */}
-      <div className="px-3 py-3 border-t border-slate-800">
+      <div className="px-3 py-3 border-t border-slate-200 dark:border-slate-800">
         <div className="flex justify-between items-center mb-1.5">
           <p className="text-[9px] text-slate-500 uppercase tracking-wider">Completado</p>
-          <p className="text-[10px] text-blue-400 font-semibold">{pct}%</p>
+          <p className="text-[10px] text-blue-500 dark:text-blue-400 font-semibold">{pct}%</p>
         </div>
-        <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-blue-600 rounded-full transition-all duration-300"
             style={{ width: `${pct}%` }}
