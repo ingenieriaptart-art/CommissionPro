@@ -168,13 +168,14 @@ export default function InspectionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [equipmentId, templateId, template, equipment, latestTest, correctionMode, correctionDetail]);
 
-  // Persist state on every change to IndexedDB
+  // Persist state on every change to IndexedDB (skip in correction mode —
+  // sections persist to DB via saveSection; draft would pollute normal capture flow).
   useEffect(() => {
-    if (!state) return;
+    if (!state || correctionMode) return;
     saveInspectionDraft(equipmentId, templateId, state).catch(() => {
       // IndexedDB quota exceeded or unavailable — fail silently
     });
-  }, [state, equipmentId, templateId]);
+  }, [state, correctionMode, equipmentId, templateId]);
 
   const handleAnswerChange = useCallback((fieldKey: string, value: unknown) => {
     setState(prev => {
@@ -283,12 +284,12 @@ export default function InspectionPage() {
   // Guardar corrección (admin/director): sobrescribe data + result_summary del
   // test ejecutado, sin re-disparar auto-punch/FSM ni tocar executed_by/at.
   const handleSaveCorrection = useCallback(async () => {
-    if (!state?.testId) return;
+    if (!correctionMode || !state?.testId) return;
     const ok = await correct(state.testId, state.answers);
     if (!ok) return; // error mostrado vía saveError
     await deleteInspectionDraft(equipmentId, templateId).catch(() => {});
     router.push(returnTo);
-  }, [state, correct, equipmentId, templateId, returnTo, router]);
+  }, [correctionMode, state, correct, equipmentId, templateId, returnTo, router]);
 
   if (eqLoading || tplLoading || !state) {
     return (

@@ -92,6 +92,7 @@ export function DynamicFormSection({
                     onEvidenceAdd={onEvidenceAdd}
                     onEvidenceRemove={onEvidenceRemove}
                     forceRequired={forceRequired}
+                    disabled={fieldReadOnly}
                   />
                 </div>
               );

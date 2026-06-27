@@ -14,6 +14,8 @@ interface FieldRendererProps {
   onEvidenceRemove: (fieldKey: string, index: number) => void;
   /** When true, textarea is visually required (previous checkbox = FALLA/NO) */
   forceRequired?: boolean;
+  /** When true, all inputs are disabled (read-only correction mode). */
+  disabled?: boolean;
 }
 
 const inputClass =
@@ -23,6 +25,7 @@ export function FieldRenderer({
   field, value, evidences,
   onChange, onEvidenceAdd, onEvidenceRemove,
   forceRequired = false,
+  disabled = false,
 }: FieldRendererProps) {
   const strValue   = (value as string | undefined) ?? "";
   const numValue   = (value as number | undefined) ?? "";
@@ -45,6 +48,7 @@ export function FieldRenderer({
             type="text"
             value={strValue}
             onChange={e => onChange(field.key, e.target.value)}
+            disabled={disabled}
             className={inputClass}
             placeholder={field.label}
           />
@@ -62,6 +66,7 @@ export function FieldRenderer({
               onChange={e => onChange(field.key, e.target.valueAsNumber)}
               min={field.validations?.min}
               max={field.validations?.max}
+              disabled={disabled}
               className={cn(inputClass, "w-36")}
               placeholder="0"
               step="any"
@@ -81,6 +86,7 @@ export function FieldRenderer({
             type="date"
             value={strValue}
             onChange={e => onChange(field.key, e.target.value)}
+            disabled={disabled}
             className={cn(inputClass, "w-44")}
           />
         </div>
@@ -93,6 +99,7 @@ export function FieldRenderer({
           <select
             value={strValue}
             onChange={e => onChange(field.key, e.target.value)}
+            disabled={disabled}
             className={cn(inputClass, "w-auto min-w-[160px]")}
           >
             <option value="">— Seleccionar —</option>
@@ -111,6 +118,7 @@ export function FieldRenderer({
             options={field.options ?? ["OK", "FALLA", "N/A"]}
             value={strValue || undefined}
             onChange={v => onChange(field.key, v)}
+            disabled={disabled}
           />
         </div>
       );
@@ -122,6 +130,7 @@ export function FieldRenderer({
           <textarea
             value={strValue}
             onChange={e => onChange(field.key, e.target.value)}
+            disabled={disabled}
             rows={3}
             className={cn(
               inputClass,
@@ -140,6 +149,7 @@ export function FieldRenderer({
           <SignatureField
             value={strValue || undefined}
             onChange={v => onChange(field.key, v)}
+            disabled={disabled}
           />
         </div>
       );
@@ -151,8 +161,8 @@ export function FieldRenderer({
           <EvidenceCapture
             fieldKey={field.key}
             items={evidences}
-            onAdd={url => onEvidenceAdd(field.key, url)}
-            onRemove={idx => onEvidenceRemove(field.key, idx)}
+            onAdd={url => { if (!disabled) onEvidenceAdd(field.key, url); }}
+            onRemove={idx => { if (!disabled) onEvidenceRemove(field.key, idx); }}
           />
         </div>
       );

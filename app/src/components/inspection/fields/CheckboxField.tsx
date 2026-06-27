@@ -5,6 +5,7 @@ interface CheckboxFieldProps {
   options: string[];
   value: string | undefined;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
 const OPTION_STYLES: Record<string, { selected: string; hover: string }> = {
@@ -22,7 +23,7 @@ const DEFAULT_STYLE = {
   hover:    "hover:border-blue-700",
 };
 
-export function CheckboxField({ options, value, onChange }: CheckboxFieldProps) {
+export function CheckboxField({ options, value, onChange, disabled }: CheckboxFieldProps) {
   return (
     <div className="flex flex-wrap gap-2">
       {options.map(opt => {
@@ -32,6 +33,7 @@ export function CheckboxField({ options, value, onChange }: CheckboxFieldProps) 
           <button
             key={opt}
             type="button"
+            disabled={disabled}
             onClick={() => onChange(isSelected ? "" : opt)}
             className={cn(
               "px-4 py-1.5 rounded-md border text-xs font-semibold transition-all",
