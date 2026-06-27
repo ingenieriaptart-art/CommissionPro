@@ -21,6 +21,7 @@ import {
   saveInspectionDraft,
   getInspectionDraft,
   deleteInspectionDraft,
+  localDB,
 } from "@/lib/db/local";
 import {
   activeRequiredFields,
@@ -135,7 +136,7 @@ export default function InspectionPage() {
     const isReal = equipmentId.length === 36 && !equipmentId.startsWith("eq-");
 
     getInspectionDraft(equipmentId, templateId)
-      .then((saved) => {
+      .then(async (saved) => {
         if (saved) {
           // Restaurar borrador local — enriquecer con testId de BD si falta
           const testId = saved.testId ?? (latestTest?.status === "borrador" ? latestTest.id : undefined);
@@ -143,6 +144,19 @@ export default function InspectionPage() {
         } else if (latestTest?.status === "borrador") {
           // Sin draft local pero BD tiene un borrador → precargar respuestas
           const answers = { ...(latestTest.data ?? {}) };
+          // Upsert fila en store local: device B necesita una fila real para que
+          // saveSection/close y getMaxRevision apunten al id correcto. put() es
+          // idempotente por id — no afecta al flujo de un solo dispositivo.
+          await localDB.tests.put({
+            id: latestTest.id,
+            equipment_id: equipmentId,
+            template_id: templateId,
+            status: "borrador" as const,
+            data: answers,
+            template_snapshot: latestTest.template_snapshot ?? null,
+            sync_status: "synced",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any);
           setState({
             ...buildInitialState(equipmentId, templateId, sections, equipment),
             answers,
@@ -244,7 +258,7 @@ export default function InspectionPage() {
       if (pct > 0) syncEquipmentStatus(equipment.id, "en_ejecucion", pct);
     }
     // Autosave respuestas a BD vía outbox al cambiar sección
-    if (state?.testId) saveSection(state.testId, state.answers);
+    if (state?.testId) saveSection(state.testId, state.answers)?.catch(() => {});
   }, [state, equipment, saveSection]);
 
   const handleNext = useCallback(() => {
@@ -259,7 +273,7 @@ export default function InspectionPage() {
       if (pct > 0) syncEquipmentStatus(equipment.id, "en_ejecucion", pct);
     }
     // Autosave respuestas a BD vía outbox al avanzar sección
-    if (state?.testId) saveSection(state.testId, state.answers);
+    if (state?.testId) saveSection(state.testId, state.answers)?.catch(() => {});
   }, [template, state, equipment, saveSection]);
 
   const handlePrev = useCallback(() => {

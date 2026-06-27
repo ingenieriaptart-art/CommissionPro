@@ -89,18 +89,31 @@ export async function closeInspectionOffline(params: SubmitParams, deps: SubmitD
   const ts = deps.now();
 
   // Asegurar fila (borrador) — soporta cerrar sin haber llamado startDraft antes.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let existing = (await (db.tests as any)
-    .filter((r: any) => r.equipment_id === state.equipmentId && r.template_id === template.id && r.status === "borrador")
-    .first()) ?? null;
-  if (!existing) {
-    const row = await buildDraftTestRow(params, deps);
+  // Si state.testId está disponible (caso multi-dispositivo incluido), se usa directamente
+  // sin crear una fila nueva — el UPDATE al id correcto llega al servidor vía outbox.
+  let testId: string;
+  if (state.testId) {
+    // Caso multi-dispositivo: device B tiene testId en estado pero puede NO tenerlo
+    // en su IndexedDB local. db.tests.update(testId, …) con 0 filas locales es innocuo;
+    // el outbox UPDATE llega al servidor y actualiza la fila correcta sin generar duplicados.
+    testId = state.testId;
+  } else {
+    // Fallback: buscar borrador local por (equipment_id, template_id, status)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await db.tests.add(row as any);
-    await deps.enqueueSync("tests", row.id, "INSERT", row);
-    existing = row;
+    const existing = (await (db.tests as any)
+      .filter((r: any) => r.equipment_id === state.equipmentId && r.template_id === template.id && r.status === "borrador")
+      .first()) ?? null;
+    if (existing) {
+      testId = existing.id;
+    } else {
+      // Red de seguridad: cerrar sin startDraft previo — crear fila nueva
+      const row = await buildDraftTestRow(params, deps);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await db.tests.add(row as any);
+      await deps.enqueueSync("tests", row.id, "INSERT", row);
+      testId = row.id;
+    }
   }
-  const testId = existing.id;
 
   const result_summary = recomputeResultSummary(state.answers);
   const closePatch = { status: "ejecutado" as const, data: state.answers, result_summary, executed_by: userId, executed_at: ts, updated_at: ts, sync_status: "pending" as const };
