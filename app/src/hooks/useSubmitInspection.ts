@@ -3,7 +3,7 @@ import { useState } from "react";
 import { localDB, enqueueSync, saveBlobLocally, deleteInspectionDraft, enqueueTransition } from "@/lib/db/local";
 import { runSync } from "@/lib/sync/engine";
 import { computeTemplateHash } from "@/lib/sync/hash";
-import { startDraftOffline, saveSectionOffline, closeInspectionOffline } from "@/lib/sync/submitInspection";
+import { startDraftOffline, saveSectionOffline, closeInspectionOffline, correctInspectionOffline } from "@/lib/sync/submitInspection";
 import { nextState } from "@/lib/state/equipmentFsm";
 import { useAuthStore } from "@/stores/auth.store";
 import { APP_VERSION, SCHEMA_VERSION } from "@/lib/version";
@@ -83,5 +83,19 @@ export function useSubmitInspection() {
   // Alias para no romper llamadas existentes.
   const submit = close;
 
-  return { startDraft, saveSection, close, submit, isSubmitting, error };
+  const correct = async (testId: string, answers: Record<string, unknown>): Promise<boolean> => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await correctInspectionOffline(testId, answers, buildDeps() as any);
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error desconocido");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return { startDraft, saveSection, close, submit, correct, isSubmitting, error };
 }

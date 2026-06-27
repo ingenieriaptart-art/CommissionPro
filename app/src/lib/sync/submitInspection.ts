@@ -166,3 +166,22 @@ export async function closeInspectionOffline(params: SubmitParams, deps: SubmitD
 
 // Compat: mantener el nombre anterior como alias.
 export const submitInspectionOffline = closeInspectionOffline;
+
+/**
+ * Corrección interina (admin/director): sobrescribe data + result_summary del test
+ * ya ejecutado sin alterar executed_by / executed_at / status ni disparar auto-punch
+ * ni transición de FSM.  Solo toca data + result_summary + updated_at.
+ */
+export async function correctInspectionOffline(
+  testId: string,
+  answers: Record<string, unknown>,
+  deps: Pick<SubmitDeps, "db" | "enqueueSync" | "now" | "isOnline" | "runSync">,
+): Promise<void> {
+  const ts = deps.now();
+  const result_summary = recomputeResultSummary(answers);
+  const patch = { data: answers, result_summary, updated_at: ts, sync_status: "pending" as const };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await deps.db.tests.update(testId, patch as any);
+  await deps.enqueueSync("tests", testId, "UPDATE", { id: testId, data: answers, result_summary, updated_at: ts });
+  if (deps.isOnline()) void deps.runSync();
+}

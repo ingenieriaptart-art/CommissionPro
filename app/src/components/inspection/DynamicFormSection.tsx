@@ -11,11 +11,14 @@ interface DynamicFormSectionProps {
   onAnswerChange: (fieldKey: string, value: unknown) => void;
   onEvidenceAdd: (fieldKey: string, url: string) => void;
   onEvidenceRemove: (fieldKey: string, index: number) => void;
+  /** Opcional: si retorna true para un campo, ese campo se muestra solo-lectura (corrección admin). */
+  readOnlyField?: (field: import("@/types/inspection").MockInspectionField) => boolean;
 }
 
 export function DynamicFormSection({
   section, answers, evidences,
   onAnswerChange, onEvidenceAdd, onEvidenceRemove,
+  readOnlyField,
 }: DynamicFormSectionProps) {
   const sectionInactive = section.is_active === false;
 
@@ -58,6 +61,7 @@ export function DynamicFormSection({
           <div className="space-y-5">
             {section.fields.map((field, idx) => {
               const fieldInactive = field.is_active === false;
+              const fieldReadOnly = !fieldInactive && (readOnlyField?.(field) ?? false);
               const prevField = idx > 0 ? section.fields[idx - 1] : null;
               const prevValue = prevField ? answers[prevField.key] : undefined;
               const forceRequired =
@@ -70,6 +74,8 @@ export function DynamicFormSection({
                   className={`bg-slate-900 rounded-xl p-4 border transition-opacity ${
                     fieldInactive
                       ? "border-slate-800/40 opacity-40 pointer-events-none select-none"
+                      : fieldReadOnly
+                      ? "border-slate-700/60 opacity-50 pointer-events-none select-none"
                       : "border-slate-800"
                   }`}
                 >

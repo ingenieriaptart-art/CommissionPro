@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, CheckCircle, FileText, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEquipmentForInspection, useInspectionTemplate, useLatestTestForInspection } from "@/hooks/useInspectionData";
 import { SectionSidebar } from "@/components/inspection/SectionSidebar";
@@ -10,6 +10,9 @@ import { InspectionSummary } from "@/components/inspection/InspectionSummary";
 import { InspectionMiniMap } from "@/components/inspection/InspectionMiniMap";
 import { EquipmentPdfUpload } from "@/components/equipment/EquipmentPdfUpload";
 import { useSubmitInspection } from "@/hooks/useSubmitInspection";
+import { useInspectionDetail } from "@/hooks/useInspectionReview";
+import { useAuthStore } from "@/stores/auth.store";
+import { isEditableField } from "@/lib/inspection/correction";
 import type { InspectionState, SectionStatus, MockInspectionSection } from "@/types/inspection";
 import type { Equipment } from "@/types";
 import { syncEquipmentStatus, calcFormPct } from "@/hooks/useEquipmentStatusSync";
@@ -67,15 +70,22 @@ export default function InspectionPage() {
   const { equipmentId, templateId } = params;
   const returnTo = searchParams.get("returnTo") ?? "/";
 
+  // Correction mode: ?correct=<testId> — only admin/director may enter
+  const correctId = searchParams.get("correct") ?? undefined;
+  const isAdminOrDirector = useAuthStore((s) => s.isRole("admin", "director"));
+  const correctionMode = !!correctId && isAdminOrDirector;
+
   const { data: equipment, isLoading: eqLoading }  = useEquipmentForInspection(equipmentId);
   const { data: template,  isLoading: tplLoading } = useInspectionTemplate(templateId);
 
   const [state, setState]   = useState<InspectionState | null>(null);
   const [docsOpen, setDocsOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
-  const { startDraft, saveSection, close, submit, isSubmitting, error: saveError } = useSubmitInspection();
+  const { startDraft, saveSection, close, submit, correct, isSubmitting, error: saveError } = useSubmitInspection();
 
   const { data: latestTest } = useLatestTestForInspection(equipmentId, templateId);
+  // For correction mode: load the specific ejecutado test by id
+  const { data: correctionDetail } = useInspectionDetail(correctionMode ? correctId : undefined);
 
   // Guard: the init effect must only run once — prevents re-initialization from background refetches
   const initialized = useRef(false);
@@ -86,9 +96,33 @@ export default function InspectionPage() {
   // Load or initialize state from IndexedDB (survives tab close / browser restart).
   // También crea un borrador en BD (startDraft) si no existe ninguno, y precarga
   // respuestas desde la BD si hay un borrador existente sin draft local.
+  // En modo corrección (correctionMode), carga las respuestas del test ejecutado
+  // sin crear un nuevo borrador ni disparar auto-punch/FSM.
   useEffect(() => {
     if (initialized.current) return;
     if (!template || !equipment) return;
+
+    if (correctionMode) {
+      // Esperar a que cargue el detalle de la inspección a corregir
+      if (correctionDetail === undefined) return;
+      initialized.current = true;
+      const sections = template.sections;
+      if (!correctionDetail) {
+        // Test no encontrado — iniciar estado vacío sin borrador
+        setState(buildInitialState(equipmentId, templateId, sections, equipment));
+        return;
+      }
+      const answers = { ...(correctionDetail.test.data ?? {}) };
+      setState({
+        ...buildInitialState(equipmentId, templateId, sections, equipment),
+        answers,
+        testId: correctId,
+        sectionStatus: deriveSectionStatuses(sections, answers),
+      });
+      return;
+    }
+
+    // Flujo normal (sin corrección)
     // Esperar a que la consulta de BD resuelva (undefined = aún cargando)
     if (latestTest === undefined) return;
     // All data is ready — mark as initialized so background refetches don't re-run this body
@@ -132,7 +166,7 @@ export default function InspectionPage() {
         setState(buildInitialState(equipmentId, templateId, sections, equipment));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [equipmentId, templateId, template, equipment, latestTest]);
+  }, [equipmentId, templateId, template, equipment, latestTest, correctionMode, correctionDetail]);
 
   // Persist state on every change to IndexedDB
   useEffect(() => {
@@ -246,6 +280,16 @@ export default function InspectionPage() {
     router.push(returnTo);
   }, [state, equipment, template, close, equipmentId, templateId, returnTo, router]);
 
+  // Guardar corrección (admin/director): sobrescribe data + result_summary del
+  // test ejecutado, sin re-disparar auto-punch/FSM ni tocar executed_by/at.
+  const handleSaveCorrection = useCallback(async () => {
+    if (!state?.testId) return;
+    const ok = await correct(state.testId, state.answers);
+    if (!ok) return; // error mostrado vía saveError
+    await deleteInspectionDraft(equipmentId, templateId).catch(() => {});
+    router.push(returnTo);
+  }, [state, correct, equipmentId, templateId, returnTo, router]);
+
   if (eqLoading || tplLoading || !state) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -319,6 +363,14 @@ export default function InspectionPage() {
               >
                 <ArrowLeft size={14} /> Volver al formulario
               </button>
+            ) : correctionMode ? (
+              <button
+                onClick={handleSaveCorrection}
+                disabled={isSubmitting}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                <CheckCircle size={14} /> Guardar corrección
+              </button>
             ) : allComplete && (
               <button
                 onClick={handleComplete}
@@ -377,6 +429,7 @@ export default function InspectionPage() {
               onAnswerChange={handleAnswerChange}
               onEvidenceAdd={handleEvidenceAdd}
               onEvidenceRemove={handleEvidenceRemove}
+              readOnlyField={correctionMode ? (field) => !isEditableField(field) : undefined}
             />
           )}
         </main>
