@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { EquipmentPdfUpload } from '@/components/equipment/EquipmentPdfUpload';
 import { useEquipmentInspectionTemplates } from '@/hooks/useInspectionData';
+import { useEquipmentInspections } from '@/hooks/useInspectionReview';
+import { useAuthStore } from '@/stores/auth.store';
 import type { SelectionCardData } from './SelectionCard';
 
 interface Props {
@@ -94,6 +96,20 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
     assignedTemplates.find((t) => (t.code ?? '').toUpperCase().startsWith('CHK')) ??
     assignedTemplates[0];
 
+  // Estado real de la inspección de este equipo+plantilla (mismo criterio que el
+  // panel del plano): decide si el botón es Iniciar/Continuar/Ver/Corregir.
+  const isAdminOrDirector = useAuthStore((s) => s.isRole('admin', 'director'));
+  const isRealEquipment =
+    !!realEquipmentId && realEquipmentId.length === 36 && !realEquipmentId.startsWith('ic02-');
+  const { data: inspections = [] } = useEquipmentInspections(
+    isRealEquipment ? realEquipmentId : undefined,
+  );
+  const latestInspection = realTemplate
+    ? [...inspections]
+        .filter((i) => i.template_id === realTemplate.id)
+        .sort((a, b) => (b.revision ?? 0) - (a.revision ?? 0))[0]
+    : undefined;
+
   const precomCfg = {
     pending:      { label: 'PENDIENTE',   color: '#64748B', bg: 'rgba(100,116,139,0.12)' },
     'in-progress':{ label: 'EN PROGRESO', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)'  },
@@ -120,6 +136,23 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
       const templateId = templateForBadge(signalBadge, tag);
       router.push(`/equipment/${eqId}/inspection/${templateId}?returnTo=${returnTo}`);
     }
+    onClose();
+  }
+
+  // Ver inspección ejecutada (solo lectura)
+  function goReview(testId: string) {
+    const returnTo = encodeURIComponent(pathname);
+    router.push(`/equipment/${realEquipmentId}/review/${testId}?returnTo=${returnTo}`);
+    onClose();
+  }
+
+  // Corregir inspección ejecutada (admin/director) — abre el formulario con datos
+  function goCorrect(testId: string) {
+    if (!realTemplate) return;
+    const returnTo = encodeURIComponent(pathname);
+    router.push(
+      `/equipment/${realEquipmentId}/inspection/${realTemplate.id}?correct=${testId}&returnTo=${returnTo}`,
+    );
     onClose();
   }
 
@@ -315,30 +348,80 @@ export function InstrumentDrawer({ card, projectId, equipmentId: equipmentIdProp
             ACCIONES
           </div>
 
-          {/* Botón principal — Iniciar Precomisionamiento */}
-          <button
-            onClick={() => handleAction('inspeccion')}
-            disabled={!!isFuture}
-            style={{
-              width: '100%', padding: '14px 16px',
-              borderRadius: '8px', border: 'none', cursor: isFuture ? 'not-allowed' : 'pointer',
-              background: isFuture
-                ? 'rgba(56,189,248,0.04)'
-                : 'linear-gradient(135deg, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0.10) 100%)',
-              borderWidth: '1px', borderStyle: 'solid',
-              borderColor: isFuture ? 'rgba(56,189,248,0.12)' : 'rgba(56,189,248,0.40)',
-              display: 'flex', alignItems: 'center', gap: '12px',
-              opacity: isFuture ? 0.4 : 1,
-              transition: 'all 150ms ease',
-            }}
-          >
-            <span style={{ fontSize: '22px' }}>📋</span>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '13px', fontWeight: '700', color: '#38BDF8' }}>Iniciar Precomisionamiento</div>
-              <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '2px' }}>Formulario de verificación técnica</div>
-            </div>
-            <span style={{ marginLeft: 'auto', fontSize: '16px', color: '#38BDF8', opacity: 0.7 }}>›</span>
-          </button>
+          {/* Acción según estado real de la inspección (Iniciar / Continuar / Ver / Corregir) */}
+          {(!latestInspection || latestInspection.status === 'borrador') ? (
+            <button
+              onClick={() => handleAction('inspeccion')}
+              disabled={!!isFuture}
+              style={{
+                width: '100%', padding: '14px 16px',
+                borderRadius: '8px', border: 'none', cursor: isFuture ? 'not-allowed' : 'pointer',
+                background: isFuture
+                  ? 'rgba(56,189,248,0.04)'
+                  : 'linear-gradient(135deg, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0.10) 100%)',
+                borderWidth: '1px', borderStyle: 'solid',
+                borderColor: isFuture ? 'rgba(56,189,248,0.12)' : 'rgba(56,189,248,0.40)',
+                display: 'flex', alignItems: 'center', gap: '12px',
+                opacity: isFuture ? 0.4 : 1,
+                transition: 'all 150ms ease',
+              }}
+            >
+              <span style={{ fontSize: '22px' }}>📋</span>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#38BDF8' }}>
+                  {latestInspection?.status === 'borrador' ? 'Continuar Precomisionamiento' : 'Iniciar Precomisionamiento'}
+                </div>
+                <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '2px' }}>
+                  {latestInspection?.status === 'borrador' ? 'Retomar borrador en proceso' : 'Formulario de verificación técnica'}
+                </div>
+              </div>
+              <span style={{ marginLeft: 'auto', fontSize: '16px', color: '#38BDF8', opacity: 0.7 }}>›</span>
+            </button>
+          ) : (
+            <>
+              {/* Ver inspección — solo lectura (inspección ya enviada) */}
+              <button
+                onClick={() => goReview(latestInspection.id)}
+                style={{
+                  width: '100%', padding: '14px 16px',
+                  borderRadius: '8px', cursor: 'pointer',
+                  background: 'linear-gradient(135deg, rgba(56,189,248,0.20) 0%, rgba(56,189,248,0.10) 100%)',
+                  borderWidth: '1px', borderStyle: 'solid', borderColor: 'rgba(56,189,248,0.40)',
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  transition: 'all 150ms ease',
+                }}
+              >
+                <span style={{ fontSize: '22px' }}>📄</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '700', color: '#38BDF8' }}>Ver inspección</div>
+                  <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '2px' }}>Resultado registrado (solo lectura)</div>
+                </div>
+                <span style={{ marginLeft: 'auto', fontSize: '16px', color: '#38BDF8', opacity: 0.7 }}>›</span>
+              </button>
+
+              {/* Corregir — solo admin/director, sobre inspección ejecutada */}
+              {latestInspection.status === 'ejecutado' && isAdminOrDirector && (
+                <button
+                  onClick={() => goCorrect(latestInspection.id)}
+                  style={{
+                    width: '100%', padding: '14px 16px',
+                    borderRadius: '8px', cursor: 'pointer',
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.08) 100%)',
+                    borderWidth: '1px', borderStyle: 'solid', borderColor: 'rgba(245,158,11,0.40)',
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    transition: 'all 150ms ease',
+                  }}
+                >
+                  <span style={{ fontSize: '22px' }}>✏️</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#F59E0B' }}>Corregir inspección</div>
+                    <div style={{ fontSize: '10px', color: '#A8BFDA', marginTop: '2px' }}>Editar respuestas (admin/director)</div>
+                  </div>
+                  <span style={{ marginLeft: 'auto', fontSize: '16px', color: '#F59E0B', opacity: 0.7 }}>›</span>
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
     </>
